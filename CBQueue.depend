@@ -29,3 +29,30 @@
 1563892576 source:e:\coding\c\cbqueue\cbqtbase.c
 	"cbqtest.h"
 
+1563892576 source:e:\coding\c\cbq\cbqtbase.c
+	"cbqtest.h"
+
+1563892836 e:\coding\c\cbq\cbqtest.h
+	<stdio.h>
+	<conio.h>
+	"cbqueue.h"
+
+1563890280 e:\coding\c\cbq\cbqueue.h
+	<stdlib.h>
+	<stdio.h>
+	<stdint.h>
+	"cbqdebug.h"
+
+1563371694 e:\coding\c\cbq\cbqdebug.h
+	<stdio.h>
+
+1564224353 source:e:\coding\c\cbq\cbqueue.c
+	"cbqueue.h"
+	"cbqlocal.h"
+
+1563347252 e:\coding\c\cbq\cbqlocal.h
+	"cbqueue.h"
+
+1563870849 source:e:\coding\c\cbq\main.c
+	"cbqtest.h"
+
