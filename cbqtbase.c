@@ -1,0 +1,161 @@
+#include "cbqtest.h"
+
+/* ---------------- Hello World ---------------- */
+int funcHW(int argc, CBQArg_t* argv)
+{
+    printf("CB 1: Hello, world!\n");
+    return 0;
+}
+
+int funcHU(int argc, CBQArg_t* argv)
+{
+    printf("CB 2: Hello, %s! Your age is %d.\n", argv[0].sVar, argv[1].iVar);
+    free(argv[0].sVar);
+    return 0;
+}
+
+int add(int argc, CBQArg_t* argv)
+{
+    int res = 0;
+
+    while (argc > 0) {
+        argc--;
+        res += argv[argc].iVar;
+    }
+    printf("CB 3: Add result is %d.\n", res);
+
+    return 0;
+}
+
+
+void CBQ_T_HelloWorld(void)
+{
+    CBQueue_t queue;
+    const char username [] = "User";
+    int age = 20;
+
+    /* Print debug status */
+    CBQ_OUTDEBUGSTATUS();
+
+    /* Queue initialize */
+    ASRT(CBQ_QueueInit(&queue, 3, CBQ_SM_STATIC, 0), "");
+
+    /* Push hello world function into queue */
+    ASRT(CBQ_Push(&queue, funcHW, 0, CBQ_NO_ARGS ), "");
+
+    /* Push hello user function into queue */
+    ASRT(CBQ_Push(&queue, funcHU, 2, (CBQArg_t) {.sVar = CBQ_strIntoHeap(username)}, (CBQArg_t) {.iVar = age} ), "");
+
+    /* Push summ calc function */
+    ASRT(CBQ_Push(&queue, add, 3, (CBQArg_t) {.iVar = 1}, (CBQArg_t) {.iVar = 2}, (CBQArg_t) {.iVar = 4}), "");
+
+    if (CBQ_HAVECALL(queue))
+        printf("main: calls num in queue: %llu\n", CBQ_GetCallAmount(&queue));
+
+    /* Execute first pushed function */
+    ASRT(CBQ_Exec(&queue, 0), "");
+
+    /* Execute second pushed function */
+    ASRT(CBQ_Exec(&queue, 0), "");
+
+    /* Execute third pushed function */
+    ASRT(CBQ_Exec(&queue, 0), "");
+
+    if (!CBQ_HAVECALL(queue))
+        printf("main: queue is empty\n");
+
+    /* Queue free */
+    ASRT(CBQ_QueueFree(&queue), "");
+}
+
+/* ---------------- Control Test ---------------- */
+
+int counter(int argc, CBQArg_t* argv)
+{
+    static int count = 0;
+    count++;
+    printf("CB exec count is %d\n", count);
+    return 0;
+}
+
+#ifdef _INC_CONIO
+void CBQ_T_ControlTest(void)
+{
+    int quit = 0,
+        key;
+    size_t customSize,
+        qSize,
+        qEngagedSize;
+    CBQueue_t queue;
+
+    CBQ_OUTDEBUGSTATUS();
+    ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0), "Failed to init");
+
+    quit = 0;
+    printf("p - push, e - pop, c - change size, i - increment size, d - decrement size, q - exit.\n");
+    do {
+        if (kbhit())
+            key = getch();
+        else
+            continue;
+
+        if (key == 'P' || key == 'p' || key == 'E' || key == 'e' || key == 'Q' || key == 'q' ||
+            key == 'C' || key == 'c' || key == 'I' || key == 'i' || key == 'D' || key == 'd') {
+
+            system("cls");
+
+            switch(key) {
+
+                case 'P':
+                case 'p': {
+                    ASRT(CBQ_Push(&queue, counter, 0, CBQ_NO_ARGS), "Failed to push");
+                    break;
+                }
+
+                case 'E':
+                case 'e': {
+                    ASRT(CBQ_Exec(&queue, NULL), "Failed to pop");
+                    break;
+                }
+
+                case 'Q':
+                case 'q': {
+                    quit = 1;
+                    break;
+                }
+
+                case 'C':
+                case 'c': {
+                    printf("Type new size\n");
+                    scanf("%llu", &customSize);
+                    fflush(stdin);
+                    ASRT(CBQ_ChangeSize(&queue, 0, customSize), "Failed to change size");
+                    break;
+                }
+
+                case 'I':
+                case 'i': {
+                    ASRT(CBQ_ChangeSize(&queue, CBQ_INC_SIZE, 0), "Failed to increment size");
+                    break;
+                }
+
+                case 'D':
+                case 'd': {
+                    ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size");
+                    break;
+                }
+            }
+
+            ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "");
+            printf("Size: %llu, engaged size: %llu\n", qSize, qEngagedSize);
+        }
+    } while(!quit);
+
+    ASRT(CBQ_QueueFree(&queue), "Failed to free");
+}
+#else
+void CBQ_T_ControlTest(void)
+{
+    printf("conio lib is not supported for control test\n");
+}
+#endif
