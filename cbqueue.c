@@ -5,7 +5,11 @@
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit);
 int CBQ_QueueFree(CBQueue_t* queue);
+
 int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
+
+int CBQ_QueueSaveState(CBQueue_t* queue, char* data, size_t* receivedSize);
+int CBQ_QueueRestoreState(CBQueue_t* queue, char* data, size_t size);
 
 /* ---------------- Container methods ---------------- */
 int CBQ_containerInit__(CBQContainer_t* container);
@@ -55,7 +59,7 @@ char* CBQ_strIntoHeap(const char* str);
 #ifdef CBQD_OUTPUTLOG
 
     #define CBQ_MSGPRINT(STR) \
-        printf("Status: %s\n", STR)
+        printf("Notice: %s\n", STR)
 
 #else
 
@@ -161,6 +165,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
         if (errSt)
             return errSt;
 
+    /* CBQ_CUSTOM_SIZE */
     } else {
         if (customNewSize <= 0 || customNewSize > CBQ_QUEUE_MAX_SIZE)
             return CBQ_ERR_ARG_OUT_OF_RANGE;
@@ -446,7 +451,7 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t arg, ...)
         if (errSt)
             return errSt;
 
-        CBQ_MSGPRINT("Queue size is auto incremented");
+        CBQ_MSGPRINT("Size incrementation was automatic");
     }
 
     /* set into container */
