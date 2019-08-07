@@ -140,6 +140,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
 /* ---------------- Call Methods ---------------- */
 int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t argv, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
+int CBQ_Clear(CBQueue_t* queue);
 
 /* ---------------- Info Methods ---------------- */
 #define CBQ_HAVECALL_P(TRUSTED_QUEUE_POINTER) \
