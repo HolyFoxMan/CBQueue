@@ -33,6 +33,7 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize);
 /* ---------------- Call Methods ---------------- */
 int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t arg, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
+int CBQ_Clear(CBQueue_t* queue);
 
 /* ---------------- Info Methods ---------------- */
 // CBQ_HAVECALL(TRUSTED_QUEUE);
@@ -40,6 +41,7 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 size_t CBQ_GetCallAmount(CBQueue_t* queue);
 int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
     int* getSizeMode, size_t* getSizeMaxLimit);
+
 /* ---------------- Other Methods ---------------- */
 char* CBQ_strIntoHeap(const char* str);
 
@@ -525,6 +527,19 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
     container->label = '-';
     #endif
     CBQ_DRAWSCHEME(queue);
+
+    return 0;
+}
+
+int CBQ_Clear(CBQueue_t* queue)
+{
+    BASE_ERR_CHECK(queue);
+
+    /* To clear a queue, you can simply shift the pointers
+     * to a common index and set the status of an empty queue.
+     */
+    queue->rId = queue->sId = 0;
+    queue->status = CBQ_ST_EMPTY;
 
     return 0;
 }

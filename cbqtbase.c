@@ -159,3 +159,124 @@ void CBQ_T_ControlTest(void)
     printf("conio lib is not supported for control test\n");
 }
 #endif
+
+/* ---------------- SizeModes Test ---------------- */
+
+int occupyAllCells(CBQueue_t* queue)
+{
+    size_t size, engSize, i;
+    int errSt = 0;
+
+    CBQ_GetFullInfo(queue, NULL, &size, &engSize, NULL, NULL);
+    size -= engSize;    // last empty cells
+
+    for (i = 0; i < size; i++) {
+        errSt = CBQ_Push(queue, counter, 0, CBQ_NO_ARGS);
+        if (errSt)
+            break;
+    }
+
+    return errSt;
+}
+
+int execAllCells(CBQueue_t* queue)
+{
+    int errSt = 0;
+
+    while(CBQ_HAVECALL_P(queue)) {
+        errSt = CBQ_Exec(queue, NULL);
+        if (errSt)
+            break;
+    }
+
+    return errSt;
+}
+
+int occupyCustomCells(CBQueue_t* queue, size_t num)
+{
+    int errSt = 0;
+
+    while(num--) {
+        errSt = CBQ_Push(queue, counter, 0, CBQ_NO_ARGS);
+        if (errSt)
+            break;
+    }
+
+    return errSt;
+}
+
+int execCustomCells(CBQueue_t* queue, size_t num)
+{
+    int errSt = 0;
+
+    while(num--) {
+        errSt = CBQ_Exec(queue, NULL);
+        if (errSt)
+            break;
+    }
+
+    return errSt;
+}
+
+int toState_3(CBQueue_t* queue)
+{
+    int errSt;
+
+    errSt = occupyAllCells(queue);
+    if (errSt)
+        return errSt;
+    /* ABCDEFGHIKLMNOPQ
+     * b...............
+     */
+
+    errSt = execCustomCells(queue, CBQ_SI_TINY / 2);
+    if (errSt)
+        return errSt;
+    /* --------IKLMNOPQ
+     * s.......r.......
+     */
+
+     return 0;
+}
+
+int toState_4(CBQueue_t* queue)
+{
+    int errSt;
+
+    errSt = occupyAllCells(queue);
+    if (errSt)
+        return errSt;
+    /* ABCDEFGHIKLMNOPQ
+     * b...............
+     */
+
+    errSt = execCustomCells(queue, CBQ_SI_TINY / 2);
+    if (errSt)
+        return errSt;
+    /* --------IKLMNOPQ
+     * s.......r.......
+     */
+
+    errSt = occupyCustomCells(queue, CBQ_SI_TINY / 4);
+    if (errSt)
+        return errSt;
+    /* RSTU----IKLMNOPQ
+     * ....s...r.......
+     */
+
+    return 0;
+}
+
+void CBQ_T_SizemodeTest(void)
+{
+    /* STATIC test */
+    CBQueue_t queue;
+
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed");
+    /* ----------------
+     * b...............
+     */
+
+     ASRT(toState_3(&queue), "failed set to state 3");
+
+}
