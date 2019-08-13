@@ -8,10 +8,12 @@
         #define false 0
     #endif
 
-    #define INIT_INC_SIZE   8
-    #define MAX_INC_SIZE    16384
+    #define CBQ_QUEUE_MAX_SIZE  65536
     #define MIN_SIZE        1
     #define DEC_BUFF_PERC   1.1L
+
+    #define INIT_INC_SIZE   8
+    #define MAX_INC_SIZE    16384
 
     #define MAX_CO_ARG      20
     #define DEF_CO_ARG      5

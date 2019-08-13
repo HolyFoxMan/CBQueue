@@ -6,8 +6,7 @@
     #include <stdint.h>
     #include "cbqdebug.h"
 
-    /* Maximum (unstable) size of queue */
-    #define CBQ_QUEUE_MAX_SIZE  65536
+    /* Maximum (unstable) size of queue is 65536 */
 
     /* Turn on that define if dont want base queue check on following methods:
      * push
