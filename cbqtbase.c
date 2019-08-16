@@ -85,8 +85,10 @@ void CBQ_T_ControlTest(void)
         key;
     size_t customSize,
         qSize,
-        qEngagedSize;
+        qEngagedSize,
+        resultByteSize;
     CBQueue_t queue;
+    unsigned char* saveStateBuffer = NULL;
 
     CBQ_OUTDEBUGSTATUS();
     ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0), "Failed to init");
@@ -100,7 +102,8 @@ void CBQ_T_ControlTest(void)
             continue;
 
         if (key == 'P' || key == 'p' || key == 'E' || key == 'e' || key == 'Q' || key == 'q' ||
-            key == 'C' || key == 'c' || key == 'I' || key == 'i' || key == 'D' || key == 'd') {
+            key == 'C' || key == 'c' || key == 'I' || key == 'i' || key == 'D' || key == 'd' ||
+            key == 'S' || key == 's' || key == 'L' || key == 'l') {
 
             system("cls");
 
@@ -142,6 +145,19 @@ void CBQ_T_ControlTest(void)
                 case 'D':
                 case 'd': {
                     ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size");
+                    break;
+                }
+
+                case 'S':
+                case 's': {
+                    ASRT(CBQ_SaveState(&queue, saveStateBuffer, &resultByteSize), "Saving data error");
+                    printf("Received size (in bytes): %llu\n", resultByteSize);
+                    break;
+                }
+
+                case 'L':
+                case 'l': {
+                    ASRT(CBQ_RestoreState(&queue, saveStateBuffer, resultByteSize), "Loading data error");
                     break;
                 }
             }

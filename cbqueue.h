@@ -134,12 +134,15 @@
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit);
 int CBQ_QueueFree(CBQueue_t* queue);
-int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
-
-/* ---------------- Call Methods ---------------- */
 int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t argv, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
+
+/* ---------------- Additional methods ---------------- */
+int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
+int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize);
+int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
 int CBQ_Clear(CBQueue_t* queue);
+char* CBQ_strIntoHeap(const char* str);
 
 /* ---------------- Info Methods ---------------- */
 #define CBQ_HAVECALL_P(TRUSTED_QUEUE_POINTER) \
@@ -155,10 +158,10 @@ int CBQ_Clear(CBQueue_t* queue);
     (TRUSTED_QUEUE).size
 
 size_t CBQ_GetCallAmount(CBQueue_t* queue);
+
 int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
     int* getSizeMode, size_t* getSizeMaxLimit);
-/* ---------------- Other Methods ---------------- */
-char* CBQ_strIntoHeap(const char* str);
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #endif // CBQUEUE_H

@@ -8,8 +8,8 @@ int CBQ_QueueFree(CBQueue_t* queue);
 
 int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
 
-int CBQ_QueueSaveState(CBQueue_t* queue, char* data, size_t* receivedSize);
-int CBQ_QueueRestoreState(CBQueue_t* queue, char* data, size_t size);
+int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize);
+int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
 
 /* ---------------- Container methods ---------------- */
 int CBQ_containerInit__(CBQContainer_t* container);
@@ -186,6 +186,33 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
                 return errSt;
         }
     }
+
+    return 0;
+}
+
+int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize)
+{
+    size_t i, j;
+
+    BASE_ERR_CHECK(queue);
+
+    CBQ_MSGPRINT("Saving queue state...");
+
+    /* Getting data size */
+    *receivedSize = sizeof (CBQueue_t) + queue->size * sizeof (CBQContainer_t);
+    for (i = 0; i < queue->size; i++)
+        *receivedSize += queue->coArr[i].argc * sizeof (CBQArg_t);
+
+    return 0;
+}
+
+int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size)
+{
+    size_t i, j;
+
+    BASE_ERR_CHECK(queue);
+
+    CBQ_MSGPRINT("Loading queue state...");
 
     return 0;
 }
