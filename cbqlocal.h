@@ -18,6 +18,32 @@
     #define MAX_CO_ARG      20
     #define DEF_CO_ARG      5
 
+    /* Getting bytes for header in save state data
+     * Its  int:
+            sizeMode,
+            status,
+            curLetter   (have -1, if is not debug mode)
+     * and size_t:
+            size,
+            sizeMaxLimit,
+            incSize,
+            rId,
+            sId
+    */
+    #define GET_BASE_QUEUE_HEADER() \
+        sizeof (int) * 3 + sizeof (size_t) * 5
+
+
+    /* Getting one container size
+     * Its all included variables, except CBQArg_t pointer
+     */
+    #define GET_BASE_CONTAINER_SIZE() \
+        sizeof (CBQContainer_t) - sizeof (CBQArg_t*)
+
+    /* Getting size of arguments array in container */
+    #define GET_CONTAINER_ARGS_SIZE(container) \
+        container.argc * sizeof (CBQArg_t)
+
     /* Queue init status types */
     enum {
         CBQ_IN_INITED = 0x51494E49,

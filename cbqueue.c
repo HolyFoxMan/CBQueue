@@ -193,15 +193,29 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
 int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize)
 {
     size_t i, j;
+    size_t engSize;
+    CBQContainer_t* cbqc;
 
     BASE_ERR_CHECK(queue);
 
     CBQ_MSGPRINT("Saving queue state...");
 
+    engSize = CBQ_GetCallAmount(queue);
+
     /* Getting data size */
-    *receivedSize = sizeof (CBQueue_t) + queue->size * sizeof (CBQContainer_t);
-    for (i = 0; i < queue->size; i++)
-        *receivedSize += queue->coArr[i].argc * sizeof (CBQArg_t);
+    *receivedSize = GET_BASE_QUEUE_HEADER() + engSize * GET_BASE_CONTAINER_SIZE();
+
+    /* The algorithm can move the pointer outside the cells if the queue is full.
+     * This is convenient when the queue size changes (increment to a greater extent).
+     * But in this case, such a feature is not needed. Therefore we equate pointers.
+     * After the shift algorithm, the read pointer is always at zero.
+     */
+    CBQ_offsetToBeginning__(queue);
+    if (queue->status == CBQ_ST_FULL)
+        queue->sId = 0;
+
+    for (i = 0; i < engSize; i++)
+        *receivedSize += GET_CONTAINER_ARGS_SIZE(queue->coArr[i]);
 
     return 0;
 }
