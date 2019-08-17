@@ -235,9 +235,9 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size)
 int CBQ_containerInit__(CBQContainer_t* container)
 {
     CBQContainer_t tmpContainer = {
+    	.func = NULL,
         .argMax = DEF_CO_ARG,
-        .argc = 0,
-        .func = NULL
+        .argc = 0
 
         #ifdef CBQD_SCHEME
         , .label = '-'
