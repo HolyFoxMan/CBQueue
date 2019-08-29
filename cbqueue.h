@@ -139,10 +139,13 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 
 /* ---------------- Additional methods ---------------- */
 int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
-int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize);
-int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
 int CBQ_Clear(CBQueue_t* queue);
 char* CBQ_strIntoHeap(const char* str);
+
+/* Not used
+int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize);
+int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
+*/
 
 /* ---------------- Info Methods ---------------- */
 #define CBQ_HAVECALL_P(TRUSTED_QUEUE_POINTER) \
