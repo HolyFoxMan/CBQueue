@@ -192,6 +192,15 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
     return 0;
 }
 
+/* This part is unused. Methods of save and rest queue was complicated
+ * for stored pointers of structs, strings and functions.
+ * It only makes sense to independently save this data,
+ * not using the module for that. Its is not yet able to parse data
+ * through a pointers. In the future, tags for variables may appear.
+ * However, this can affect the complexity of adding a call to the queue.
+ * And there will be a need to register all used types in the future in calls.
+ */
+
 /*
 int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize)
 {
@@ -204,9 +213,9 @@ int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize)
     CBQ_MSGPRINT("Saving queue state...");
 
     engSize = CBQ_GetCallAmount(queue);
-
+*/
     /* Getting data size */
-    // *receivedSize = GET_BASE_QUEUE_HEADER() + engSize * GET_BASE_CONTAINER_SIZE();
+    /* (*receivedSize) = GET_BASE_QUEUE_HEADER() + engSize * GET_BASE_CONTAINER_SIZE(); */
 
     /* The algorithm can move the pointer outside the cells if the queue is full.
      * This is convenient when the queue size changes (increment to a greater extent).
@@ -366,6 +375,10 @@ size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newDecSize)
         else
             newDecSize = tmpSize;
     }
+
+    /* it is worth reducing the inc size */
+    if (trustedQueue->incSize > INIT_INC_SIZE)
+        trustedQueue->incSize >>= 1;
 
     return newDecSize;
 }

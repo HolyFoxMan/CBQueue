@@ -85,10 +85,10 @@ void CBQ_T_ControlTest(void)
         key;
     size_t customSize,
         qSize,
-        qEngagedSize,
-        resultByteSize;
+        qEngagedSize;
+  //      resultByteSize;
+//    unsigned char* saveStateBuffer = NULL;
     CBQueue_t queue;
-    unsigned char* saveStateBuffer = NULL;
 
     CBQ_OUTDEBUGSTATUS();
     ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0), "Failed to init");
@@ -147,7 +147,7 @@ void CBQ_T_ControlTest(void)
                     ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size");
                     break;
                 }
-
+/*
                 case 'S':
                 case 's': {
                     ASRT(CBQ_SaveState(&queue, saveStateBuffer, &resultByteSize), "Saving data error");
@@ -160,6 +160,7 @@ void CBQ_T_ControlTest(void)
                     ASRT(CBQ_RestoreState(&queue, saveStateBuffer, resultByteSize), "Loading data error");
                     break;
                 }
+                */
             }
 
             ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "");

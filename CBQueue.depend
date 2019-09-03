@@ -1,62 +1,5 @@
 # depslib dependency file v1.0
-1563370615 source:e:\coding\c\cbqueue\cbqthw.c
-	"cbqtest.h"
-
-1563892836 e:\coding\c\cbqueue\cbqtest.h
-	<stdio.h>
-	<conio.h>
-	"cbqueue.h"
-
-1563890280 e:\coding\c\cbqueue\cbqueue.h
-	<stdlib.h>
-	<stdio.h>
-	<stdint.h>
-	"cbqdebug.h"
-
-1563371694 e:\coding\c\cbqueue\cbqdebug.h
-	<stdio.h>
-
-1563968033 source:e:\coding\c\cbqueue\cbqueue.c
-	"cbqueue.h"
-	"cbqlocal.h"
-
-1563347252 e:\coding\c\cbqueue\cbqlocal.h
-	"cbqueue.h"
-
-1563870849 source:e:\coding\c\cbqueue\main.c
-	"cbqtest.h"
-
-1563892576 source:e:\coding\c\cbqueue\cbqtbase.c
-	"cbqtest.h"
-
-1565200713 source:e:\coding\c\cbq\cbqtbase.c
-	"cbqtest.h"
-
-1563892836 e:\coding\c\cbq\cbqtest.h
-	<stdio.h>
-	<conio.h>
-	"cbqueue.h"
-
-1563890280 e:\coding\c\cbq\cbqueue.h
-	<stdlib.h>
-	<stdio.h>
-	<stdint.h>
-	"cbqdebug.h"
-
-1563371694 e:\coding\c\cbq\cbqdebug.h
-	<stdio.h>
-
-1564610122 source:e:\coding\c\cbq\cbqueue.c
-	"cbqueue.h"
-	"cbqlocal.h"
-
-1563347252 e:\coding\c\cbq\cbqlocal.h
-	"cbqueue.h"
-
-1563870849 source:e:\coding\c\cbq\main.c
-	"cbqtest.h"
-
-1565961850 source:e:\coding\cbqueue\cbqtbase.c
+1567245166 source:e:\coding\cbqueue\cbqtbase.c
 	"cbqtest.h"
 
 1565686175 e:\coding\cbqueue\cbqtest.h
@@ -64,22 +7,28 @@
 	<conio.h>
 	"cbqueue.h"
 
-1565961588 e:\coding\cbqueue\cbqueue.h
+1567121355 e:\coding\cbqueue\cbqueue.h
 	<stdlib.h>
 	<stdio.h>
 	<stdint.h>
 	"cbqdebug.h"
 
-1565686175 e:\coding\cbqueue\cbqdebug.h
+1567260148 e:\coding\cbqueue\cbqdebug.h
 	<stdio.h>
 
-1567120135 source:e:\coding\cbqueue\cbqueue.c
+1567490483 source:e:\coding\cbqueue\cbqueue.c
 	"cbqueue.h"
 	"cbqlocal.h"
 
 1565993132 e:\coding\cbqueue\cbqlocal.h
 	"cbqueue.h"
 
-1565686175 source:e:\coding\cbqueue\main.c
+1567248678 source:e:\coding\cbqueue\main.c
+	"cbqt_gamefly.h"
+
+1567248700 e:\coding\cbqueue\cbqt_gamefly.h
 	"cbqtest.h"
+
+1567495561 source:e:\coding\cbqueue\cbqt_gamefly.c
+	"cbqt_gamefly.h"
 

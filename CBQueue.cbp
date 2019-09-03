@@ -34,6 +34,10 @@
 		</Compiler>
 		<Unit filename="cbqdebug.h" />
 		<Unit filename="cbqlocal.h" />
+		<Unit filename="cbqt_gamefly.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="cbqt_gamefly.h" />
 		<Unit filename="cbqtbase.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Tests/" />
