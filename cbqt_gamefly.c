@@ -60,12 +60,10 @@ void CBQ_T_GAMEFLY(void)
 
         /* base key events */
         if (player_s.pressedKey == K_PAUSE) {
-
             if (gamefly_s.status == GF_PLAY)
                 gamefly_s.status = GF_PAUSE;
             else if (gamefly_s.status == GF_PAUSE)
                 gamefly_s.status = GF_PLAY;
-
         }
 
         if (player_s.pressedKey == K_ESC)
@@ -73,10 +71,8 @@ void CBQ_T_GAMEFLY(void)
 
     } while (gamefly_s.status != GF_EXIT);
 
-    free(str);
-
     CBQ_QueueFree(&qGame);
-    CBQ_QueueFree(&qRender);
+
 }
 
 int startComponents(int argc, CBQArg_t* argv)
