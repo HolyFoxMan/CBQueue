@@ -1,8 +1,18 @@
 #ifndef CBQTEST_H
 #define CBQTEST_H
 
-    /* activate support of "%llu" format for printing vars with size_t type */
-    #define __USE_MINGW_ANSI_STDIO 1
+    /* activate support of size_t format for printing 
+    vars with size_t type. Use SZ_PRTF instead "%..."
+    */
+    
+    #ifdef __MINGW32__
+    	#define __USE_MINGW_ANSI_STDIO 1
+    	#define SZ_PRTF "%llu"
+    #elif defined(__linux__)
+    	#define SZ_PRTF "%zd"
+    #else
+    	#define SZ_PRTF "%lu"
+    #endif
 
     #include <stdio.h>
     #include <conio.h>
