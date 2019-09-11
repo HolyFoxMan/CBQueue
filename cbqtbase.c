@@ -164,7 +164,8 @@ void CBQ_T_ControlTest(void)
             }
 
             ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "");
-            printf("Size: "SZ_PRTF", engaged size: "SZ_PRTF"\n", qSize, qEngagedSize);
+            printf("Size: " SZ_PRTF ", engaged size: "
+            SZ_PRTF "\n", qSize, qEngagedSize);
         }
     } while(!quit);
 
