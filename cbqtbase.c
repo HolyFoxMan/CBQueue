@@ -78,7 +78,7 @@ int counter(int argc, CBQArg_t* argv)
     return 0;
 }
 
-#ifdef _INC_CONIO
+#if defined(_INC_CONIO) || defined(CONIO_H)
 void CBQ_T_ControlTest(void)
 {
     int quit = 0,
@@ -130,7 +130,7 @@ void CBQ_T_ControlTest(void)
                 case 'C':
                 case 'c': {
                     printf("Type new size\n");
-                    scanf("%llu", &customSize);
+                    scanf(SZ_PRTF, &customSize);
                     fflush(stdin);
                     ASRT(CBQ_ChangeSize(&queue, 0, customSize), "Failed to change size");
                     break;
@@ -164,7 +164,7 @@ void CBQ_T_ControlTest(void)
             }
 
             ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "");
-            printf("Size: %llu, engaged size: %llu\n", qSize, qEngagedSize);
+            printf("Size: "SZ_PRTF", engaged size: "SZ_PRTF"\n", qSize, qEngagedSize);
         }
     } while(!quit);
 
