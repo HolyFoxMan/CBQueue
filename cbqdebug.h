@@ -1,11 +1,10 @@
 #ifndef CBQDEBUG_H
 #define CBQDEBUG_H
 
-/* set that macros define to deactivate
- debug mode */
-  #indef NO_CBQ_DEBUG
-	#define CBQ_DEBUG
-  #endif
+/* set that macros define to activate
+ debug mode before including cbq headers */
+ 
+/* #define CBQ_DEBUG */
 
     #ifdef CBQ_DEBUG
 
