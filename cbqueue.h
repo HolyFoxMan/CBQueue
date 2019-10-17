@@ -15,6 +15,11 @@
      */
     // #define NO_BASE_CHECK
 
+    /* Disable exceptions, which can be obtained by queue methods (except Push)
+        in callbacks which are processed from the same queue
+    */
+    // #define NO_EXCEPTIONS_OF_BUSY
+
     /* Macros for callback without arguments which set into 4 arg in CBQ_Exec function */
     #define CBQ_NO_ARGS \
         (CBQArg_t) {0}
