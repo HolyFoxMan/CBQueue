@@ -1,34 +1,34 @@
 # depslib dependency file v1.0
-1567245166 source:e:\coding\cbqueue\cbqtbase.c
+1571312620 source:e:\coding\cbqueue\cbqtbase.c
 	"cbqtest.h"
 
-1565686175 e:\coding\cbqueue\cbqtest.h
+1571311993 e:\coding\cbqueue\cbqtest.h
 	<stdio.h>
 	<conio.h>
 	"cbqueue.h"
 
-1567121355 e:\coding\cbqueue\cbqueue.h
+1571311384 e:\coding\cbqueue\cbqueue.h
 	<stdlib.h>
 	<stdio.h>
 	<stdint.h>
 	"cbqdebug.h"
 
-1567260148 e:\coding\cbqueue\cbqdebug.h
+1571307675 e:\coding\cbqueue\cbqdebug.h
 	<stdio.h>
 
-1567490483 source:e:\coding\cbqueue\cbqueue.c
+1571311360 source:e:\coding\cbqueue\cbqueue.c
 	"cbqueue.h"
 	"cbqlocal.h"
 
-1565993132 e:\coding\cbqueue\cbqlocal.h
+1571307862 e:\coding\cbqueue\cbqlocal.h
 	"cbqueue.h"
 
-1567248678 source:e:\coding\cbqueue\main.c
+1571312306 source:e:\coding\cbqueue\main.c
 	"cbqt_gamefly.h"
 
 1567248700 e:\coding\cbqueue\cbqt_gamefly.h
 	"cbqtest.h"
 
-1567495561 source:e:\coding\cbqueue\cbqt_gamefly.c
+1568048989 source:e:\coding\cbqueue\cbqt_gamefly.c
 	"cbqt_gamefly.h"
 

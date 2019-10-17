@@ -49,6 +49,9 @@
         /* init status */
         int     initSt;
 
+        /* exec status */
+        int     execSt;
+
         /* containers */
         size_t  size;
         struct  CBQContainer_t* coArr;
@@ -117,7 +120,8 @@
         CBQ_ERR_STATIC_SIZE_OVERFLOW,
         CBQ_ERR_LIMIT_SIZE_OVERFLOW,
         CBQ_ERR_MAX_SIZE_OVERFLOW,
-        CBQ_ERR_QUEUE_IS_EMPTY
+        CBQ_ERR_QUEUE_IS_EMPTY,
+        CBQ_ERR_IS_BUSY
     };
 
     /* These enums choose in "changeTowards" param from ChangeSize method

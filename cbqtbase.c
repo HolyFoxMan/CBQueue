@@ -295,6 +295,43 @@ void CBQ_T_SizemodeTest(void)
      * b...............
      */
 
-     ASRT(toState_3(&queue), "failed set to state 3");
+     ASRT(toState_3(&queue), "Failed set to state 3");
 
+     ASRT(CBQ_QueueFree(&queue), "Failed to free");
+
+}
+
+int selfExecCB(int argc, CBQArg_t* argv)
+{
+    static int part = 0;
+    int sterr;
+
+    printf("CB: Self queue executing Number %d\n", part);
+    fflush(stdout);
+
+    part++;
+
+    sterr = CBQ_Exec(argv[0].qVar, 0);
+
+    if (sterr)
+        return sterr;
+
+    part--;
+    return 0;
+}
+
+void CBQ_T_BusyTest(void)
+{
+    int errSt = 0;
+    CBQueue_t queue;
+
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed");
+
+    ASRT(CBQ_Push(&queue, selfExecCB, 1, (CBQArg_t) {.qVar = &queue}), "Push error")
+
+    CBQ_Exec(&queue, &errSt);
+    if (errSt == CBQ_ERR_IS_BUSY)
+        printf("Error of self exec was successful handled\n");
+
+    ASRT(CBQ_QueueFree(&queue), "Failed to free");
 }

@@ -3,8 +3,8 @@
 
 /* set that macros define to activate
  debug mode before including cbq headers */
- 
-/* #define CBQ_DEBUG */
+
+ #define CBQ_DEBUG
 
     #ifdef CBQ_DEBUG
 

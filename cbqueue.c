@@ -80,6 +80,7 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLim
 {
     size_t i;
     CBQueue_t iniQueue = {
+        .execSt = CBQ_EST_NO_EXEC,
         .size = size,
         .incSize = INIT_INC_SIZE,
         .rId = 0,
@@ -562,6 +563,12 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
     if (queue->status == CBQ_ST_EMPTY)
         return CBQ_ERR_QUEUE_IS_EMPTY;
 
+    if (queue->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+
+    /* change status as busy */
+    queue->execSt = CBQ_EST_EXEC;
+
     /* inset from container and execute callback function */
     container = &queue->coArr[queue->rId];
     if (funcRetSt == NULL)
@@ -578,6 +585,9 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
         queue->status = CBQ_ST_EMPTY;
     else
         queue->status = CBQ_ST_STABLE;
+
+    /* now queue is free for executing */
+    queue->execSt = CBQ_EST_NO_EXEC;
 
     CBQ_MSGPRINT("Queue is popped");
 

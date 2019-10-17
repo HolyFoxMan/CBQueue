@@ -57,6 +57,12 @@
         CBQ_ST_FULL
     };
 
+    /* Executing status */
+    enum {
+        CBQ_EST_NO_EXEC,
+        CBQ_EST_EXEC
+    };
+
     typedef struct CBQContainer_t CBQContainer_t;
     struct CBQContainer_t {
 
