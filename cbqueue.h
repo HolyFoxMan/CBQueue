@@ -20,9 +20,16 @@
     */
     // #define NO_EXCEPTIONS_OF_BUSY
 
+    /* No dynamic args in push method check */
+    // #define NO_DYNARG_CHECK
+
     /* Macros for callback without arguments which set into 4 arg in CBQ_Exec function */
     #define CBQ_NO_ARGS \
         (CBQArg_t) {0}
+
+    /* Macros for callback without scalable arguments, same as null macros
+    */
+    #define CBQ_NO_DYN_ARGS NULL
 
     /* Union type has argument base element which contain
      * used variables for function calls in queue.
@@ -126,7 +133,8 @@
         CBQ_ERR_LIMIT_SIZE_OVERFLOW,
         CBQ_ERR_MAX_SIZE_OVERFLOW,
         CBQ_ERR_QUEUE_IS_EMPTY,
-        CBQ_ERR_IS_BUSY
+        CBQ_ERR_IS_BUSY,
+        CBQ_ERR_DYNARG_VARIANCE
     };
 
     /* These enums choose in "changeTowards" param from ChangeSize method
@@ -143,7 +151,7 @@
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit);
 int CBQ_QueueFree(CBQueue_t* queue);
-int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t argv, ...);
+int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArgs, int argc, CBQArg_t arg, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 
 /* ---------------- Additional methods ---------------- */

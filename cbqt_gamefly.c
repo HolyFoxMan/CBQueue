@@ -48,7 +48,7 @@ void CBQ_T_GAMEFLY(void)
 
     gamefly_s.status = GF_PLAY;
 
-    CBQ_Push(&qGame, startComponents, 1, (CBQArg_t) {.qVar = &qGame});
+    CBQ_Push(&qGame, startComponents, 0, NULL, 1, (CBQArg_t) {.qVar = &qGame});
 //    CBQ_Push(&qGame, showMsg, 2, (CBQArg_t) {.qVar = &qGame}, (CBQArg_t) {.sVar = str});
 
     do {
@@ -89,7 +89,7 @@ int playerStart(int argc, CBQArg_t* argv)
 
 int showMsg(int argc, CBQArg_t* argv)
 {
-    CBQ_Push(argv[0].qVar, loopMsg, 2, (CBQArg_t) {.qVar = argv[0].qVar}, (CBQArg_t) {.sVar = argv[1].sVar});
+    CBQ_Push(argv[0].qVar, loopMsg, 0, NULL, 2, (CBQArg_t) {.qVar = argv[0].qVar}, (CBQArg_t) {.sVar = argv[1].sVar});
 
     return 0;
 }
@@ -98,7 +98,7 @@ int loopMsg(int argc, CBQArg_t* argv)
 {
     printf("%s", argv[1].sVar);
     fflush(stdout);
-    CBQ_Push(argv[0].qVar, loopMsg, 2, (CBQArg_t) {.qVar = argv[0].qVar}, (CBQArg_t) {.sVar = argv[1].sVar});
+    CBQ_Push(argv[0].qVar, loopMsg, 0, NULL, 2, (CBQArg_t) {.qVar = argv[0].qVar}, (CBQArg_t) {.sVar = argv[1].sVar});
 
     return 0;
 }

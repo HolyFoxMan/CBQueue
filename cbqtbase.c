@@ -41,13 +41,13 @@ void CBQ_T_HelloWorld(void)
     ASRT(CBQ_QueueInit(&queue, 3, CBQ_SM_STATIC, 0), "");
 
     /* Push hello world function into queue */
-    ASRT(CBQ_Push(&queue, funcHW, 0, CBQ_NO_ARGS ), "");
+    ASRT(CBQ_Push(&queue, funcHW, 0, NULL, 0, CBQ_NO_ARGS ), "");
 
     /* Push hello user function into queue */
-    ASRT(CBQ_Push(&queue, funcHU, 2, (CBQArg_t) {.sVar = CBQ_strIntoHeap(username)}, (CBQArg_t) {.iVar = age} ), "");
+    ASRT(CBQ_Push(&queue, funcHU, 0, NULL, 2, (CBQArg_t) {.sVar = CBQ_strIntoHeap(username)}, (CBQArg_t) {.iVar = age} ), "");
 
     /* Push summ calc function */
-    ASRT(CBQ_Push(&queue, add, 3, (CBQArg_t) {.iVar = 1}, (CBQArg_t) {.iVar = 2}, (CBQArg_t) {.iVar = 4}), "");
+    ASRT(CBQ_Push(&queue, add, 0, NULL, 3, (CBQArg_t) {.iVar = 1}, (CBQArg_t) {.iVar = 2}, (CBQArg_t) {.iVar = 4}), "");
 
     if (CBQ_HAVECALL(queue))
         printf("main: calls num in queue: %llu\n", CBQ_GetCallAmount(&queue));
@@ -111,7 +111,7 @@ void CBQ_T_ControlTest(void)
 
                 case 'P':
                 case 'p': {
-                    ASRT(CBQ_Push(&queue, counter, 0, CBQ_NO_ARGS), "Failed to push");
+                    ASRT(CBQ_Push(&queue, counter, 0, NULL, 0, CBQ_NO_ARGS), "Failed to push");
                     break;
                 }
 
@@ -189,7 +189,7 @@ int occupyAllCells(CBQueue_t* queue)
     size -= engSize;    // last empty cells
 
     for (i = 0; i < size; i++) {
-        errSt = CBQ_Push(queue, counter, 0, CBQ_NO_ARGS);
+        errSt = CBQ_Push(queue, counter, 0, NULL, 0, CBQ_NO_ARGS);
         if (errSt)
             break;
     }
@@ -215,7 +215,7 @@ int occupyCustomCells(CBQueue_t* queue, size_t num)
     int errSt = 0;
 
     while(num--) {
-        errSt = CBQ_Push(queue, counter, 0, CBQ_NO_ARGS);
+        errSt = CBQ_Push(queue, counter, 0, NULL, 0, CBQ_NO_ARGS);
         if (errSt)
             break;
     }
@@ -327,7 +327,7 @@ void CBQ_T_BusyTest(void)
 
     ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed");
 
-    ASRT(CBQ_Push(&queue, selfExecCB, 1, (CBQArg_t) {.qVar = &queue}), "Push error")
+    ASRT(CBQ_Push(&queue, selfExecCB, 0, NULL, 1, (CBQArg_t) {.qVar = &queue}), "Push error")
 
     CBQ_Exec(&queue, &errSt);
     if (errSt == CBQ_ERR_IS_BUSY)

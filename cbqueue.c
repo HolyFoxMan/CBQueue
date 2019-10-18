@@ -33,7 +33,7 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize);
     free(P_CONTAINER.args)
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t arg, ...);
+int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArgs, int argc, CBQArg_t arg, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_Clear(CBQueue_t* queue);
 
@@ -493,15 +493,26 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
 }
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t arg, ...)
+int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArgs, int argc, CBQArg_t arg, ...)
 {
     size_t i;
-    int errSt;
+    int errSt,
+        argcAll;
     CBQContainer_t* container;
     CBQArg_t* argv;
 
     /* base error checking */
     OPT_BASE_ERR_CHECK(queue);
+
+    /* static arg range check */
+    if (argc < 0)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+    /* dynamic arg check (optional), if only dynarg pointer is null, argc not considered */
+    #ifndef NO_DYNARG_CHECK
+    if (dynamicArgs && dynArgc <= 0)
+        return CBQ_ERR_DYNARG_VARIANCE;
+    #endif
 
     /* status check */
     if (queue->status == CBQ_ST_FULL) {
@@ -519,8 +530,13 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t arg, ...)
     container = &queue->coArr[queue->sId];
     argv = &arg;
 
-    if (argc > container->argMax) {
-        errSt = CBQ_coIncMaxArgSize__(container, argc);
+    if (dynamicArgs)
+        argcAll = argc + dynArgc;
+    else
+        argcAll = argc;
+
+    if (argcAll > container->argMax) {
+        errSt = CBQ_coIncMaxArgSize__(container, argcAll);
         if (errSt)
             return errSt;
     }
@@ -528,7 +544,12 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int argc, CBQArg_t arg, ...)
     for (i = 0; i < argc; i++)
         container->args[i] = argv[i];
 
-    container->argc = argc;
+    /* in CB after static args are dynamic args*/
+    if (dynamicArgs)
+        for (i = argc; i < argcAll; i++)
+            container->args[i] = dynamicArgs[i];
+
+    container->argc = argcAll;
     container->func = func;
 
     /* debug for scheme */
