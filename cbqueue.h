@@ -151,7 +151,19 @@
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit);
 int CBQ_QueueFree(CBQueue_t* queue);
-int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArgs, int argc, CBQArg_t arg, ...);
+
+/* At c99 */
+#if __STDC_VERSION__ >= 199901L
+    /* macros function for poushing CB with static number (in runtime) of arguments */
+    #define CBQ_PushStatic(queue, func, argc, ...) \
+        CBQ_Push(queue, func, 0, CBQ_NO_DYN_ARGS, argc, __VA_ARGS__)
+#endif // __STDC_VERSION__
+
+    /* macros function for variable arguments */
+    #define CBQ_PushVariable(queue, func, argc, variableArgs_p) \
+        CBQ_Push(queue, func, argc, variableArgs_p, 0, CBQ_NO_ARGS)
+
+int CBQ_Push(CBQueue_t* queue, QCallback func, int vArgc, CBQArg_t* varArgs, int argc, CBQArg_t arg, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 
 /* ---------------- Additional methods ---------------- */

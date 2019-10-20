@@ -33,7 +33,7 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize);
     free(P_CONTAINER.args)
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArgs, int argc, CBQArg_t arg, ...);
+int CBQ_Push(CBQueue_t* queue, QCallback func, int vArgc, CBQArg_t* varArgs, int argc, CBQArg_t arg, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_Clear(CBQueue_t* queue);
 
@@ -493,7 +493,7 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
 }
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArgs, int argc, CBQArg_t arg, ...)
+int CBQ_Push(CBQueue_t* queue, QCallback func, int vArgc, CBQArg_t* varArgs, int argc, CBQArg_t arg, ...)
 {
     size_t i;
     int errSt,
@@ -508,9 +508,9 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArg
     if (argc < 0)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
-    /* dynamic arg check (optional), if only dynarg pointer is null, argc not considered */
+    /* variable arg check (optional), if only varArgs pointer is null, vArgc not considered */
     #ifndef NO_DYNARG_CHECK
-    if (dynamicArgs && dynArgc <= 0)
+    if (varArgs && vArgc <= 0)
         return CBQ_ERR_DYNARG_VARIANCE;
     #endif
 
@@ -530,8 +530,8 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArg
     container = &queue->coArr[queue->sId];
     argv = &arg;
 
-    if (dynamicArgs)
-        argcAll = argc + dynArgc;
+    if (varArgs)
+        argcAll = argc + vArgc;
     else
         argcAll = argc;
 
@@ -544,10 +544,10 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int dynArgc, CBQArg_t* dynamicArg
     for (i = 0; i < argc; i++)
         container->args[i] = argv[i];
 
-    /* in CB after static args are dynamic args*/
-    if (dynamicArgs)
+    /* in CB after static args are variable args*/
+    if (varArgs)
         for (i = argc; i < argcAll; i++)
-            container->args[i] = dynamicArgs[i];
+            container->args[i] = varArgs[i];
 
     container->argc = argcAll;
     container->func = func;

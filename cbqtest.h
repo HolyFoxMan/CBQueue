@@ -22,6 +22,7 @@
     void CBQ_T_HelloWorld(void);
     void CBQ_T_ControlTest(void);
     void CBQ_T_BusyTest(void);
+    void CBQ_T_Args(void);
 
 #endif // CBQTEST_H
 

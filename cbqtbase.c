@@ -335,3 +335,49 @@ void CBQ_T_BusyTest(void)
 
     ASRT(CBQ_QueueFree(&queue), "Failed to free");
 }
+
+/* sum of ints */
+int testVarArgsCB(int argc, CBQArg_t* args)
+{
+    int i;
+    int sum;
+
+    for(i = 0, sum = 0; i < argc; i++)
+        sum += args[i].iVar;
+
+    printf("CB: The sum is %d\n", sum);
+
+    return 0;
+}
+
+void CBQ_T_Args(void)
+{
+    CBQueue_t queue;
+    int argc = 4;
+    CBQArg_t vArgs[4] = {
+            /* sum: 35 */
+            {.iVar = 4},
+            {.iVar = 7},
+            {.iVar = 9},
+            {.iVar = 15}
+    };
+
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init");
+
+    /* sum test */
+    ASRT(CBQ_PushVariable(&queue, testVarArgsCB, argc, vArgs),"Failed to push CB with variable args");
+
+    /* sum: 10 */
+    ASRT(CBQ_PushStatic(&queue, testVarArgsCB, 2,
+        (CBQArg_t) {.iVar = 4},
+        (CBQArg_t) {.iVar = 6}),
+    "Failed to push CB with static args");
+
+    printf("Test of calc sum of 4, 7, 9 and 15 (35) by variable args\n");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with variable args");
+
+    printf("Test of calc sum of 4 and 6 (10) by static args\n");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with static args");
+
+    ASRT(CBQ_QueueFree(&queue),"Failed to free");
+}
