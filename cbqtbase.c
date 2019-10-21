@@ -41,7 +41,7 @@ void CBQ_T_HelloWorld(void)
     ASRT(CBQ_QueueInit(&queue, 3, CBQ_SM_STATIC, 0), "");
 
     /* Push hello world function into queue */
-    ASRT(CBQ_Push(&queue, funcHW, 0, NULL, 0, CBQ_NO_ARGS ), "");
+    ASRT(CBQ_Push(&queue, funcHW, 0, NULL, 0, CBQ_NO_STPARAMS), "");
 
     /* Push hello user function into queue */
     ASRT(CBQ_Push(&queue, funcHU, 0, NULL, 2, (CBQArg_t) {.sVar = CBQ_strIntoHeap(username)}, (CBQArg_t) {.iVar = age} ), "");
@@ -111,7 +111,7 @@ void CBQ_T_ControlTest(void)
 
                 case 'P':
                 case 'p': {
-                    ASRT(CBQ_Push(&queue, counter, 0, NULL, 0, CBQ_NO_ARGS), "Failed to push");
+                    ASRT(CBQ_Push(&queue, counter, 0, NULL, 0, CBQ_NO_STPARAMS), "Failed to push");
                     break;
                 }
 
@@ -189,7 +189,7 @@ int occupyAllCells(CBQueue_t* queue)
     size -= engSize;    // last empty cells
 
     for (i = 0; i < size; i++) {
-        errSt = CBQ_Push(queue, counter, 0, NULL, 0, CBQ_NO_ARGS);
+        errSt = CBQ_Push(queue, counter, 0, NULL, 0, CBQ_NO_STPARAMS);
         if (errSt)
             break;
     }
@@ -215,7 +215,7 @@ int occupyCustomCells(CBQueue_t* queue, size_t num)
     int errSt = 0;
 
     while(num--) {
-        errSt = CBQ_Push(queue, counter, 0, NULL, 0, CBQ_NO_ARGS);
+        errSt = CBQ_Push(queue, counter, 0, NULL, 0, CBQ_NO_STPARAMS);
         if (errSt)
             break;
     }
@@ -337,7 +337,7 @@ void CBQ_T_BusyTest(void)
 }
 
 /* sum of ints */
-int testVarArgsCB(int argc, CBQArg_t* args)
+int testVarParamsCB(int argc, CBQArg_t* args)
 {
     int i;
     int sum;
@@ -350,11 +350,11 @@ int testVarArgsCB(int argc, CBQArg_t* args)
     return 0;
 }
 
-void CBQ_T_Args(void)
+void CBQ_T_Params(void)
 {
     CBQueue_t queue;
-    int argc = 4;
-    CBQArg_t vArgs[4] = {
+    int numc = 4;
+    CBQArg_t nums[4] = {
             /* sum: 35 */
             {.iVar = 4},
             {.iVar = 7},
@@ -365,19 +365,19 @@ void CBQ_T_Args(void)
     ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init");
 
     /* sum test */
-    ASRT(CBQ_PushVariable(&queue, testVarArgsCB, argc, vArgs),"Failed to push CB with variable args");
+    ASRT(CBQ_PushVariable(&queue, testVarParamsCB, numc, nums),"Failed to push CB with variable params");
 
     /* sum: 10 */
-    ASRT(CBQ_PushStatic(&queue, testVarArgsCB, 2,
+    ASRT(CBQ_PushStatic(&queue, testVarParamsCB, 2,
         (CBQArg_t) {.iVar = 4},
         (CBQArg_t) {.iVar = 6}),
-    "Failed to push CB with static args");
+    "Failed to push CB with static params");
 
-    printf("Test of calc sum of 4, 7, 9 and 15 (35) by variable args\n");
-    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with variable args");
+    printf("Test of calc sum of 4, 7, 9 and 15 (35) by variable params\n");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with variable params");
 
-    printf("Test of calc sum of 4 and 6 (10) by static args\n");
-    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with static args");
+    printf("Test of calc sum of 4 and 6 (10) by static params\n");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with static params");
 
     ASRT(CBQ_QueueFree(&queue),"Failed to free");
 }

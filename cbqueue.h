@@ -21,15 +21,15 @@
     // #define NO_EXCEPTIONS_OF_BUSY
 
     /* No dynamic args in push method check */
-    // #define NO_DYNARG_CHECK
+    // #define NO_VPARAM_CHECK
 
-    /* Macros for callback without arguments which set into 4 arg in CBQ_Exec function */
-    #define CBQ_NO_ARGS \
+    /* Macros for callback without static parameters which set into 4 param in CBQ_Exec function */
+    #define CBQ_NO_STPARAMS \
         (CBQArg_t) {0}
 
-    /* Macros for callback without scalable arguments, same as null macros
+    /* Macros for callback without scalable parameters, same as null macros
     */
-    #define CBQ_NO_DYN_ARGS NULL
+    #define CBQ_NO_VPARAMS NULL
 
     /* Union type has argument base element which contain
      * used variables for function calls in queue.
@@ -116,7 +116,7 @@
      * CBQArg_t union type. The number of arguments issued at
      * first var - argc.
      */
-    typedef int (*QCallback) (int argc, CBQArg_t* argv);
+    typedef int (*QCallback) (int argc, CBQArg_t* args);
 
     /* List of possible return statuses by callback queue methods.
      * First CBQ_SUCCESSFUL is simple zero constant which is used
@@ -134,7 +134,7 @@
         CBQ_ERR_MAX_SIZE_OVERFLOW,
         CBQ_ERR_QUEUE_IS_EMPTY,
         CBQ_ERR_IS_BUSY,
-        CBQ_ERR_DYNARG_VARIANCE
+        CBQ_ERR_VPARAM_VARIANCE
     };
 
     /* These enums choose in "changeTowards" param from ChangeSize method
@@ -154,16 +154,17 @@ int CBQ_QueueFree(CBQueue_t* queue);
 
 /* At c99 */
 #if __STDC_VERSION__ >= 199901L
-    /* macros function for poushing CB with static number (in runtime) of arguments */
-    #define CBQ_PushStatic(queue, func, argc, ...) \
-        CBQ_Push(queue, func, 0, CBQ_NO_DYN_ARGS, argc, __VA_ARGS__)
+    /* macros function for pushing CB with static number (in runtime) of parameters */
+    #define CBQ_PushStatic(queue, func, paramc, ...) \
+        CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, paramc, __VA_ARGS__)
 #endif // __STDC_VERSION__
 
-    /* macros function for variable arguments */
-    #define CBQ_PushVariable(queue, func, argc, variableArgs_p) \
-        CBQ_Push(queue, func, argc, variableArgs_p, 0, CBQ_NO_ARGS)
+    /* macros function for variable parameters */
+    #define CBQ_PushVariable(queue, func, paramc, pVarParamArray) \
+        CBQ_Push(queue, func, paramc, pVarParamArray, 0, CBQ_NO_STPARAMS)
 
-int CBQ_Push(CBQueue_t* queue, QCallback func, int vArgc, CBQArg_t* varArgs, int argc, CBQArg_t arg, ...);
+/* Method pushes callbacks by static and variable passing of parameters (in run-time) */
+int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 
 /* ---------------- Additional methods ---------------- */

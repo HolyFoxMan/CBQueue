@@ -33,7 +33,7 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize);
     free(P_CONTAINER.args)
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int vArgc, CBQArg_t* varArgs, int argc, CBQArg_t arg, ...);
+int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_Clear(CBQueue_t* queue);
 
@@ -493,25 +493,25 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
 }
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int vArgc, CBQArg_t* varArgs, int argc, CBQArg_t arg, ...)
+int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...)
 {
     size_t i;
     int errSt,
         argcAll;
     CBQContainer_t* container;
-    CBQArg_t* argv;
+    CBQArg_t* args;
 
     /* base error checking */
     OPT_BASE_ERR_CHECK(queue);
 
     /* static arg range check */
-    if (argc < 0)
+    if (stParamc < 0)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
-    /* variable arg check (optional), if only varArgs pointer is null, vArgc not considered */
-    #ifndef NO_DYNARG_CHECK
-    if (varArgs && vArgc <= 0)
-        return CBQ_ERR_DYNARG_VARIANCE;
+    /* variable param check (optional), if only varParams pointer is null, vParamc not considered */
+    #ifndef NO_VPARAM_CHECK
+    if (varParams && varParamc <= 0)
+        return CBQ_ERR_VPARAM_VARIANCE;
     #endif
 
     /* status check */
@@ -528,12 +528,12 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int vArgc, CBQArg_t* varArgs, int
 
     /* set into container */
     container = &queue->coArr[queue->sId];
-    argv = &arg;
+    args = &stParams;
 
-    if (varArgs)
-        argcAll = argc + vArgc;
+    if (varParams)
+        argcAll = stParamc + varParamc;
     else
-        argcAll = argc;
+        argcAll = stParamc;
 
     if (argcAll > container->argMax) {
         errSt = CBQ_coIncMaxArgSize__(container, argcAll);
@@ -541,13 +541,14 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int vArgc, CBQArg_t* varArgs, int
             return errSt;
     }
 
-    for (i = 0; i < argc; i++)
-        container->args[i] = argv[i];
+    if (stParamc)
+        for (i = 0; i < stParamc; i++)
+            container->args[i] = args[i];
 
-    /* in CB after static args are variable args*/
-    if (varArgs)
-        for (i = argc; i < argcAll; i++)
-            container->args[i] = varArgs[i];
+    /* in CB after static params are variable params*/
+    if (varParams)
+        for (i = stParamc; i < argcAll; i++)
+            container->args[i] = varParams[i];
 
     container->argc = argcAll;
     container->func = func;
