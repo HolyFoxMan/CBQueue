@@ -47,15 +47,20 @@ int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* g
 /* ---------------- Other Methods ---------------- */
 char* CBQ_strIntoHeap(const char* str);
 
+/* inline methods by macros */
 #ifdef CBQD_SCHEME
 
+    /* void* type because thats declared in debug header,
+     * which was included before CBQueue_t* type definition
+     */
+    int CBQ_drawScheme_chk__(void* queue);
     void CBQ_drawScheme__(CBQueue_t* trustedQueue);
-    #define CBQ_DRAWSCHEME(P_TRUSTED_QUEUE) \
+    #define CBQ_DRAWSCHEME_IN(P_TRUSTED_QUEUE) \
         CBQ_drawScheme__(P_TRUSTED_QUEUE)
 
 #else
 
-    #define CBQ_DRAWSCHEME(P_TRUSTED_QUEUE) \
+    #define CBQ_DRAWSCHEME_IN(P_TRUSTED_QUEUE) \
         ((void)0)
 
 #endif // CBQD_SCHEME
@@ -127,7 +132,7 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLim
     *queue = iniQueue;
 
     CBQ_MSGPRINT("Queue initialized");
-    CBQ_DRAWSCHEME(&iniQueue);
+    CBQ_DRAWSCHEME_IN(&iniQueue);
 
     return 0;
 }
@@ -298,7 +303,7 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
     trustedQueue->status = CBQ_ST_STABLE;
 
     CBQ_MSGPRINT("Queue size incremented");
-    CBQ_DRAWSCHEME(trustedQueue);
+    CBQ_DRAWSCHEME_IN(trustedQueue);
 
     return 0;
 }
@@ -356,7 +361,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
         return errSt;
 
     CBQ_MSGPRINT("Queue size decremented");
-    CBQ_DRAWSCHEME(trustedQueue);
+    CBQ_DRAWSCHEME_IN(trustedQueue);
 
     return 0;
 }
@@ -571,7 +576,7 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParam
         queue->status = CBQ_ST_STABLE;
 
     CBQ_MSGPRINT("Queue is pushed");
-    CBQ_DRAWSCHEME(queue);
+    CBQ_DRAWSCHEME_IN(queue);
 
     return 0;
 }
@@ -616,7 +621,7 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
     #ifdef CBQD_SCHEME
     container->label = '-';
     #endif
-    CBQ_DRAWSCHEME(queue);
+    CBQ_DRAWSCHEME_IN(queue);
 
     return 0;
 }
@@ -710,53 +715,66 @@ char* CBQ_strIntoHeap(const char* str)
 #endif // CBQD_STATUS
 
 #ifdef CBQD_SCHEME
-    void CBQ_drawScheme__(CBQueue_t* trustedQueue)
-    {
-        CBQContainer_t* cbqc;
 
-        size_t i;
+void CBQ_drawScheme__(CBQueue_t* trustedQueue)
+{
+    CBQContainer_t* cbqc;
 
-        printf("Queue scheme:\n");
-        for (i = 0; i < trustedQueue->size; i++) {
+    size_t i;
 
-            #ifdef __unix__
-                if (i == trustedQueue->rId && i == trustedQueue->sId)
-                    printf("\033[35m");
-                else if (i == trustedQueue->rId)
-                    printf("\033[31m");
-                else if (i == trustedQueue->sId)
-                    printf("\033[34m");
-            #endif
+    printf("Queue scheme:\n");
+    for (i = 0; i < trustedQueue->size; i++) {
 
-            cbqc = &trustedQueue->coArr[i];
-
-            if (cbqc->label >= 'A' && cbqc->label <= 'Z')
-                printf("%c", (char) cbqc->label);
-            else
-                printf("-");
-
-            #ifdef __unix__
-                printf("\033[0m");
-            #endif
-        }
-
-        printf("\n");
-
-        #ifndef __unix__
-            for (i = 0; i < trustedQueue->size; i++) {
-                if (i == trustedQueue->rId && i == trustedQueue->sId)
-                    printf("b");
-                else if (i == trustedQueue->rId)
-                    printf("r");
-                else if (i == trustedQueue->sId)
-                    printf("s");
-                else
-                    printf(".");
-            }
-
-            printf("\n\n");
+        #ifdef __unix__
+            if (i == trustedQueue->rId && i == trustedQueue->sId)
+                printf("\033[35m");
+            else if (i == trustedQueue->rId)
+                printf("\033[31m");
+            else if (i == trustedQueue->sId)
+                printf("\033[34m");
         #endif
 
-        fflush(stdout);
+        cbqc = &trustedQueue->coArr[i];
+
+        if (cbqc->label >= 'A' && cbqc->label <= 'Z')
+            printf("%c", (char) cbqc->label);
+        else
+            printf("-");
+
+        #ifdef __unix__
+            printf("\033[0m");
+        #endif
     }
-#endif
+
+    printf("\n");
+
+    #ifndef __unix__
+        for (i = 0; i < trustedQueue->size; i++) {
+            if (i == trustedQueue->rId && i == trustedQueue->sId)
+                printf("b");
+            else if (i == trustedQueue->rId)
+                printf("r");
+            else if (i == trustedQueue->sId)
+                printf("s");
+            else
+                printf(".");
+        }
+
+        printf("\n\n");
+    #endif
+
+    fflush(stdout);
+}
+
+int CBQ_drawScheme_chk__(void* queue)
+{
+    CBQueue_t* cqueue = (CBQueue_t*) queue;
+
+    BASE_ERR_CHECK(cqueue);
+
+    CBQ_drawScheme__(cqueue);
+
+    return 0;
+}
+
+#endif // CBQD_SCHEME

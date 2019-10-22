@@ -82,7 +82,8 @@ int counter(int argc, CBQArg_t* argv)
 void CBQ_T_ControlTest(void)
 {
     int quit = 0,
-        key;
+        key,
+        inCB = 0;
     size_t customSize,
         qSize,
         qEngagedSize;
@@ -103,7 +104,7 @@ void CBQ_T_ControlTest(void)
 
         if (key == 'P' || key == 'p' || key == 'E' || key == 'e' || key == 'Q' || key == 'q' ||
             key == 'C' || key == 'c' || key == 'I' || key == 'i' || key == 'D' || key == 'd' ||
-            key == 'S' || key == 's' || key == 'L' || key == 'l') {
+            key == 'S' || key == 's' || key == 'L' || key == 'l' || key == 'F' || key == 'f') {
 
             system("cls");
 
@@ -147,6 +148,13 @@ void CBQ_T_ControlTest(void)
                     ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size");
                     break;
                 }
+
+                case 'F':
+                case 'f': {
+                    inCB = !inCB;
+                    CBQ_DRAWSCHEME(&queue);
+                    break;
+                }
 /*
                 case 'S':
                 case 's': {
@@ -165,7 +173,7 @@ void CBQ_T_ControlTest(void)
 
             ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "");
             printf("Size: " SZ_PRTF ", engaged size: "
-            SZ_PRTF "\n", qSize, qEngagedSize);
+            SZ_PRTF " run in CB: %s\n", qSize, qEngagedSize, inCB?"true":"false");
         }
     } while(!quit);
 

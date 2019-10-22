@@ -4,7 +4,7 @@
 /* set that macros define to activate
  debug mode before including cbq headers */
 
- // #define CBQ_DEBUG
+    #define CBQ_DEBUG
 
     #ifdef CBQ_DEBUG
 
@@ -70,5 +70,15 @@
             ((void)0)
 
     #endif // CBQD_STATUS
+
+    #ifdef CBQD_SCHEME
+    /* use only macros function CBQ_DRAWSCHEME(), not that method */
+    int CBQ_drawScheme_chk__(void* queue);
+    #define CBQ_DRAWSCHEME(P_QUEUE) \
+        CBQ_drawScheme_chk__((void*)P_QUEUE)
+    #else
+        #define CBQ_DRAWSCHEME(P_QUEUE) \
+            ((void)0)
+    #endif // CBQD_SCHEME
 
 #endif // CBQDEBUG_H
