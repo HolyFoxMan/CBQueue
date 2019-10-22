@@ -547,8 +547,8 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParam
 
     /* in CB after static params are variable params*/
     if (varParams)
-        for (i = stParamc; i < argcAll; i++)
-            container->args[i] = varParams[i];
+        for (i = 0; i < varParamc; i++)
+            container->args[i + stParamc] = varParams[i];
 
     container->argc = argcAll;
     container->func = func;

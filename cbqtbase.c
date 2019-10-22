@@ -327,7 +327,7 @@ void CBQ_T_BusyTest(void)
 
     ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed");
 
-    ASRT(CBQ_Push(&queue, selfExecCB, 0, NULL, 1, (CBQArg_t) {.qVar = &queue}), "Push error")
+    ASRT(CBQ_Push(&queue, selfExecCB, 0, NULL, 1, (CBQArg_t) {.qVar = &queue}), "Push error");
 
     CBQ_Exec(&queue, &errSt);
     if (errSt == CBQ_ERR_IS_BUSY)
@@ -337,7 +337,7 @@ void CBQ_T_BusyTest(void)
 }
 
 /* sum of ints */
-int testVarParamsCB(int argc, CBQArg_t* args)
+int addAllNumsCB(int argc, CBQArg_t* args)
 {
     int i;
     int sum;
@@ -350,12 +350,53 @@ int testVarParamsCB(int argc, CBQArg_t* args)
     return 0;
 }
 
+int mulAllNumsCB(int argc, CBQArg_t* args)
+{
+    int i;
+    int pro;
+
+    for(i = 0, pro = 1; i < argc; i++)
+        pro *= args[i].iVar;
+
+    printf("CB: The product is %d\n", pro);
+
+    return 0;
+}
+
+int calcNumsCB(int argc, CBQArg_t* args)
+{
+    int i;
+
+    printf("CB: arguments: ");
+    for(i = 2; i < argc; i++)
+        printf("%d ",args[i].iVar);
+    printf("\n");
+
+    switch(args[1].cVar) {
+    case '+': {
+        CBQ_PushVariable(args[0].qVar, addAllNumsCB, argc - 2, args + 2);
+        printf("Addition selected\n");
+        break;
+    }
+    case '*': {
+        CBQ_PushVariable(args[0].qVar, mulAllNumsCB, argc - 2, args + 2);
+        printf("Multiplication selected\n");
+        break;
+    }
+    default: {
+        printf("Error, unknown operation\n");
+        break;
+        }
+    }
+
+    return 0;
+}
+
 void CBQ_T_Params(void)
 {
     CBQueue_t queue;
     int numc = 4;
     CBQArg_t nums[4] = {
-            /* sum: 35 */
             {.iVar = 4},
             {.iVar = 7},
             {.iVar = 9},
@@ -364,11 +405,11 @@ void CBQ_T_Params(void)
 
     ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init");
 
-    /* sum test */
-    ASRT(CBQ_PushVariable(&queue, testVarParamsCB, numc, nums),"Failed to push CB with variable params");
+    /* Variable params passing, sum: 35 */
+    ASRT(CBQ_PushVariable(&queue, addAllNumsCB, numc, nums),"Failed to push CB with variable params");
 
-    /* sum: 10 */
-    ASRT(CBQ_PushStatic(&queue, testVarParamsCB, 2,
+    /*  Static params passing, sum: 10 */
+    ASRT(CBQ_PushStatic(&queue, addAllNumsCB, 2,
         (CBQArg_t) {.iVar = 4},
         (CBQArg_t) {.iVar = 6}),
     "Failed to push CB with static params");
@@ -378,6 +419,16 @@ void CBQ_T_Params(void)
 
     printf("Test of calc sum of 4 and 6 (10) by static params\n");
     ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with static params");
+
+    /* Now test with combine parameters - product of 4 nums (3780) */
+    ASRT(CBQ_Push(&queue, calcNumsCB, numc, nums, 2,
+        (CBQArg_t) {.qVar = &queue},
+        (CBQArg_t) {.cVar = '*'}),
+    "Error to push calc CB");
+
+    printf("Test with combine parameters: multiplication\n");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with combine params");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with calculation");
 
     ASRT(CBQ_QueueFree(&queue),"Failed to free");
 }
