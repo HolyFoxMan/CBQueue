@@ -83,7 +83,6 @@ char* CBQ_strIntoHeap(const char* str);
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit)
 {
-    size_t i;
     CBQueue_t iniQueue = {
         .execSt = CBQ_EST_NO_EXEC,
         .size = size,
@@ -121,7 +120,7 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLim
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
     /* Containers init */
-    for (i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
         if (CBQ_containerInit__(&iniQueue.coArr[i]))
             return CBQ_ERR_MEM_ALLOC_FAILED;
 
@@ -139,12 +138,10 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLim
 
 int CBQ_QueueFree(CBQueue_t* queue)
 {
-    size_t i;
-
     BASE_ERR_CHECK(queue);
 
     /* free args data in containers */
-    for (i = 0; i < queue->size; i++)
+    for (size_t i = 0; i < queue->size; i++)
         CBQ_COARGFREE_P__(queue->coArr[i]);
 
     /* free containers data */
@@ -338,7 +335,6 @@ int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t newSize)
 int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
 {
     int errSt;
-    size_t i;
 
     /* align or get new size */
     newDecSize = CBQ_decSizeAlignment__(trustedQueue, newDecSize);
@@ -348,12 +344,8 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
         return errSt;
 
     /* free unused container args */
-    i = newDecSize;
-
-    while (i < trustedQueue->size) {
+    for (size_t i = newDecSize; i < trustedQueue->size; i++)
         CBQ_COARGFREE_P__(trustedQueue->coArr[i]);
-        i++;
-    }
 
     /* mem reallocation */
     errSt = CBQ_reallocSizeToAccepted__(trustedQueue, newDecSize);
@@ -720,10 +712,8 @@ void CBQ_drawScheme__(CBQueue_t* trustedQueue)
 {
     CBQContainer_t* cbqc;
 
-    size_t i;
-
     printf("Queue scheme:\n");
-    for (i = 0; i < trustedQueue->size; i++) {
+    for (size_t i = 0; i < trustedQueue->size; i++) {
 
         #ifdef __unix__
             if (i == trustedQueue->rId && i == trustedQueue->sId)
@@ -749,7 +739,7 @@ void CBQ_drawScheme__(CBQueue_t* trustedQueue)
     printf("\n");
 
     #ifndef __unix__
-        for (i = 0; i < trustedQueue->size; i++) {
+        for (size_t i = 0; i < trustedQueue->size; i++) {
             if (i == trustedQueue->rId && i == trustedQueue->sId)
                 printf("b");
             else if (i == trustedQueue->rId)

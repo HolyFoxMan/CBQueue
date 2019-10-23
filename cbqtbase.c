@@ -70,11 +70,18 @@ void CBQ_T_HelloWorld(void)
 
 /* ---------------- Control Test ---------------- */
 
-int counter(int argc, CBQArg_t* argv)
+int counterCB(int argc, CBQArg_t* argv)
 {
     static int count = 0;
     count++;
-    printf("CB exec count is %d\n", count);
+    printf("CB: counter is %d\n", count);
+    return 0;
+}
+
+int counterPusherCB(int argc, CBQArg_t* argv)
+{
+    int sterr = 0;
+    ASRT(sterr = CBQ_PushVoid(argv[0].qVar, counterCB), "Failed to push counter cb");
     return 0;
 }
 
@@ -112,7 +119,11 @@ void CBQ_T_ControlTest(void)
 
                 case 'P':
                 case 'p': {
-                    ASRT(CBQ_Push(&queue, counter, 0, NULL, 0, CBQ_NO_STPARAMS), "Failed to push");
+                    if (!inCB) {
+                        ASRT(CBQ_PushVoid(&queue, counterCB), "Failed to push");
+                    } else {
+                        ASRT(CBQ_PushStatic(&queue, counterPusherCB, 1, (CBQArg_t) {.qVar = &queue}), "Failed to push");
+                    }
                     break;
                 }
 
@@ -152,7 +163,7 @@ void CBQ_T_ControlTest(void)
                 case 'F':
                 case 'f': {
                     inCB = !inCB;
-                    CBQ_DRAWSCHEME(&queue);
+                    ASRT(CBQ_DRAWSCHEME(&queue),"");
                     break;
                 }
 /*
@@ -197,7 +208,7 @@ int occupyAllCells(CBQueue_t* queue)
     size -= engSize;    // last empty cells
 
     for (i = 0; i < size; i++) {
-        errSt = CBQ_Push(queue, counter, 0, NULL, 0, CBQ_NO_STPARAMS);
+        errSt = CBQ_Push(queue, counterCB, 0, NULL, 0, CBQ_NO_STPARAMS);
         if (errSt)
             break;
     }
@@ -223,7 +234,7 @@ int occupyCustomCells(CBQueue_t* queue, size_t num)
     int errSt = 0;
 
     while(num--) {
-        errSt = CBQ_Push(queue, counter, 0, NULL, 0, CBQ_NO_STPARAMS);
+        errSt = CBQ_Push(queue, counterCB, 0, NULL, 0, CBQ_NO_STPARAMS);
         if (errSt)
             break;
     }

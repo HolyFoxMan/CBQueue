@@ -1,6 +1,12 @@
 #ifndef CBQUEUE_H
 #define CBQUEUE_H
 
+    /* At c99 */
+    #if __STDC_VERSION__ < 199901L
+        #error Need "c99" version
+    #endif
+
+
     #include <stdlib.h>
     #include <stdio.h>
     #include <stdint.h>
@@ -152,16 +158,19 @@
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit);
 int CBQ_QueueFree(CBQueue_t* queue);
 
-/* At c99 */
-#if __STDC_VERSION__ >= 199901L
-    /* macros function for pushing CB with static number (in runtime) of parameters */
-    #define CBQ_PushStatic(queue, func, paramc, ...) \
-        CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, paramc, __VA_ARGS__)
-#endif // __STDC_VERSION__
 
-    /* macros function for variable parameters */
-    #define CBQ_PushVariable(queue, func, paramc, pVarParamArray) \
-        CBQ_Push(queue, func, paramc, pVarParamArray, 0, CBQ_NO_STPARAMS)
+    /* macros function for pushing CB with static number (in runtime) of parameters */
+#define CBQ_PushStatic(queue, func, paramc, ...) \
+    CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, paramc, __VA_ARGS__)
+
+
+/* macros function for variable passing of parameters */
+#define CBQ_PushVariable(queue, func, paramc, pVarParamArray) \
+    CBQ_Push(queue, func, paramc, pVarParamArray, 0, CBQ_NO_STPARAMS)
+
+/* macros function for pushing CB without parameters */
+#define CBQ_PushVoid(queue, func) \
+    CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, 0, CBQ_NO_STPARAMS)
 
 /* Method pushes callbacks by static and variable passing of parameters (in run-time) */
 int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...);
