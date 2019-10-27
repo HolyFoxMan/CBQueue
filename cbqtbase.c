@@ -38,34 +38,34 @@ void CBQ_T_HelloWorld(void)
     CBQ_OUTDEBUGSTATUS();
 
     /* Queue initialize */
-    ASRT(CBQ_QueueInit(&queue, 3, CBQ_SM_STATIC, 0), "");
+    ASRT(CBQ_QueueInit(&queue, 3, CBQ_SM_STATIC, 0), "")
 
     /* Push hello world function into queue */
-    ASRT(CBQ_Push(&queue, funcHW, 0, NULL, 0, CBQ_NO_STPARAMS), "");
+    ASRT(CBQ_Push(&queue, funcHW, 0, NULL, 0, CBQ_NO_STPARAMS), "")
 
     /* Push hello user function into queue */
-    ASRT(CBQ_Push(&queue, funcHU, 0, NULL, 2, (CBQArg_t) {.sVar = CBQ_strIntoHeap(username)}, (CBQArg_t) {.iVar = age} ), "");
+    ASRT(CBQ_Push(&queue, funcHU, 0, NULL, 2, (CBQArg_t) {.sVar = CBQ_strIntoHeap(username)}, (CBQArg_t) {.iVar = age} ), "")
 
     /* Push summ calc function */
-    ASRT(CBQ_Push(&queue, add, 0, NULL, 3, (CBQArg_t) {.iVar = 1}, (CBQArg_t) {.iVar = 2}, (CBQArg_t) {.iVar = 4}), "");
+    ASRT(CBQ_Push(&queue, add, 0, NULL, 3, (CBQArg_t) {.iVar = 1}, (CBQArg_t) {.iVar = 2}, (CBQArg_t) {.iVar = 4}), "")
 
     if (CBQ_HAVECALL(queue))
         printf("main: calls num in queue: %llu\n", CBQ_GetCallAmount(&queue));
 
     /* Execute first pushed function */
-    ASRT(CBQ_Exec(&queue, 0), "");
+    ASRT(CBQ_Exec(&queue, 0), "")
 
     /* Execute second pushed function */
-    ASRT(CBQ_Exec(&queue, 0), "");
+    ASRT(CBQ_Exec(&queue, 0), "")
 
     /* Execute third pushed function */
-    ASRT(CBQ_Exec(&queue, 0), "");
+    ASRT(CBQ_Exec(&queue, 0), "")
 
     if (!CBQ_HAVECALL(queue))
         printf("main: queue is empty\n");
 
     /* Queue free */
-    ASRT(CBQ_QueueFree(&queue), "");
+    ASRT(CBQ_QueueFree(&queue), "")
 }
 
 /* ---------------- Control Test ---------------- */
@@ -80,8 +80,7 @@ int counterCB(int argc, CBQArg_t* argv)
 
 int counterPusherCB(int argc, CBQArg_t* argv)
 {
-    int sterr = 0;
-    ASRT(sterr = CBQ_PushVoid(argv[0].qVar, counterCB), "Failed to push counter cb");
+    ASRT(CBQ_PushVoid(argv[0].qVar, counterCB), "Failed to push counter cb")
     return 0;
 }
 
@@ -99,7 +98,7 @@ void CBQ_T_ControlTest(void)
     CBQueue_t queue;
 
     CBQ_OUTDEBUGSTATUS();
-    ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0), "Failed to init");
+    ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0), "Failed to init")
 
     quit = 0;
     printf("p - push, e - pop, c - change size, i - increment size, d - decrement size, q - exit.\n");
@@ -119,17 +118,16 @@ void CBQ_T_ControlTest(void)
 
                 case 'P':
                 case 'p': {
-                    if (!inCB) {
-                        ASRT(CBQ_PushVoid(&queue, counterCB), "Failed to push");
-                    } else {
-                        ASRT(CBQ_PushStatic(&queue, counterPusherCB, 1, (CBQArg_t) {.qVar = &queue}), "Failed to push");
-                    }
+                    if (!inCB)
+                        ASRT(CBQ_PushVoid(&queue, counterCB), "Failed to push")
+                    else
+                        ASRT(CBQ_PushStatic(&queue, counterPusherCB, 1, (CBQArg_t) {.qVar = &queue}), "Failed to push")
                     break;
                 }
 
                 case 'E':
                 case 'e': {
-                    ASRT(CBQ_Exec(&queue, NULL), "Failed to pop");
+                    ASRT(CBQ_Exec(&queue, NULL), "Failed to pop")
                     break;
                 }
 
@@ -144,51 +142,52 @@ void CBQ_T_ControlTest(void)
                     printf("Type new size\n");
                     scanf(SZ_PRTF, &customSize);
                     fflush(stdin);
-                    ASRT(CBQ_ChangeSize(&queue, 0, customSize), "Failed to change size");
+                    ASRT(CBQ_ChangeSize(&queue, 0, customSize), "Failed to change size")
                     break;
                 }
 
                 case 'I':
                 case 'i': {
-                    ASRT(CBQ_ChangeSize(&queue, CBQ_INC_SIZE, 0), "Failed to increment size");
+                    ASRT(CBQ_ChangeSize(&queue, CBQ_INC_SIZE, 0), "Failed to increment size")
                     break;
                 }
 
                 case 'D':
                 case 'd': {
-                    ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size");
+                    ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size")
                     break;
                 }
 
                 case 'F':
                 case 'f': {
                     inCB = !inCB;
-                    ASRT(CBQ_DRAWSCHEME(&queue),"");
+                    ASRT(CBQ_DRAWSCHEME(&queue),"")
                     break;
                 }
 /*
                 case 'S':
                 case 's': {
-                    ASRT(CBQ_SaveState(&queue, saveStateBuffer, &resultByteSize), "Saving data error");
+                    ASRT(CBQ_SaveState(&queue, saveStateBuffer, &resultByteSize), "Saving data error")
                     printf("Received size (in bytes): %llu\n", resultByteSize);
                     break;
                 }
 
                 case 'L':
                 case 'l': {
-                    ASRT(CBQ_RestoreState(&queue, saveStateBuffer, resultByteSize), "Loading data error");
+                    ASRT(CBQ_RestoreState(&queue, saveStateBuffer, resultByteSize), "Loading data error")
                     break;
                 }
                 */
             }
 
-            ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "");
+            ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "")
+
             printf("Size: " SZ_PRTF ", engaged size: "
             SZ_PRTF " run in CB: %s\n", qSize, qEngagedSize, inCB?"true":"false");
         }
     } while(!quit);
 
-    ASRT(CBQ_QueueFree(&queue), "Failed to free");
+    ASRT(CBQ_QueueFree(&queue), "Failed to free")
 }
 #else
 void CBQ_T_ControlTest(void)
@@ -309,14 +308,14 @@ void CBQ_T_SizemodeTest(void)
     /* STATIC test */
     CBQueue_t queue;
 
-    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed");
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed")
     /* ----------------
      * b...............
      */
 
-     ASRT(toState_3(&queue), "Failed set to state 3");
+     ASRT(toState_3(&queue), "Failed set to state 3")
 
-     ASRT(CBQ_QueueFree(&queue), "Failed to free");
+     ASRT(CBQ_QueueFree(&queue), "Failed to free")
 
 }
 
@@ -339,20 +338,50 @@ int selfExecCB(int argc, CBQArg_t* argv)
     return 0;
 }
 
+int changeSizeCB(int argc, CBQArg_t* argv)
+{
+    return CBQ_ChangeSize(argv[0].qVar, argv[1].iVar, argv[2].szVar);
+}
+
+
+int freeQueueCB(int argc, CBQArg_t* argv)
+{
+    return CBQ_QueueFree(argv[0].qVar);
+}
+
+
 void CBQ_T_BusyTest(void)
 {
     int errSt = 0;
     CBQueue_t queue;
 
-    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed");
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed")
 
-    ASRT(CBQ_Push(&queue, selfExecCB, 0, NULL, 1, (CBQArg_t) {.qVar = &queue}), "Push error");
+    ASRT(CBQ_Push(&queue, selfExecCB, 0, NULL, 1, (CBQArg_t) {.qVar = &queue}), "Push error")
 
     CBQ_Exec(&queue, &errSt);
     if (errSt == CBQ_ERR_IS_BUSY)
-        printf("Error of self exec was successful handled\n");
+        printf("Error of intermdeiary CB exec was successful handled\n");
 
-    ASRT(CBQ_QueueFree(&queue), "Failed to free");
+    ASRT(CBQ_PushStatic(&queue, changeSizeCB, 3,
+        (CBQArg_t) {.qVar = &queue},
+        (CBQArg_t) {.iVar = CBQ_DEC_SIZE},
+        (CBQArg_t) {.szVar = 0}
+    ),"Failed to push CB for custom changing size")
+
+    CBQ_Exec(&queue, &errSt);
+    if (errSt == CBQ_ERR_IS_BUSY)
+        printf("Error of changing size through an intermdeiary was successful handled\n");
+
+    ASRT(CBQ_PushStatic(&queue, freeQueueCB, 1,
+        (CBQArg_t) {.qVar = &queue}
+    ),"Failed to push CB for custom changing size")
+
+    CBQ_Exec(&queue, &errSt);
+    if (errSt == CBQ_ERR_IS_BUSY)
+        printf("Error of free queue through an intermdeiary was successful handled\n");
+
+    ASRT(CBQ_QueueFree(&queue), "Failed to free")
 }
 
 /* sum of ints */
@@ -422,32 +451,75 @@ void CBQ_T_Params(void)
             {.iVar = 15}
     };
 
-    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init");
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init")
 
     /* Variable params passing, sum: 35 */
-    ASRT(CBQ_PushVariable(&queue, addAllNumsCB, numc, nums),"Failed to push CB with variable params");
+    ASRT(CBQ_PushVariable(&queue, addAllNumsCB, numc, nums),"Failed to push CB with variable params")
 
     /*  Static params passing, sum: 10 */
     ASRT(CBQ_PushStatic(&queue, addAllNumsCB, 2,
         (CBQArg_t) {.iVar = 4},
         (CBQArg_t) {.iVar = 6}),
-    "Failed to push CB with static params");
+    "Failed to push CB with static params")
 
     printf("Test of calc sum of 4, 7, 9 and 15 (35) by variable params\n");
-    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with variable params");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with variable params")
 
     printf("Test of calc sum of 4 and 6 (10) by static params\n");
-    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with static params");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with static params")
 
     /* Now test with combine parameters - product of 4 nums (3780) */
     ASRT(CBQ_Push(&queue, calcNumsCB, numc, nums, 2,
         (CBQArg_t) {.qVar = &queue},
         (CBQArg_t) {.cVar = '*'}),
-    "Error to push calc CB");
+    "Error to push calc CB")
 
     printf("Test with combine parameters: multiplication\n");
-    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with combine params");
-    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with calculation");
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with combine params")
+    ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with calculation")
 
-    ASRT(CBQ_QueueFree(&queue),"Failed to free");
+    ASRT(CBQ_QueueFree(&queue),"Failed to free")
+}
+
+#define POINTERS_MAX 15
+
+typedef struct {
+    int x;
+    int y;
+    char c;
+    int st;
+} point_t;
+
+typedef struct {
+    point_t arr[POINTERS_MAX];
+    int curActive;
+} pointers_t;
+
+int ptrLife(int agrc, CBQArg_t* args)
+{
+
+    return 0;
+}
+
+void CBQ_T_SetTimeout(void)
+{
+    CBQueue_t queue;
+    pointers_t ptrs = (pointers_t) {
+        .arr = {
+            {4, 6, '*', 1},
+            {7, 3, '+', 1},
+            {6, 10, '*', 1},
+            {8, 5, '+', 1},
+            {14, 1, '*', 1},
+            {1, 5, '+', 1}
+        },
+        .curActive = 5
+    };
+
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init")
+
+    for (int i = 0; i < ptrs.curActive; i++)
+        ASRT(CBQ_PushStatic(&queue, ptrLife, 1, (CBQArg_t) {.pVar = &ptrs.arr[i]}), "failed to start pointer life cycle")
+
+    ASRT(CBQ_QueueFree(&queue),"Failed to free")
 }

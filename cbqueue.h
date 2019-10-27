@@ -6,28 +6,32 @@
         #error Need "c99" version
     #endif
 
-
     #include <stdlib.h>
-    #include <stdio.h>
     #include <stdint.h>
+    #include <time.h>
     #include "cbqdebug.h"
 
     /* Maximum (unstable) size of queue is 65536 */
+
+    /* ---------------- UNSAFETY MACROSES ---------------- */
 
     /* Turn on that define if dont want base queue check on following methods:
      * push
      * exec
      * change size
+     * set timeout
      */
     // #define NO_BASE_CHECK
 
-    /* Disable exceptions, which can be obtained by queue methods (except Push)
-        in callbacks which are processed from the same queue
-    */
+    /* Disable exceptions, which can be obtained by queue methods (except Push, set timeout and info mehtods)
+     * in callbacks which are processed from the same queue
+     */
     // #define NO_EXCEPTIONS_OF_BUSY
 
     /* No dynamic args in push method check */
     // #define NO_VPARAM_CHECK
+
+    /* ---------------- UNSAFETY MACROSES ---------------- */
 
     /* Macros for callback without static parameters which set into 4 param in CBQ_Exec function */
     #define CBQ_NO_STPARAMS \
@@ -46,12 +50,13 @@
         int32_t     iVar;                 // integer
         uint32_t    uiVar;                // unsigned integer
         uint8_t     tuiVar;               // tiny unsigned integer (byte)
+        size_t      szVar;                // size_t
         double      dVar;                 // double
         char        cVar;                 // char
         char*       sVar;                 // string
         void*       pVar;                 // pointer (need explicit type conversion before using)
         struct CBQueue_t*  qVar;          // pointer to queue in which can send new call
-        int (*fVar)(size_t, CBQArg_t*);   // function pointer
+        int (*fVar)(int, CBQArg_t*);   // function pointer
 
     };
 
@@ -67,8 +72,10 @@
         /* init status */
         int     initSt;
 
-        /* exec status */
+        /* exec status (only for excpetion catching) */
+        #ifndef NO_EXCEPTIONS_OF_BUSY
         int     execSt;
+        #endif // NO_EXCEPTIONS_OF_BUSY
 
         /* containers */
         size_t  size;
@@ -158,8 +165,9 @@
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit);
 int CBQ_QueueFree(CBQueue_t* queue);
 
+/* -------- push macroses -------- */
 
-    /* macros function for pushing CB with static number (in runtime) of parameters */
+/* macros function for pushing CB with static number (in runtime) of parameters */
 #define CBQ_PushStatic(queue, func, paramc, ...) \
     CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, paramc, __VA_ARGS__)
 
@@ -172,9 +180,21 @@ int CBQ_QueueFree(CBQueue_t* queue);
 #define CBQ_PushVoid(queue, func) \
     CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, 0, CBQ_NO_STPARAMS)
 
+/* -------- set timeout macroses -------- */
+#define CBQ_SetTimeoutVoid(queue, delay, isSec, target_queue, func)  \
+    CBQ_SetTimout(queue, delay, isSec, target_queue, func, 0, CBQ_NO_VPARAMS)
+
+/* self-push queue */
+#define CBQ_SetTimeoutSP(queue, delay, isSec, func, vParamc, vParams)  \
+    CBQ_SetTimout(queue, delay, isSec, queue, func, vParamc, vParams)
+
+#define CBQ_SetTimeoutVoidSP(queue, delay, isSec, func)  \
+    CBQ_SetTimout(queue, delay, isSec, queue, func, 0, CBQ_NO_VPARAMS)
+
 /* Method pushes callbacks by static and variable passing of parameters (in run-time) */
 int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
+int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec, CBQueue_t* targetQueue, QCallback func, int vParamc, CBQArg_t* vParams);
 
 /* ---------------- Additional methods ---------------- */
 int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);

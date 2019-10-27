@@ -89,4 +89,9 @@
         #define OPT_BASE_ERR_CHECK(QUEUE) ((void)0)
     #endif // NO_BASE_CHECK
 
+    /* SetTimeout defs */
+    #define ST_ARG_C    4
+
+    enum { ST_QUEUE, ST_DELAY, ST_TRG_QUEUE, ST_FUNC };
+
 #endif // CBQLOCAL_H

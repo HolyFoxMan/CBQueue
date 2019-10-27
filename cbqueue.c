@@ -36,6 +36,8 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize);
 int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_Clear(CBQueue_t* queue);
+int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec, CBQueue_t* targetQueue, QCallback func, int vParamc, CBQArg_t* vParams);
+    int setTimeoutFrame__(int argc, CBQArg_t* args);
 
 /* ---------------- Info Methods ---------------- */
 // CBQ_HAVECALL(TRUSTED_QUEUE);
@@ -84,7 +86,9 @@ char* CBQ_strIntoHeap(const char* str);
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit)
 {
     CBQueue_t iniQueue = {
+        #ifndef NO_EXCEPTIONS_OF_BUSY
         .execSt = CBQ_EST_NO_EXEC,
+        #endif
         .size = size,
         .incSize = INIT_INC_SIZE,
         .rId = 0,
@@ -140,6 +144,11 @@ int CBQ_QueueFree(CBQueue_t* queue)
 {
     BASE_ERR_CHECK(queue);
 
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+    if (queue->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
+
     /* free args data in containers */
     for (size_t i = 0; i < queue->size; i++)
         CBQ_COARGFREE_P__(queue->coArr[i]);
@@ -159,6 +168,11 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
     size_t errSt;
 
     BASE_ERR_CHECK(queue);
+
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+    if (queue->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
 
     CBQ_MSGPRINT("Queue size changing...");
 
@@ -582,11 +596,13 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
     if (queue->status == CBQ_ST_EMPTY)
         return CBQ_ERR_QUEUE_IS_EMPTY;
 
+    #ifndef NO_EXCEPTIONS_OF_BUSY
     if (queue->execSt == CBQ_EST_EXEC)
         return CBQ_ERR_IS_BUSY;
 
     /* change status as busy */
     queue->execSt = CBQ_EST_EXEC;
+    #endif // NO_EXCEPTIONS_OF_BUSY
 
     /* inset from container and execute callback function */
     container = &queue->coArr[queue->rId];
@@ -605,8 +621,10 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
     else
         queue->status = CBQ_ST_STABLE;
 
+    #ifndef NO_EXCEPTIONS_OF_BUSY
     /* now queue is free for executing */
     queue->execSt = CBQ_EST_NO_EXEC;
+    #endif // NO_EXCEPTIONS_OF_BUSY
 
     CBQ_MSGPRINT("Queue is popped");
 
@@ -768,3 +786,56 @@ int CBQ_drawScheme_chk__(void* queue)
 }
 
 #endif // CBQD_SCHEME
+
+/* ---------------- Callback Methods ---------------- */
+/* push CB after delay, like JS func. Needs time.h lib
+*/
+
+int setTimeoutFrame__(int argc, CBQArg_t* args);
+
+int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec,
+    CBQueue_t* targetQueue, QCallback func, int vParamc, CBQArg_t* vParams)
+{
+    clock_t targetTime;
+    int retst = 0;
+
+    BASE_ERR_CHECK(queue);
+    if (targetQueue != queue) {
+        BASE_ERR_CHECK(targetQueue);
+    }
+
+    if (isSec)
+        targetTime = clock() + (delay * CLOCKS_PER_SEC);
+    else
+        targetTime = clock() + delay;
+
+    retst = CBQ_Push(queue, setTimeoutFrame__, vParamc, vParams, ST_ARG_C,
+        (CBQArg_t) {.qVar = queue},
+        (CBQArg_t) {.uiVar = targetTime},
+        (CBQArg_t) {.qVar = targetQueue},
+        (CBQArg_t) {.fVar = func});
+
+    return retst;
+}
+
+int setTimeoutFrame__(int argc, CBQArg_t* args)
+{
+    int retst = 0;
+
+    if (clock() >= (clock_t) args[ST_DELAY].uiVar) {
+
+        if (args[ST_QUEUE].qVar == args[ST_TRG_QUEUE].qVar)
+            retst = args[ST_FUNC].fVar(argc - ST_ARG_C, args + ST_ARG_C);
+        else
+            retst = CBQ_Push(args[ST_TRG_QUEUE].qVar, args[ST_FUNC].fVar,
+                        argc - ST_ARG_C, args + ST_ARG_C, 0, CBQ_NO_STPARAMS);
+    }
+    else
+        retst = CBQ_Push(args[ST_QUEUE].qVar, setTimeoutFrame__, argc - ST_ARG_C, args + ST_ARG_C, ST_ARG_C,
+            (CBQArg_t) {.qVar = args[ST_QUEUE].qVar},
+            (CBQArg_t) {.uiVar = args[ST_DELAY].uiVar},
+            (CBQArg_t) {.qVar = args[ST_TRG_QUEUE].qVar},
+            (CBQArg_t) {.fVar = args[ST_FUNC].fVar});
+
+    return retst;
+}
