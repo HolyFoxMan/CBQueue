@@ -37,7 +37,7 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParam
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_Clear(CBQueue_t* queue);
 int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec, CBQueue_t* targetQueue, QCallback func, int vParamc, CBQArg_t* vParams);
-    int setTimeoutFrame__(int argc, CBQArg_t* args);
+    int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args);
 
 /* ---------------- Info Methods ---------------- */
 // CBQ_HAVECALL(TRUSTED_QUEUE);
@@ -791,7 +791,7 @@ int CBQ_drawScheme_chk__(void* queue)
 /* push CB after delay, like JS func. Needs time.h lib
 */
 
-int setTimeoutFrame__(int argc, CBQArg_t* args);
+int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args);
 
 int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec,
     CBQueue_t* targetQueue, QCallback func, int vParamc, CBQArg_t* vParams)
@@ -809,7 +809,7 @@ int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec,
     else
         targetTime = clock() + delay;
 
-    retst = CBQ_Push(queue, setTimeoutFrame__, vParamc, vParams, ST_ARG_C,
+    retst = CBQ_Push(queue, CBQ_setTimeoutFrame__, vParamc, vParams, ST_ARG_C,
         (CBQArg_t) {.qVar = queue},
         (CBQArg_t) {.uiVar = targetTime},
         (CBQArg_t) {.qVar = targetQueue},
@@ -818,7 +818,7 @@ int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec,
     return retst;
 }
 
-int setTimeoutFrame__(int argc, CBQArg_t* args)
+int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
 {
     int retst = 0;
 
@@ -829,9 +829,10 @@ int setTimeoutFrame__(int argc, CBQArg_t* args)
         else
             retst = CBQ_Push(args[ST_TRG_QUEUE].qVar, args[ST_FUNC].fVar,
                         argc - ST_ARG_C, args + ST_ARG_C, 0, CBQ_NO_STPARAMS);
-    }
-    else
-        retst = CBQ_Push(args[ST_QUEUE].qVar, setTimeoutFrame__, argc - ST_ARG_C, args + ST_ARG_C, ST_ARG_C,
+
+    } else
+        retst = CBQ_Push(args[ST_QUEUE].qVar, CBQ_setTimeoutFrame__,
+            argc - ST_ARG_C, (argc - ST_ARG_C)? args + ST_ARG_C : NULL, ST_ARG_C,
             (CBQArg_t) {.qVar = args[ST_QUEUE].qVar},
             (CBQArg_t) {.uiVar = args[ST_DELAY].uiVar},
             (CBQArg_t) {.qVar = args[ST_TRG_QUEUE].qVar},

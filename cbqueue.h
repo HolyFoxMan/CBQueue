@@ -182,14 +182,14 @@ int CBQ_QueueFree(CBQueue_t* queue);
 
 /* -------- set timeout macroses -------- */
 #define CBQ_SetTimeoutVoid(queue, delay, isSec, target_queue, func)  \
-    CBQ_SetTimout(queue, delay, isSec, target_queue, func, 0, CBQ_NO_VPARAMS)
+    CBQ_SetTimeout(queue, delay, isSec, target_queue, func, 0, CBQ_NO_VPARAMS)
 
 /* self-push queue */
-#define CBQ_SetTimeoutSP(queue, delay, isSec, func, vParamc, vParams)  \
-    CBQ_SetTimout(queue, delay, isSec, queue, func, vParamc, vParams)
+#define CBQ_SetTimeoutSP(queue, delay, isSec, func, vParamc, ...)  \
+    CBQ_SetTimeout(queue, delay, isSec, queue, func, vParamc, __VA_ARGS__)
 
 #define CBQ_SetTimeoutVoidSP(queue, delay, isSec, func)  \
-    CBQ_SetTimout(queue, delay, isSec, queue, func, 0, CBQ_NO_VPARAMS)
+    CBQ_SetTimeout(queue, delay, isSec, queue, func, 0, CBQ_NO_VPARAMS)
 
 /* Method pushes callbacks by static and variable passing of parameters (in run-time) */
 int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...);

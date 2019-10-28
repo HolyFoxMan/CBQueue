@@ -23,6 +23,8 @@
     void CBQ_T_ControlTest(void);
     void CBQ_T_BusyTest(void);
     void CBQ_T_Params(void);
+    void CBQ_T_SetTimeout_AutoGame(void);
+    void CBQ_T_SetTimeout(void);
 
 #endif // CBQTEST_H
 

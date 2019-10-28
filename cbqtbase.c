@@ -3,13 +3,13 @@
 /* ---------------- Hello World ---------------- */
 int funcHW(int argc, CBQArg_t* argv)
 {
-    printf("CB 1: Hello, world!\n");
+    printf("CB HW: Hello, world!\n");
     return 0;
 }
 
 int funcHU(int argc, CBQArg_t* argv)
 {
-    printf("CB 2: Hello, %s! Your age is %d.\n", argv[0].sVar, argv[1].iVar);
+    printf("CB age: Hello, %s! Your age is %d.\n", argv[0].sVar, argv[1].iVar);
     free(argv[0].sVar);
     return 0;
 }
@@ -22,7 +22,7 @@ int add(int argc, CBQArg_t* argv)
         argc--;
         res += argv[argc].iVar;
     }
-    printf("CB 3: Add result is %d.\n", res);
+    printf("CB sum: Add result is %d.\n", res);
 
     return 0;
 }
@@ -75,6 +75,7 @@ int counterCB(int argc, CBQArg_t* argv)
     static int count = 0;
     count++;
     printf("CB: counter is %d\n", count);
+    fflush(stdout);
     return 0;
 }
 
@@ -482,6 +483,9 @@ void CBQ_T_Params(void)
 }
 
 #define POINTERS_MAX 15
+#define F_W 30
+#define F_H 20
+#define ST_DEL 1
 
 typedef struct {
     int x;
@@ -497,13 +501,43 @@ typedef struct {
 
 int ptrLife(int agrc, CBQArg_t* args)
 {
+    int rstat = 0;
+    point_t* ptr = (point_t*) args[1].pVar;
+    char** field = (char**) args[2].pVar;
+
+    /* rand move */
+    if (ptr->x == 0)
+        ++ptr->x;
+    else if (ptr->x == F_W - 1)
+        --ptr->x;
+    else
+        ptr->x += rand() % 2 -1;
+
+    if (ptr->y == 0)
+        ++ptr->y;
+    else if (ptr->y == F_H - 1)
+        --ptr->y;
+    else
+        ptr->y += rand() % 2 - 1;
+
+    /* determinate pos in array */
+    if (field[ptr->y][ptr->x] && ptr->c != field[ptr->y][ptr->x]) {
+        ptr->st = 0;
+        return 0;
+    } else
+        field[ptr->y][ptr->x] = ptr->c;
+
+    rstat = CBQ_SetTimeoutSP(args[0].qVar, ST_DEL, 1, ptrLife, 3, args);
+    if (rstat)
+        return rstat;
 
     return 0;
 }
 
-void CBQ_T_SetTimeout(void)
+void CBQ_T_SetTimeout_AutoGame(void)
 {
     CBQueue_t queue;
+    int rstat = 0;
     pointers_t ptrs = (pointers_t) {
         .arr = {
             {4, 6, '*', 1},
@@ -515,11 +549,64 @@ void CBQ_T_SetTimeout(void)
         },
         .curActive = 5
     };
+    char field[F_H][F_W] = {0};
 
     ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init")
 
     for (int i = 0; i < ptrs.curActive; i++)
-        ASRT(CBQ_PushStatic(&queue, ptrLife, 1, (CBQArg_t) {.pVar = &ptrs.arr[i]}), "failed to start pointer life cycle")
+        ASRT(CBQ_PushStatic(&queue, ptrLife, 3,
+            (CBQArg_t) {.qVar = &queue},
+            (CBQArg_t) {.pVar = &ptrs.arr[i]},
+            (CBQArg_t) {.pVar = field}),
+        "failed to start pointer life cycle")
+
+    for(;;) {
+        if (kbhit() && getch() == 'q')
+            break;
+
+        if (CBQ_HAVECALL(queue))
+            ASRT(rstat = CBQ_Exec(&queue, &rstat), "failed to exec")
+        else
+            break;
+
+        if (rstat) {
+            printf("callback returned err code %d\n", rstat);
+            break;
+
+            /* draw array */
+            system("clear");
+            for (int i = 0; i < F_H; i++) {
+                for (int j = 0; j < F_W; j++)
+                    printf("%c", field[i][j]);
+                printf("\n");
+            }
+            fflush(stdout);
+        }
+    }
+    if (!rstat)
+        printf("End of game");
 
     ASRT(CBQ_QueueFree(&queue),"Failed to free")
+}
+
+/* base set timeout test */
+void CBQ_T_SetTimeout(void)
+{
+    CBQueue_t queue;
+    CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0);
+    int retst = 0;
+
+    /* Hello world after 2 sec */
+    ASRT(CBQ_SetTimeoutVoidSP(&queue, 2, 1, funcHW), "error to set time")
+
+    /* sum of 1, 2, 3 after 3 sec at start of execution */
+    ASRT(CBQ_SetTimeoutSP(&queue, 3, 1, add, 3, (CBQArg_t[]) {{1}, {2}, {3}} ), "failed to push add cb")
+
+    while(CBQ_HAVECALL(queue)) {
+        ASRT(CBQ_Exec(&queue, &retst), "error to exec");
+        if (retst)
+            printf("Returned error code by set timeout: %d\n", retst);
+    }
+
+    CBQ_QueueFree(&queue);
 }
