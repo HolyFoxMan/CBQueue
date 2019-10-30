@@ -482,113 +482,6 @@ void CBQ_T_Params(void)
     ASRT(CBQ_QueueFree(&queue),"Failed to free")
 }
 
-#define POINTERS_MAX 15
-#define F_W 30
-#define F_H 20
-#define ST_DEL 1
-
-typedef struct {
-    int x;
-    int y;
-    char c;
-    int st;
-} point_t;
-
-typedef struct {
-    point_t arr[POINTERS_MAX];
-    int curActive;
-} pointers_t;
-
-int ptrLife(int agrc, CBQArg_t* args)
-{
-    int rstat = 0;
-    point_t* ptr = (point_t*) args[1].pVar;
-    char** field = (char**) args[2].pVar;
-
-    /* rand move */
-    if (ptr->x == 0)
-        ++ptr->x;
-    else if (ptr->x == F_W - 1)
-        --ptr->x;
-    else
-        ptr->x += rand() % 2 -1;
-
-    if (ptr->y == 0)
-        ++ptr->y;
-    else if (ptr->y == F_H - 1)
-        --ptr->y;
-    else
-        ptr->y += rand() % 2 - 1;
-
-    /* determinate pos in array */
-    if (field[ptr->y][ptr->x] && ptr->c != field[ptr->y][ptr->x]) {
-        ptr->st = 0;
-        return 0;
-    } else
-        field[ptr->y][ptr->x] = ptr->c;
-
-    rstat = CBQ_SetTimeoutSP(args[0].qVar, ST_DEL, 1, ptrLife, 3, args);
-    if (rstat)
-        return rstat;
-
-    return 0;
-}
-
-void CBQ_T_SetTimeout_AutoGame(void)
-{
-    CBQueue_t queue;
-    int rstat = 0;
-    pointers_t ptrs = (pointers_t) {
-        .arr = {
-            {4, 6, '*', 1},
-            {7, 3, '+', 1},
-            {6, 10, '*', 1},
-            {8, 5, '+', 1},
-            {14, 1, '*', 1},
-            {1, 5, '+', 1}
-        },
-        .curActive = 5
-    };
-    char field[F_H][F_W] = {0};
-
-    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init")
-
-    for (int i = 0; i < ptrs.curActive; i++)
-        ASRT(CBQ_PushStatic(&queue, ptrLife, 3,
-            (CBQArg_t) {.qVar = &queue},
-            (CBQArg_t) {.pVar = &ptrs.arr[i]},
-            (CBQArg_t) {.pVar = field}),
-        "failed to start pointer life cycle")
-
-    for(;;) {
-        if (kbhit() && getch() == 'q')
-            break;
-
-        if (CBQ_HAVECALL(queue))
-            ASRT(rstat = CBQ_Exec(&queue, &rstat), "failed to exec")
-        else
-            break;
-
-        if (rstat) {
-            printf("callback returned err code %d\n", rstat);
-            break;
-
-            /* draw array */
-            system("clear");
-            for (int i = 0; i < F_H; i++) {
-                for (int j = 0; j < F_W; j++)
-                    printf("%c", field[i][j]);
-                printf("\n");
-            }
-            fflush(stdout);
-        }
-    }
-    if (!rstat)
-        printf("End of game");
-
-    ASRT(CBQ_QueueFree(&queue),"Failed to free")
-}
-
 /* base set timeout test */
 void CBQ_T_SetTimeout(void)
 {
@@ -609,4 +502,129 @@ void CBQ_T_SetTimeout(void)
     }
 
     CBQ_QueueFree(&queue);
+}
+
+#define POINTERS_MAX 15
+#define F_W 30
+#define F_H 20
+#define ST_DEL 1
+
+typedef struct {
+    int x;
+    int y;
+    char c;
+    int st;
+} point_t;
+
+typedef struct {
+    point_t arr[POINTERS_MAX];
+    int curActive;
+} pointers_t;
+
+int ptrLife(int argc, CBQArg_t* args)
+{
+    point_t* ptr = (point_t*) args[1].pVar;
+    char (*field)[F_W] = (char(*)[F_W]) args[2].pVar;
+
+    /* rand move */
+    if (ptr->x == 0)
+        ++ptr->x;
+    else if (ptr->x == F_W - 1)
+        --ptr->x;
+    else
+        ptr->x += rand() % 3 - 1;
+
+    if (ptr->y == 0)
+        ++ptr->y;
+    else if (ptr->y == F_H - 1)
+        --ptr->y;
+    else
+        ptr->y += rand() % 3 - 1;
+
+    /* determinate pos in array */
+    if (field[ptr->y][ptr->x] && ptr->c != field[ptr->y][ptr->x]) {
+
+        ptr->st = 0;
+        /* decrement cur active points */
+        *((int*) args[3].pVar) -= 1;
+        return 0;
+
+    } else
+        field[ptr->y][ptr->x] = ptr->c;
+
+    return CBQ_SetTimeoutSP(args[0].qVar, ST_DEL + 1, 1, ptrLife, argc, args);
+
+    return 0;
+}
+
+/* draw screen */
+int drawScreenCB(int argc, CBQArg_t* args)
+{
+    char (*field)[F_W] = (char(*)[F_W]) args[1].pVar;
+
+    system("clear");
+    for (int i = 0; i < F_H; i++) {
+        for (int j = 0; j < F_W; j++)
+            printf("%c", field[i][j]);
+        printf("\n");
+    }
+    printf("active points: %d\nexit - q\n", *((int*) args[2].pVar));
+    fflush(stdout);
+
+    return CBQ_SetTimeoutSP(args[0].qVar, ST_DEL, 1, drawScreenCB, argc, args); // 0 or err
+}
+
+void CBQ_T_SetTimeout_AutoGame(void)
+{
+    CBQueue_t queue;
+    int rstat = 0;
+    pointers_t ptrs = (pointers_t) {
+        .arr = {
+            {4, 6, '*', 1},
+            {7, 3, '+', 1},
+            {6, 10, '*', 1},
+            {8, 5, '+', 1},
+            {14, 1, '*', 1},
+            {1, 5, '+', 1}
+        },
+        .curActive = 6
+    };
+    char field[F_H][F_W] = {0};
+
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init")
+
+    ASRT(CBQ_PushStatic(&queue, drawScreenCB, 3,
+            (CBQArg_t) {.qVar = &queue},
+            (CBQArg_t) {.pVar = (void*) field},
+            (CBQArg_t) {.pVar = (void*) &ptrs.curActive}),
+        "Failed to push draw screen cb")
+
+    for (int i = 0; i < ptrs.curActive; i++)
+        ASRT(CBQ_PushStatic(&queue, ptrLife, 4,
+            (CBQArg_t) {.qVar = &queue},
+            (CBQArg_t) {.pVar = &ptrs.arr[i]},
+            (CBQArg_t) {.pVar = (void*) field},
+            (CBQArg_t) {.pVar = (void*) &ptrs.curActive}),
+        "failed to start pointer life cycle")
+
+    srand(time(NULL));
+
+    for(;;) {
+        if (kbhit() && getch() == 'q')
+            break;
+
+        if (CBQ_HAVECALL(queue))
+            ASRT(rstat = CBQ_Exec(&queue, &rstat), "failed to exec")
+        else
+            break;
+
+        if (rstat) {
+            printf("callback returned err code %d\n", rstat);
+            break;
+        }
+    }
+    if (!rstat)
+        printf("End of game");
+
+    ASRT(CBQ_QueueFree(&queue),"Failed to free")
 }
