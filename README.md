@@ -8,4 +8,5 @@ It is simple module written on C. Work with the queue by using the following bas
 * ChangeSize
 * getFullInfo
 * getCallAmount (Engaged size)
+* setTimeout (Like in JS)
 and etc.
