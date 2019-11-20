@@ -3,51 +3,49 @@
 
 
 /* ---------------- Base methods ---------------- */
-int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit);
-int CBQ_QueueFree(CBQueue_t* queue);
-
-int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
+int CBQ_QueueInit(CBQueue_t*, size_t, int, size_t);
+int CBQ_QueueFree(CBQueue_t*);
+int CBQ_ChangeSize(CBQueue_t*, int, size_t);
 
 /*
-int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize);
-int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
+int CBQ_SaveState(CBQueue_t*, unsigned char*, size_t*);
+int CBQ_RestoreState(CBQueue_t*, unsigned char*, size_t);
 */
 
 /* ---------------- Container methods ---------------- */
-int CBQ_containerInit__(CBQContainer_t* container);
-int CBQ_reallocSizeToAccepted__(CBQueue_t* trustedQueue, size_t newSize);
-int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue);
+int CBQ_containerInit__(CBQContainer_t*);
+int CBQ_reallocSizeToAccepted__(CBQueue_t*, size_t);
+int CBQ_offsetToBeginning__(CBQueue_t*);
 
     /* Incrementation */
-    size_t CBQ_calcNewIncSize__(CBQueue_t* trustedQueue);
-    int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t newSize);
-    int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newSize);
+    size_t CBQ_calcNewIncSize__(CBQueue_t*);
+    int CBQ_incSizeCheck__(CBQueue_t*, size_t);
+    int CBQ_incSize__(CBQueue_t*, size_t);
 
     /* Decrementation */
-    int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newSize);
-    size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newSize);
+    int CBQ_decSize__(CBQueue_t*, size_t);
+    size_t CBQ_decSizeAlignment__(CBQueue_t*, size_t);
 
 /* ---------------- Container Args Methods ---------------- */
-int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize);
+int CBQ_coIncMaxArgSize__(CBQContainer_t*, size_t);
 #define CBQ_COARGFREE_P__(P_CONTAINER) \
     free(P_CONTAINER.args)
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...);
-int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
-int CBQ_Clear(CBQueue_t* queue);
-int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec, CBQueue_t* targetQueue, QCallback func, int vParamc, CBQArg_t* vParams);
-    int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args);
+int CBQ_Push(CBQueue_t*, QCallback, int, CBQArg_t*, int, CBQArg_t, ...);
+int CBQ_Exec(CBQueue_t*, int*);
+int CBQ_Clear(CBQueue_t*);
+int CBQ_SetTimeout(CBQueue_t*, clock_t, int, CBQueue_t*, QCallback, int, CBQArg_t*);
+    int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 
 /* ---------------- Info Methods ---------------- */
 // CBQ_HAVECALL(TRUSTED_QUEUE);
 // CBQ_GETSIZE(TRUSTED_QUEUE);
-size_t CBQ_GetCallAmount(CBQueue_t* queue);
-int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
-    int* getSizeMode, size_t* getSizeMaxLimit);
+size_t CBQ_GetCallAmount(CBQueue_t*);
+int CBQ_GetFullInfo(CBQueue_t*, int*, size_t*, size_t*, int*, size_t*);
 
 /* ---------------- Other Methods ---------------- */
-char* CBQ_strIntoHeap(const char* str);
+char* CBQ_strIntoHeap(const char*);
 
 /* inline methods by macros */
 #ifdef CBQD_SCHEME
@@ -55,8 +53,8 @@ char* CBQ_strIntoHeap(const char* str);
     /* void* type because thats declared in debug header,
      * which was included before CBQueue_t* type definition
      */
-    int CBQ_drawScheme_chk__(void* queue);
-    void CBQ_drawScheme__(CBQueue_t* trustedQueue);
+    int CBQ_drawScheme_chk__(void*);
+    void CBQ_drawScheme__(CBQueue_t*);
     #define CBQ_DRAWSCHEME_IN(P_TRUSTED_QUEUE) \
         CBQ_drawScheme__(P_TRUSTED_QUEUE)
 
