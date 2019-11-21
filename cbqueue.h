@@ -3,7 +3,7 @@
 
     /* At c99 */
     #if __STDC_VERSION__ < 199901L
-        #error Need "c99" version
+        #error Needs "c99" version
     #endif
 
     #include <stdlib.h>

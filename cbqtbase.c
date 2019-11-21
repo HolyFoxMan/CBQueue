@@ -94,8 +94,8 @@ void CBQ_T_ControlTest(void)
     size_t customSize,
         qSize,
         qEngagedSize;
-  //      resultByteSize;
-//    unsigned char* saveStateBuffer = NULL;
+//      resultByteSize;
+//  unsigned char* saveStateBuffer = NULL;
     CBQueue_t queue;
 
     CBQ_OUTDEBUGSTATUS();
@@ -104,88 +104,98 @@ void CBQ_T_ControlTest(void)
     quit = 0;
     printf("p - push, e - pop, c - change size, i - increment size, d - decrement size, q - exit.\n");
     do {
-        if (kbhit())
+
+        if (kbhit()) {
             key = getch();
-        else
+            switch(key) {
+            case 'P': case 'p':
+            case 'C': case 'c':
+            case 'E': case 'e':
+            case 'Q': case 'q':
+            case 'I': case 'i':
+            case 'F': case 'f':
+            case 'D': case 'd':
+            // case 'S': case 's':
+            // case 'L': case 'l':
+                system("cls");
+                break;
+            default:
+                continue;
+            }
+        } else
             continue;
 
-        if (key == 'P' || key == 'p' || key == 'E' || key == 'e' || key == 'Q' || key == 'q' ||
-            key == 'C' || key == 'c' || key == 'I' || key == 'i' || key == 'D' || key == 'd' ||
-            key == 'S' || key == 's' || key == 'L' || key == 'l' || key == 'F' || key == 'f') {
+        switch(key) {
 
-            system("cls");
-
-            switch(key) {
-
-                case 'P':
-                case 'p': {
-                    if (!inCB)
-                        ASRT(CBQ_PushVoid(&queue, counterCB), "Failed to push")
-                    else
-                        ASRT(CBQ_PushStatic(&queue, counterPusherCB, 1, (CBQArg_t) {.qVar = &queue}), "Failed to push")
-                    break;
-                }
-
-                case 'E':
-                case 'e': {
-                    ASRT(CBQ_Exec(&queue, NULL), "Failed to pop")
-                    break;
-                }
-
-                case 'Q':
-                case 'q': {
-                    quit = 1;
-                    break;
-                }
-
-                case 'C':
-                case 'c': {
-                    printf("Type new size\n");
-                    scanf(SZ_PRTF, &customSize);
-                    fflush(stdin);
-                    ASRT(CBQ_ChangeSize(&queue, 0, customSize), "Failed to change size")
-                    break;
-                }
-
-                case 'I':
-                case 'i': {
-                    ASRT(CBQ_ChangeSize(&queue, CBQ_INC_SIZE, 0), "Failed to increment size")
-                    break;
-                }
-
-                case 'D':
-                case 'd': {
-                    ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size")
-                    break;
-                }
-
-                case 'F':
-                case 'f': {
-                    inCB = !inCB;
-                    ASRT(CBQ_DRAWSCHEME(&queue),"")
-                    break;
-                }
-/*
-                case 'S':
-                case 's': {
-                    ASRT(CBQ_SaveState(&queue, saveStateBuffer, &resultByteSize), "Saving data error")
-                    printf("Received size (in bytes): %llu\n", resultByteSize);
-                    break;
-                }
-
-                case 'L':
-                case 'l': {
-                    ASRT(CBQ_RestoreState(&queue, saveStateBuffer, resultByteSize), "Loading data error")
-                    break;
-                }
-                */
+            case 'P':
+            case 'p': {
+                if (!inCB)
+                    ASRT(CBQ_PushVoid(&queue, counterCB), "Failed to push")
+                else
+                    ASRT(CBQ_PushStatic(&queue, counterPusherCB, 1, (CBQArg_t) {.qVar = &queue}), "Failed to push")
+                break;
             }
 
-            ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "")
+            case 'E':
+            case 'e': {
+                ASRT(CBQ_Exec(&queue, NULL), "Failed to pop")
+                break;
+            }
 
-            printf("Size: " SZ_PRTF ", engaged size: "
-            SZ_PRTF " run in CB: %s\n", qSize, qEngagedSize, inCB?"true":"false");
+            case 'Q':
+            case 'q': {
+                quit = 1;
+                break;
+            }
+
+            case 'C':
+            case 'c': {
+                printf("Type new size\n");
+                scanf(SZ_PRTF, &customSize);
+                fflush(stdin);
+                ASRT(CBQ_ChangeSize(&queue, 0, customSize), "Failed to change size")
+                break;
+            }
+
+            case 'I':
+            case 'i': {
+                ASRT(CBQ_ChangeSize(&queue, CBQ_INC_SIZE, 0), "Failed to increment size")
+                break;
+            }
+
+            case 'D':
+            case 'd': {
+                ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size")
+                break;
+            }
+
+            case 'F':
+            case 'f': {
+                inCB = !inCB;
+                ASRT(CBQ_DRAWSCHEME(&queue),"")
+                break;
+            }
+/*
+            case 'S':
+            case 's': {
+                ASRT(CBQ_SaveState(&queue, saveStateBuffer, &resultByteSize), "Saving data error")
+                printf("Received size (in bytes): %llu\n", resultByteSize);
+                break;
+            }
+
+            case 'L':
+            case 'l': {
+                ASRT(CBQ_RestoreState(&queue, saveStateBuffer, resultByteSize), "Loading data error")
+                break;
+            }
+            */
         }
+
+        ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "")
+
+        printf("Size: " SZ_PRTF ", engaged size: "
+        SZ_PRTF " run in CB: %s\n", qSize, qEngagedSize, inCB? "true" : "false");
+
     } while(!quit);
 
     ASRT(CBQ_QueueFree(&queue), "Failed to free")
