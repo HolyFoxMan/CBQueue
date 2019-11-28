@@ -508,9 +508,9 @@ static int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
 /* ---------------- Call Methods ---------------- */
 int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...)
 {
-    size_t i;
     int errSt,
-        argcAll;
+        argcAll,
+        i;
     CBQContainer_t* container;
     CBQArg_t* args;
 

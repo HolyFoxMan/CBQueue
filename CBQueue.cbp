@@ -28,6 +28,35 @@
 					<Add option="-s" />
 				</Linker>
 			</Target>
+			<Target title="Lib">
+				<Option output="CBQueue" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-std=c99" />
+					<Add option="-DCBQ_NO_DEBUG" />
+				</Compiler>
+			</Target>
+			<Target title="LibDebug">
+				<Option output="DEBlibCBQueue" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wfatal-errors" />
+					<Add option="-Wextra" />
+					<Add option="-Wall" />
+					<Add option="-std=c99" />
+					<Add option="-Og" />
+					<Add option="-g" />
+					<Add option="-DCBQ_DEBUG" />
+				</Compiler>
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
@@ -36,13 +65,23 @@
 		<Unit filename="cbqlocal.h" />
 		<Unit filename="cbqt_gamefly.c">
 			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="Release" />
 		</Unit>
-		<Unit filename="cbqt_gamefly.h" />
+		<Unit filename="cbqt_gamefly.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="cbqtbase.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="Tests/" />
+			<Option target="Debug" />
+			<Option target="Release" />
 		</Unit>
-		<Unit filename="cbqtest.h" />
+		<Unit filename="cbqtest.h">
+			<Option target="Debug" />
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="cbqueue.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -50,6 +89,8 @@
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="EP/" />
+			<Option target="Debug" />
+			<Option target="Release" />
 		</Unit>
 		<Extensions>
 			<code_completion />

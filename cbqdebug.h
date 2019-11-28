@@ -4,7 +4,12 @@
 /* set that macros define to activate
  debug mode before including cbq headers */
 
-     #define CBQ_DEBUG
+    #define CBQ_DEBUG
+
+    /* CBQ_NO_DEBUG is predefined macros in compiler args */
+    #ifdef CBQ_NO_DEBUG
+        #undef CBQ_DEBUG
+    #endif // CBQ_NO_DEBUG
 
     #ifdef CBQ_DEBUG
 
