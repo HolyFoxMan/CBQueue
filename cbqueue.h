@@ -7,7 +7,6 @@
     #endif
 
     #include <stdlib.h>
-    #include <stdint.h>
     #include <time.h>
     #include "cbqdebug.h"
 
@@ -47,14 +46,14 @@
     typedef union CBQArg_t CBQArg_t;
     union CBQArg_t {
 
-        int32_t     iVar;                 // integer
-        uint32_t    uiVar;                // unsigned integer
-        uint8_t     tuiVar;               // tiny unsigned integer (byte)
-        size_t      szVar;                // size_t
-        double      dVar;                 // double
-        char        cVar;                 // char
-        char*       sVar;                 // string
-        void*       pVar;                 // pointer (need explicit type conversion before using)
+        int             iVar;                 // integer
+        unsigned int    uiVar;                // unsigned integer
+        unsigned char   tuiVar;               // tiny unsigned integer (byte)
+        size_t          szVar;                // size_t
+        double          dVar;                 // double
+        char            cVar;                 // char
+        char*           sVar;                 // string
+        void*           pVar;                 // pointer (need explicit type conversion before using)
         struct CBQueue_t*  qVar;          // pointer to queue in which can send new call
         int (*fVar)(int, CBQArg_t*);   // function pointer
 

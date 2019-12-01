@@ -1,56 +1,27 @@
-#include "cbqueue.h"
 #include "cbqlocal.h"
 
-
-/* ---------------- Base methods ---------------- */
-/*  int CBQ_QueueInit(CBQueue_t*, size_t, int, size_t);
-    int CBQ_QueueFree(CBQueue_t*);
-    int CBQ_ChangeSize(CBQueue_t*, int, size_t);
-*/
-
-/* Not used
-int CBQ_SaveState(CBQueue_t*, unsigned char*, size_t*);
-int CBQ_RestoreState(CBQueue_t*, unsigned char*, size_t);
-*/
-
-/* ---------------- Container methods ---------------- */
+/* ---------------- local methods declaration ---------------- */
 static int CBQ_containerInit__(CBQContainer_t*);
 static int CBQ_reallocSizeToAccepted__(CBQueue_t*, size_t);
 static int CBQ_offsetToBeginning__(CBQueue_t*);
 
-    /* Incrementation */
-    static size_t CBQ_calcNewIncSize__(CBQueue_t*);
-    static int CBQ_incSizeCheck__(CBQueue_t*, size_t);
-    static int CBQ_incSize__(CBQueue_t*, size_t);
+/* Incrementation */
+static size_t CBQ_calcNewIncSize__(CBQueue_t*);
+static int CBQ_incSizeCheck__(CBQueue_t*, size_t);
+static int CBQ_incSize__(CBQueue_t*, size_t);
 
-    /* Decrementation */
-    static int CBQ_decSize__(CBQueue_t*, size_t);
-    static size_t CBQ_decSizeAlignment__(CBQueue_t*, size_t);
+/* Decrementation */
+static int CBQ_decSize__(CBQueue_t*, size_t);
+static size_t CBQ_decSizeAlignment__(CBQueue_t*, size_t);
 
-/* ---------------- Container Args Methods ---------------- */
 static int CBQ_coIncMaxArgSize__(CBQContainer_t*, size_t);
 #define CBQ_COARGFREE_P__(P_CONTAINER) \
     free(P_CONTAINER.args)
 
-/* ---------------- Call Methods ---------------- */
-/*  int CBQ_Push(CBQueue_t*, QCallback, int, CBQArg_t*, int, CBQArg_t, ...);
-    inline int CBQ_Exec(CBQueue_t*, int*);
-    int CBQ_Clear(CBQueue_t*);
-    int CBQ_SetTimeout(CBQueue_t*, clock_t, int, CBQueue_t*, QCallback, int, CBQArg_t*);
-*/
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 
-/* ---------------- Info Methods ---------------- */
-// CBQ_HAVECALL(TRUSTED_QUEUE);
-// CBQ_GETSIZE(TRUSTED_QUEUE);
-/*  size_t CBQ_GetCallAmount(CBQueue_t*);
-    int CBQ_GetFullInfo(CBQueue_t*, int*, size_t*, size_t*, int*, size_t*);
-*/
-
-/* ---------------- Other Methods ---------------- */
-/*  char* CBQ_strIntoHeap(const char*);
-*/
-
+//  DEBUG MACRO-FUNCS                                                         //
+////////////////////////////////////////////////////////////////////////////////
 /* inline methods by macros */
 #ifdef CBQD_SCHEME
 
@@ -82,7 +53,7 @@ static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 #endif // CBQD_OUTPUTLOG
 
 ////////////////////////////////////////////////////////////////////////////////
-
+//                                                                            //
 
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit)
@@ -321,7 +292,7 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
     return 0;
 }
 
-static size_t CBQ_calcNewIncSize__(CBQueue_t* trustedQueue)
+ size_t CBQ_calcNewIncSize__(CBQueue_t* trustedQueue)
 {
     size_t newIncSize;
 
@@ -334,7 +305,7 @@ static size_t CBQ_calcNewIncSize__(CBQueue_t* trustedQueue)
     return newIncSize;
 }
 
-static int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t newSize)
+int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t newSize)
 {
     if (trustedQueue->sizeMode == CBQ_SM_STATIC)
         return CBQ_ERR_STATIC_SIZE_OVERFLOW;
@@ -348,7 +319,7 @@ static int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t newSize)
     return 0;
 }
 
-static int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
+int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
 {
     int errSt;
 
@@ -374,7 +345,7 @@ static int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
     return 0;
 }
 
-static size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newDecSize)
+size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newDecSize)
 {
     size_t tmpSize, callsSize;
 
@@ -397,7 +368,7 @@ static size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newDecSize)
     return newDecSize;
 }
 
-static int CBQ_reallocSizeToAccepted__(CBQueue_t* trustedQueue, size_t newSize)
+int CBQ_reallocSizeToAccepted__(CBQueue_t* trustedQueue, size_t newSize)
 {
 
     trustedQueue->coArr = (CBQContainer_t*) realloc(trustedQueue->coArr, sizeof(CBQContainer_t) * newSize);
@@ -412,7 +383,7 @@ static int CBQ_reallocSizeToAccepted__(CBQueue_t* trustedQueue, size_t newSize)
 /* Offset function was designed to resize to a greater or lesser degree in realloc function.
  * The function puts the queue in order from its various states in which resizing would be difficult.
  */
-static int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
+int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
 {
     CBQContainer_t* tmpCoArr;
     size_t i, j;
@@ -491,7 +462,7 @@ static int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
 }
 
 /* ---------------- Container Args Methods ---------------- */
-static int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
+int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
 {
     if (newSize > MAX_CO_ARG)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
@@ -728,7 +699,7 @@ char* CBQ_strIntoHeap(const char* str)
 
 #ifdef CBQD_SCHEME
 
-static void CBQ_drawScheme__(CBQueue_t* trustedQueue)
+void CBQ_drawScheme__(CBQueue_t* trustedQueue)
 {
     CBQContainer_t* cbqc;
 
@@ -820,7 +791,7 @@ int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec,
     return retst;
 }
 
-static int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
+int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
 {
     int retst = 0;
 
