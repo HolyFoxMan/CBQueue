@@ -90,17 +90,18 @@ void CBQ_T_ControlTest(void)
 {
     int quit = 0,
         key,
-        inCB = 0;
+        inCB = 0,
+        qStatus;
     size_t customSize,
         qSize,
         qEngagedSize;
+
 //      resultByteSize;
 //  unsigned char* saveStateBuffer = NULL;
     CBQueue_t queue;
 
     CBQ_OUTDEBUGSTATUS();
     ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0), "Failed to init")
-
     quit = 0;
     printf("p - push, e - pop, c - change size, i - increment size, d - decrement size, q - exit.\n");
     do {
@@ -191,10 +192,10 @@ void CBQ_T_ControlTest(void)
             */
         }
 
-        ASRT(CBQ_GetFullInfo(&queue, NULL, &qSize, &qEngagedSize, NULL, NULL), "")
+        ASRT(CBQ_GetFullInfo(&queue, &qStatus, &qSize, &qEngagedSize, NULL, NULL), "")
 
-        printf("Size: " SZ_PRTF ", engaged size: "
-        SZ_PRTF " run in CB: %s\n", qSize, qEngagedSize, inCB? "true" : "false");
+        printf("Status: %d, size: " SZ_PRTF ", engaged size: "
+        SZ_PRTF " run in CB: %s\n", qStatus, qSize, qEngagedSize, inCB? "true" : "false");
 
     } while(!quit);
 

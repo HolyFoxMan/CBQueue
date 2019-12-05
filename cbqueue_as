@@ -1,0 +1,1878 @@
+	.file	"cbqueue.c"
+	.text
+	.section .rdata,"dr"
+.LC0:
+	.ascii "Queue initialized\0"
+.LC1:
+	.ascii "Notice: %s\12\0"
+	.text
+	.globl	CBQ_QueueInit
+	.def	CBQ_QueueInit;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_QueueInit
+CBQ_QueueInit:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	pushq	%rbx
+	.seh_pushreg	%rbx
+	subq	$120, %rsp
+	.seh_stackalloc	120
+	leaq	128(%rsp), %rbp
+	.seh_setframe	%rbp, 128
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movl	%r8d, 32(%rbp)
+	movq	%r9, 40(%rbp)
+	movq	$0, -96(%rbp)
+	movq	$0, -88(%rbp)
+	movq	$0, -80(%rbp)
+	movq	$0, -72(%rbp)
+	movq	$0, -64(%rbp)
+	movq	$0, -56(%rbp)
+	movq	$0, -48(%rbp)
+	movq	$0, -40(%rbp)
+	movq	$0, -32(%rbp)
+	movq	24(%rbp), %rax
+	movq	%rax, -88(%rbp)
+	movq	$8, -56(%rbp)
+	movl	$65, -28(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L2
+	movl	$3, %eax
+	jmp	.L15
+.L2:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	jne	.L4
+	movl	$2, %eax
+	jmp	.L15
+.L4:
+	cmpq	$0, 24(%rbp)
+	je	.L5
+	cmpq	$65536, 24(%rbp)
+	jbe	.L6
+.L5:
+	movl	$4, %eax
+	jmp	.L15
+.L6:
+	cmpl	$0, 32(%rbp)
+	je	.L7
+	cmpl	$2, 32(%rbp)
+	jne	.L8
+.L7:
+	movq	$0, -64(%rbp)
+	movl	32(%rbp), %eax
+	movl	%eax, -72(%rbp)
+	jmp	.L9
+.L8:
+	cmpl	$1, 32(%rbp)
+	jne	.L10
+	cmpq	$0, 40(%rbp)
+	je	.L10
+	cmpq	$65536, 40(%rbp)
+	ja	.L10
+	movq	40(%rbp), %rax
+	cmpq	24(%rbp), %rax
+	jb	.L10
+	movq	40(%rbp), %rax
+	movq	%rax, -64(%rbp)
+	movl	32(%rbp), %eax
+	movl	%eax, -72(%rbp)
+	jmp	.L9
+.L10:
+	movl	$4, %eax
+	jmp	.L15
+.L9:
+	movq	24(%rbp), %rax
+	salq	$5, %rax
+	movq	%rax, %rcx
+	call	malloc
+	movq	%rax, -80(%rbp)
+	movq	-80(%rbp), %rax
+	testq	%rax, %rax
+	jne	.L11
+	movl	$5, %eax
+	jmp	.L15
+.L11:
+	movq	$0, -24(%rbp)
+	jmp	.L12
+.L14:
+	movq	-80(%rbp), %rax
+	movq	-24(%rbp), %rdx
+	salq	$5, %rdx
+	addq	%rdx, %rax
+	movq	%rax, %rcx
+	call	CBQ_containerInit__
+	testl	%eax, %eax
+	je	.L13
+	movl	$5, %eax
+	jmp	.L15
+.L13:
+	addq	$1, -24(%rbp)
+.L12:
+	movq	-24(%rbp), %rax
+	cmpq	24(%rbp), %rax
+	jb	.L14
+	movl	$1363758665, -96(%rbp)
+	movq	16(%rbp), %rax
+	movq	-96(%rbp), %rcx
+	movq	-88(%rbp), %rbx
+	movq	%rcx, (%rax)
+	movq	%rbx, 8(%rax)
+	movq	-80(%rbp), %rcx
+	movq	-72(%rbp), %rbx
+	movq	%rcx, 16(%rax)
+	movq	%rbx, 24(%rax)
+	movq	-64(%rbp), %rcx
+	movq	-56(%rbp), %rbx
+	movq	%rcx, 32(%rax)
+	movq	%rbx, 40(%rax)
+	movq	-48(%rbp), %rcx
+	movq	-40(%rbp), %rbx
+	movq	%rcx, 48(%rax)
+	movq	%rbx, 56(%rax)
+	movq	-32(%rbp), %rdx
+	movq	%rdx, 64(%rax)
+	leaq	.LC0(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+	leaq	-96(%rbp), %rax
+	movq	%rax, %rcx
+	call	CBQ_drawScheme__
+	movl	$0, %eax
+.L15:
+	addq	$120, %rsp
+	popq	%rbx
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC2:
+	.ascii "Queue freed\0"
+	.text
+	.globl	CBQ_QueueFree
+	.def	CBQ_QueueFree;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_QueueFree
+CBQ_QueueFree:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$48, %rsp
+	.seh_stackalloc	48
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L17
+	movl	$3, %eax
+	jmp	.L18
+.L17:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L19
+	movl	$1, %eax
+	jmp	.L18
+.L19:
+	movq	16(%rbp), %rax
+	movl	4(%rax), %eax
+	cmpl	$1, %eax
+	jne	.L20
+	movl	$10, %eax
+	jmp	.L18
+.L20:
+	movq	$0, -8(%rbp)
+	jmp	.L21
+.L22:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-8(%rbp), %rdx
+	salq	$5, %rdx
+	addq	%rdx, %rax
+	movq	16(%rax), %rax
+	movq	%rax, %rcx
+	call	free
+	addq	$1, -8(%rbp)
+.L21:
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, -8(%rbp)
+	jb	.L22
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	%rax, %rcx
+	call	free
+	movq	16(%rbp), %rax
+	movl	$1363563077, (%rax)
+	leaq	.LC2(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+	movl	$0, %eax
+.L18:
+	addq	$48, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC3:
+	.ascii "Queue size changing...\0"
+	.text
+	.globl	CBQ_ChangeSize
+	.def	CBQ_ChangeSize;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_ChangeSize
+CBQ_ChangeSize:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$48, %rsp
+	.seh_stackalloc	48
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movl	%edx, 24(%rbp)
+	movq	%r8, 32(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L24
+	movl	$3, %eax
+	jmp	.L25
+.L24:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L26
+	movl	$1, %eax
+	jmp	.L25
+.L26:
+	movq	16(%rbp), %rax
+	movl	4(%rax), %eax
+	cmpl	$1, %eax
+	jne	.L27
+	movl	$10, %eax
+	jmp	.L25
+.L27:
+	leaq	.LC3(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+	cmpl	$1, 24(%rbp)
+	jne	.L28
+	movl	$0, %edx
+	movq	16(%rbp), %rcx
+	call	CBQ_incSize__
+	cltq
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
+	je	.L29
+	movq	-8(%rbp), %rax
+	jmp	.L25
+.L28:
+	cmpl	$2, 24(%rbp)
+	jne	.L30
+	movl	$0, %edx
+	movq	16(%rbp), %rcx
+	call	CBQ_decSize__
+	cltq
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
+	je	.L29
+	movq	-8(%rbp), %rax
+	jmp	.L25
+.L30:
+	cmpq	$0, 32(%rbp)
+	je	.L31
+	cmpq	$65536, 32(%rbp)
+	jbe	.L32
+.L31:
+	movl	$4, %eax
+	jmp	.L25
+.L32:
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, 32(%rbp)
+	jne	.L33
+	movl	$0, %eax
+	jmp	.L25
+.L33:
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, 32(%rbp)
+	jbe	.L34
+	movq	32(%rbp), %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rcx
+	call	CBQ_incSize__
+	cltq
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
+	je	.L29
+	movq	-8(%rbp), %rax
+	jmp	.L25
+.L34:
+	movq	32(%rbp), %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rcx
+	call	CBQ_decSize__
+	cltq
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
+	je	.L29
+	movq	-8(%rbp), %rax
+	jmp	.L25
+.L29:
+	movl	$0, %eax
+.L25:
+	addq	$48, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.def	CBQ_containerInit__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_containerInit__
+CBQ_containerInit__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$64, %rsp
+	.seh_stackalloc	64
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	$0, -32(%rbp)
+	movq	$0, -24(%rbp)
+	movq	$0, -16(%rbp)
+	movq	$0, -8(%rbp)
+	movl	$5, -24(%rbp)
+	movl	$45, -8(%rbp)
+	movl	$40, %ecx
+	call	malloc
+	movq	%rax, -16(%rbp)
+	movq	-16(%rbp), %rax
+	testq	%rax, %rax
+	jne	.L36
+	movl	$5, %eax
+	jmp	.L38
+.L36:
+	movq	16(%rbp), %rcx
+	movq	-32(%rbp), %rax
+	movq	-24(%rbp), %rdx
+	movq	%rax, (%rcx)
+	movq	%rdx, 8(%rcx)
+	movq	-16(%rbp), %rax
+	movq	-8(%rbp), %rdx
+	movq	%rax, 16(%rcx)
+	movq	%rdx, 24(%rcx)
+	movl	$0, %eax
+.L38:
+	addq	$64, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC4:
+	.ascii "Queue size incremented\0"
+	.text
+	.def	CBQ_incSize__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_incSize__
+CBQ_incSize__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$48, %rsp
+	.seh_stackalloc	48
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	movq	%rax, -8(%rbp)
+	cmpq	$0, 24(%rbp)
+	jne	.L40
+	movq	16(%rbp), %rcx
+	call	CBQ_calcNewIncSize__
+	movq	%rax, 24(%rbp)
+.L40:
+	movq	24(%rbp), %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rcx
+	call	CBQ_incSizeCheck__
+	movl	%eax, -12(%rbp)
+	cmpl	$0, -12(%rbp)
+	je	.L41
+	movl	-12(%rbp), %eax
+	jmp	.L42
+.L41:
+	movq	16(%rbp), %rcx
+	call	CBQ_offsetToBeginning__
+	movl	%eax, -12(%rbp)
+	cmpl	$0, -12(%rbp)
+	je	.L43
+	movl	-12(%rbp), %eax
+	jmp	.L42
+.L43:
+	movq	24(%rbp), %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rcx
+	call	CBQ_reallocSizeToAccepted__
+	movl	%eax, -12(%rbp)
+	cmpl	$0, -12(%rbp)
+	je	.L44
+	movl	-12(%rbp), %eax
+	jmp	.L42
+.L44:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-8(%rbp), %rdx
+	salq	$5, %rdx
+	addq	%rdx, %rax
+	movq	%rax, %rcx
+	call	CBQ_containerInit__
+	movl	%eax, -12(%rbp)
+	cmpl	$0, -12(%rbp)
+	je	.L45
+	movl	-12(%rbp), %eax
+	jmp	.L42
+.L45:
+	addq	$1, -8(%rbp)
+	movq	-8(%rbp), %rax
+	cmpq	24(%rbp), %rax
+	jne	.L44
+	movq	16(%rbp), %rax
+	movl	$1, 64(%rax)
+	leaq	.LC4(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+	movq	16(%rbp), %rcx
+	call	CBQ_drawScheme__
+	movl	$0, %eax
+.L42:
+	addq	$48, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.def	CBQ_calcNewIncSize__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_calcNewIncSize__
+CBQ_calcNewIncSize__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$16, %rsp
+	.seh_stackalloc	16
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	40(%rax), %rax
+	addq	%rdx, %rax
+	movq	%rax, -8(%rbp)
+	movq	16(%rbp), %rax
+	movq	40(%rax), %rax
+	leaq	(%rax,%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 40(%rax)
+	movq	16(%rbp), %rax
+	movq	40(%rax), %rax
+	cmpq	$16384, %rax
+	jbe	.L47
+	movq	16(%rbp), %rax
+	movq	$16384, 40(%rax)
+.L47:
+	movq	-8(%rbp), %rax
+	addq	$16, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.def	CBQ_incSizeCheck__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_incSizeCheck__
+CBQ_incSizeCheck__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movq	16(%rbp), %rax
+	movl	24(%rax), %eax
+	testl	%eax, %eax
+	jne	.L50
+	movl	$6, %eax
+	jmp	.L51
+.L50:
+	movq	16(%rbp), %rax
+	movl	24(%rax), %eax
+	cmpl	$1, %eax
+	jne	.L52
+	movq	16(%rbp), %rax
+	movq	32(%rax), %rax
+	cmpq	%rax, 24(%rbp)
+	jbe	.L52
+	movl	$7, %eax
+	jmp	.L51
+.L52:
+	movq	16(%rbp), %rax
+	movl	24(%rax), %eax
+	cmpl	$2, %eax
+	jne	.L53
+	cmpq	$65536, 24(%rbp)
+	jbe	.L53
+	movl	$8, %eax
+	jmp	.L51
+.L53:
+	movl	$0, %eax
+.L51:
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC5:
+	.ascii "Queue size decremented\0"
+	.text
+	.def	CBQ_decSize__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_decSize__
+CBQ_decSize__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$48, %rsp
+	.seh_stackalloc	48
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movq	24(%rbp), %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rcx
+	call	CBQ_decSizeAlignment__
+	movq	%rax, 24(%rbp)
+	movq	16(%rbp), %rcx
+	call	CBQ_offsetToBeginning__
+	movl	%eax, -12(%rbp)
+	cmpl	$0, -12(%rbp)
+	je	.L55
+	movl	-12(%rbp), %eax
+	jmp	.L56
+.L55:
+	movq	24(%rbp), %rax
+	movq	%rax, -8(%rbp)
+	jmp	.L57
+.L58:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-8(%rbp), %rdx
+	salq	$5, %rdx
+	addq	%rdx, %rax
+	movq	16(%rax), %rax
+	movq	%rax, %rcx
+	call	free
+	addq	$1, -8(%rbp)
+.L57:
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, -8(%rbp)
+	jb	.L58
+	movq	24(%rbp), %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rcx
+	call	CBQ_reallocSizeToAccepted__
+	movl	%eax, -12(%rbp)
+	cmpl	$0, -12(%rbp)
+	je	.L59
+	movl	-12(%rbp), %eax
+	jmp	.L56
+.L59:
+	leaq	.LC5(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+	movq	16(%rbp), %rcx
+	call	CBQ_drawScheme__
+	movl	$0, %eax
+.L56:
+	addq	$48, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.def	CBQ_decSizeAlignment__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_decSizeAlignment__
+CBQ_decSizeAlignment__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$64, %rsp
+	.seh_stackalloc	64
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movq	16(%rbp), %rcx
+	call	CBQ_GetCallAmount
+	movq	%rax, -8(%rbp)
+	cmpq	$0, 24(%rbp)
+	je	.L61
+	movq	24(%rbp), %rax
+	cmpq	-8(%rbp), %rax
+	jnb	.L62
+.L61:
+	fildq	-8(%rbp)
+	cmpq	$0, -8(%rbp)
+	jns	.L63
+	fldt	.LC6(%rip)
+	faddp	%st, %st(1)
+.L63:
+	fldt	.LC7(%rip)
+	fmulp	%st, %st(1)
+	fldt	.LC8(%rip)
+	fxch	%st(1)
+	fcomi	%st(1), %st
+	fstp	%st(1)
+	jnb	.L64
+	fnstcw	-18(%rbp)
+	movzwl	-18(%rbp), %eax
+	orb	$12, %ah
+	movw	%ax, -20(%rbp)
+	fldcw	-20(%rbp)
+	fistpq	-16(%rbp)
+	fldcw	-18(%rbp)
+	jmp	.L65
+.L64:
+	fldt	.LC8(%rip)
+	fsubrp	%st, %st(1)
+	fnstcw	-18(%rbp)
+	movzwl	-18(%rbp), %eax
+	orb	$12, %ah
+	movw	%ax, -20(%rbp)
+	fldcw	-20(%rbp)
+	fistpq	-16(%rbp)
+	fldcw	-18(%rbp)
+	movabsq	$-9223372036854775808, %rax
+	xorq	%rax, -16(%rbp)
+.L65:
+	movq	-16(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	cmpq	$0, -16(%rbp)
+	je	.L66
+	movq	-16(%rbp), %rax
+	cmpq	24(%rbp), %rax
+	jbe	.L67
+.L66:
+	movq	-8(%rbp), %rax
+	addq	$1, %rax
+	movq	%rax, 24(%rbp)
+	jmp	.L62
+.L67:
+	movq	-16(%rbp), %rax
+	movq	%rax, 24(%rbp)
+.L62:
+	movq	16(%rbp), %rax
+	movq	40(%rax), %rax
+	cmpq	$8, %rax
+	jbe	.L68
+	movq	16(%rbp), %rax
+	movq	40(%rax), %rax
+	shrq	%rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 40(%rax)
+.L68:
+	movq	24(%rbp), %rax
+	addq	$64, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.def	CBQ_reallocSizeToAccepted__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_reallocSizeToAccepted__
+CBQ_reallocSizeToAccepted__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$32, %rsp
+	.seh_stackalloc	32
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movq	24(%rbp), %rax
+	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	%rax, %rcx
+	call	realloc
+	movq	16(%rbp), %rdx
+	movq	%rax, 16(%rdx)
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	testq	%rax, %rax
+	jne	.L71
+	movl	$5, %eax
+	jmp	.L72
+.L71:
+	movq	16(%rbp), %rax
+	movq	24(%rbp), %rdx
+	movq	%rdx, 8(%rax)
+	movl	$0, %eax
+.L72:
+	addq	$32, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.def	CBQ_offsetToBeginning__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_offsetToBeginning__
+CBQ_offsetToBeginning__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$64, %rsp
+	.seh_stackalloc	64
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	testq	%rax, %rax
+	jne	.L74
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 56(%rax)
+.L74:
+	movq	16(%rbp), %rax
+	movl	64(%rax), %eax
+	testl	%eax, %eax
+	jne	.L75
+	movq	16(%rbp), %rax
+	movq	$0, 56(%rax)
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 48(%rax)
+	movl	$0, %eax
+	jmp	.L76
+.L75:
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	testq	%rax, %rax
+	jne	.L77
+	movl	$0, %eax
+	jmp	.L76
+.L77:
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, %rdx
+	jnb	.L78
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	movq	%rax, -8(%rbp)
+	movq	$0, -16(%rbp)
+	jmp	.L79
+.L80:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-8(%rbp), %rdx
+	salq	$5, %rdx
+	leaq	(%rax,%rdx), %r8
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-16(%rbp), %rdx
+	salq	$5, %rdx
+	leaq	(%rax,%rdx), %rcx
+	movq	(%r8), %rax
+	movq	8(%r8), %rdx
+	movq	%rax, (%rcx)
+	movq	%rdx, 8(%rcx)
+	movq	16(%r8), %rax
+	movq	24(%r8), %rdx
+	movq	%rax, 16(%rcx)
+	movq	%rdx, 24(%rcx)
+	addq	$1, -8(%rbp)
+	addq	$1, -16(%rbp)
+.L79:
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, -8(%rbp)
+	jb	.L80
+	jmp	.L81
+.L78:
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	salq	$5, %rax
+	movq	%rax, %rcx
+	call	malloc
+	movq	%rax, -24(%rbp)
+	cmpq	$0, -24(%rbp)
+	jne	.L82
+	movl	$5, %eax
+	jmp	.L76
+.L82:
+	movq	$0, -8(%rbp)
+	jmp	.L83
+.L84:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-8(%rbp), %rdx
+	salq	$5, %rdx
+	leaq	(%rax,%rdx), %r8
+	movq	-8(%rbp), %rax
+	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	-24(%rbp), %rax
+	leaq	(%rdx,%rax), %rcx
+	movq	(%r8), %rax
+	movq	8(%r8), %rdx
+	movq	%rax, (%rcx)
+	movq	%rdx, 8(%rcx)
+	movq	16(%r8), %rax
+	movq	24(%r8), %rdx
+	movq	%rax, 16(%rcx)
+	movq	%rdx, 24(%rcx)
+	addq	$1, -8(%rbp)
+.L83:
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, -8(%rbp)
+	jb	.L84
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	movq	%rax, -8(%rbp)
+	movq	$0, -16(%rbp)
+	jmp	.L85
+.L86:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-8(%rbp), %rdx
+	salq	$5, %rdx
+	leaq	(%rax,%rdx), %r8
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-16(%rbp), %rdx
+	salq	$5, %rdx
+	leaq	(%rax,%rdx), %rcx
+	movq	(%r8), %rax
+	movq	8(%r8), %rdx
+	movq	%rax, (%rcx)
+	movq	%rdx, 8(%rcx)
+	movq	16(%r8), %rax
+	movq	24(%r8), %rdx
+	movq	%rax, 16(%rcx)
+	movq	%rdx, 24(%rcx)
+	addq	$1, -8(%rbp)
+	addq	$1, -16(%rbp)
+.L85:
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, -8(%rbp)
+	jb	.L86
+	movq	$0, -8(%rbp)
+	jmp	.L87
+.L88:
+	movq	-8(%rbp), %rax
+	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	-24(%rbp), %rax
+	leaq	(%rdx,%rax), %r8
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-16(%rbp), %rdx
+	salq	$5, %rdx
+	leaq	(%rax,%rdx), %rcx
+	movq	(%r8), %rax
+	movq	8(%r8), %rdx
+	movq	%rax, (%rcx)
+	movq	%rdx, 8(%rcx)
+	movq	16(%r8), %rax
+	movq	24(%r8), %rdx
+	movq	%rax, 16(%rcx)
+	movq	%rdx, 24(%rcx)
+	addq	$1, -8(%rbp)
+	addq	$1, -16(%rbp)
+.L87:
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, -8(%rbp)
+	jb	.L88
+	movq	-24(%rbp), %rax
+	movq	%rax, %rcx
+	call	free
+.L81:
+	movq	16(%rbp), %rax
+	movq	$0, 48(%rax)
+	movq	16(%rbp), %rax
+	movq	-16(%rbp), %rdx
+	movq	%rdx, 56(%rax)
+	movl	$0, %eax
+.L76:
+	addq	$64, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.def	CBQ_coIncMaxArgSize__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_coIncMaxArgSize__
+CBQ_coIncMaxArgSize__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$32, %rsp
+	.seh_stackalloc	32
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	cmpq	$20, 24(%rbp)
+	jbe	.L90
+	movl	$4, %eax
+	jmp	.L91
+.L90:
+	movq	24(%rbp), %rax
+	leaq	0(,%rax,8), %rdx
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	%rax, %rcx
+	call	realloc
+	movq	16(%rbp), %rdx
+	movq	%rax, 16(%rdx)
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	testq	%rax, %rax
+	jne	.L92
+	movl	$5, %eax
+	jmp	.L91
+.L92:
+	movq	24(%rbp), %rax
+	movl	%eax, %edx
+	movq	16(%rbp), %rax
+	movl	%edx, 8(%rax)
+	movl	$0, %eax
+.L91:
+	addq	$32, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC10:
+	.ascii "Queue is full to push\0"
+	.align 8
+.LC11:
+	.ascii "Size incrementation was automatic\0"
+.LC12:
+	.ascii "Queue is pushed\0"
+	.text
+	.globl	CBQ_Push
+	.def	CBQ_Push;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_Push
+CBQ_Push:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$64, %rsp
+	.seh_stackalloc	64
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movl	%r8d, 32(%rbp)
+	movq	%r9, 40(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L94
+	movl	$3, %eax
+	jmp	.L95
+.L94:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L96
+	movl	$1, %eax
+	jmp	.L95
+.L96:
+	cmpl	$0, 48(%rbp)
+	jns	.L97
+	movl	$4, %eax
+	jmp	.L95
+.L97:
+	cmpq	$0, 40(%rbp)
+	je	.L98
+	cmpl	$0, 32(%rbp)
+	jg	.L98
+	movl	$11, %eax
+	jmp	.L95
+.L98:
+	movq	16(%rbp), %rax
+	movl	64(%rax), %eax
+	cmpl	$2, %eax
+	jne	.L99
+	leaq	.LC10(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+	movl	$0, %edx
+	movq	16(%rbp), %rcx
+	call	CBQ_incSize__
+	movl	%eax, -12(%rbp)
+	cmpl	$0, -12(%rbp)
+	je	.L100
+	movl	-12(%rbp), %eax
+	jmp	.L95
+.L100:
+	leaq	.LC11(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+.L99:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	%rax, -24(%rbp)
+	leaq	56(%rbp), %rax
+	movq	%rax, -32(%rbp)
+	cmpq	$0, 40(%rbp)
+	je	.L101
+	movl	48(%rbp), %edx
+	movl	32(%rbp), %eax
+	addl	%edx, %eax
+	movl	%eax, -4(%rbp)
+	jmp	.L102
+.L101:
+	movl	48(%rbp), %eax
+	movl	%eax, -4(%rbp)
+.L102:
+	movq	-24(%rbp), %rax
+	movl	8(%rax), %eax
+	cmpl	%eax, -4(%rbp)
+	jle	.L103
+	movl	-4(%rbp), %eax
+	movslq	%eax, %rdx
+	movq	-24(%rbp), %rax
+	movq	%rax, %rcx
+	call	CBQ_coIncMaxArgSize__
+	movl	%eax, -12(%rbp)
+	cmpl	$0, -12(%rbp)
+	je	.L103
+	movl	-12(%rbp), %eax
+	jmp	.L95
+.L103:
+	cmpl	$0, 48(%rbp)
+	je	.L104
+	movl	$0, -8(%rbp)
+	jmp	.L105
+.L106:
+	movl	-8(%rbp), %eax
+	cltq
+	leaq	0(,%rax,8), %rdx
+	movq	-32(%rbp), %rax
+	leaq	(%rdx,%rax), %rcx
+	movq	-24(%rbp), %rax
+	movq	16(%rax), %rax
+	movl	-8(%rbp), %edx
+	movslq	%edx, %rdx
+	salq	$3, %rdx
+	addq	%rax, %rdx
+	movq	(%rcx), %rax
+	movq	%rax, (%rdx)
+	addl	$1, -8(%rbp)
+.L105:
+	movl	-8(%rbp), %eax
+	cmpl	48(%rbp), %eax
+	jl	.L106
+.L104:
+	cmpq	$0, 40(%rbp)
+	je	.L107
+	movl	$0, -8(%rbp)
+	jmp	.L108
+.L109:
+	movl	-8(%rbp), %eax
+	cltq
+	leaq	0(,%rax,8), %rdx
+	movq	40(%rbp), %rax
+	leaq	(%rdx,%rax), %rcx
+	movq	-24(%rbp), %rax
+	movq	16(%rax), %rax
+	movl	-8(%rbp), %r8d
+	movl	48(%rbp), %edx
+	addl	%r8d, %edx
+	movslq	%edx, %rdx
+	salq	$3, %rdx
+	addq	%rax, %rdx
+	movq	(%rcx), %rax
+	movq	%rax, (%rdx)
+	addl	$1, -8(%rbp)
+.L108:
+	movl	-8(%rbp), %eax
+	cmpl	32(%rbp), %eax
+	jl	.L109
+.L107:
+	movq	-24(%rbp), %rax
+	movl	-4(%rbp), %edx
+	movl	%edx, 12(%rax)
+	movq	-24(%rbp), %rax
+	movq	24(%rbp), %rdx
+	movq	%rdx, (%rax)
+	movq	16(%rbp), %rax
+	movl	68(%rax), %edx
+	movq	-24(%rbp), %rax
+	movl	%edx, 24(%rax)
+	movq	16(%rbp), %rax
+	movl	68(%rax), %eax
+	leal	1(%rax), %edx
+	movq	16(%rbp), %rax
+	movl	%edx, 68(%rax)
+	movq	16(%rbp), %rax
+	movl	68(%rax), %eax
+	cmpl	$90, %eax
+	jle	.L110
+	movq	16(%rbp), %rax
+	movl	$65, 68(%rax)
+.L110:
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	leaq	1(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 56(%rax)
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, %rdx
+	jne	.L111
+	movq	16(%rbp), %rax
+	movq	$0, 56(%rax)
+.L111:
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	cmpq	%rax, %rdx
+	jne	.L112
+	movq	16(%rbp), %rax
+	movl	$2, 64(%rax)
+	jmp	.L113
+.L112:
+	movq	16(%rbp), %rax
+	movl	$1, 64(%rax)
+.L113:
+	leaq	.LC12(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+	movq	16(%rbp), %rcx
+	call	CBQ_drawScheme__
+	movl	$0, %eax
+.L95:
+	addq	$64, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC13:
+	.ascii "Queue is popped\0"
+	.text
+	.globl	CBQ_Exec
+	.def	CBQ_Exec;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_Exec
+CBQ_Exec:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$48, %rsp
+	.seh_stackalloc	48
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L115
+	movl	$3, %eax
+	jmp	.L116
+.L115:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L117
+	movl	$1, %eax
+	jmp	.L116
+.L117:
+	movq	16(%rbp), %rax
+	movl	64(%rax), %eax
+	testl	%eax, %eax
+	jne	.L118
+	movl	$9, %eax
+	jmp	.L116
+.L118:
+	movq	16(%rbp), %rax
+	movl	4(%rax), %eax
+	cmpl	$1, %eax
+	jne	.L119
+	movl	$10, %eax
+	jmp	.L116
+.L119:
+	movq	16(%rbp), %rax
+	movl	$1, 4(%rax)
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	%rax, -8(%rbp)
+	cmpq	$0, 24(%rbp)
+	jne	.L120
+	movq	-8(%rbp), %rax
+	movq	(%rax), %r8
+	movq	-8(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	-8(%rbp), %rax
+	movl	12(%rax), %eax
+	movl	%eax, %ecx
+	call	*%r8
+	jmp	.L121
+.L120:
+	movq	-8(%rbp), %rax
+	movq	(%rax), %r8
+	movq	-8(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	-8(%rbp), %rax
+	movl	12(%rax), %eax
+	movl	%eax, %ecx
+	call	*%r8
+	movq	24(%rbp), %rdx
+	movl	%eax, (%rdx)
+.L121:
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	leaq	1(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 48(%rax)
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, %rdx
+	jne	.L122
+	movq	16(%rbp), %rax
+	movq	$0, 48(%rax)
+.L122:
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, %rdx
+	jne	.L123
+	movq	16(%rbp), %rax
+	movl	$0, 64(%rax)
+	jmp	.L124
+.L123:
+	movq	16(%rbp), %rax
+	movl	$1, 64(%rax)
+.L124:
+	movq	16(%rbp), %rax
+	movl	$0, 4(%rax)
+	leaq	.LC13(%rip), %rdx
+	leaq	.LC1(%rip), %rcx
+	call	printf
+	movq	-8(%rbp), %rax
+	movl	$45, 24(%rax)
+	movq	16(%rbp), %rcx
+	call	CBQ_drawScheme__
+	movl	$0, %eax
+.L116:
+	addq	$48, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.globl	CBQ_Clear
+	.def	CBQ_Clear;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_Clear
+CBQ_Clear:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L126
+	movl	$3, %eax
+	jmp	.L127
+.L126:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L128
+	movl	$1, %eax
+	jmp	.L127
+.L128:
+	movq	16(%rbp), %rax
+	movq	$0, 56(%rax)
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 48(%rax)
+	movq	16(%rbp), %rax
+	movl	$0, 64(%rax)
+	movl	$0, %eax
+.L127:
+	popq	%rbp
+	ret
+	.seh_endproc
+	.globl	CBQ_GetCallAmount
+	.def	CBQ_GetCallAmount;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_GetCallAmount
+CBQ_GetCallAmount:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L130
+	movl	$3, %eax
+	jmp	.L131
+.L130:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L132
+	movl	$1, %eax
+	jmp	.L131
+.L132:
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, %rdx
+	jnb	.L133
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	subq	%rax, %rdx
+	movq	%rdx, %rax
+	jmp	.L131
+.L133:
+	movq	16(%rbp), %rax
+	movl	64(%rax), %eax
+	cmpl	$2, %eax
+	je	.L134
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, %rdx
+	jbe	.L135
+.L134:
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	subq	%rax, %rdx
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	addq	%rdx, %rax
+	jmp	.L131
+.L135:
+	movl	$0, %eax
+.L131:
+	popq	%rbp
+	ret
+	.seh_endproc
+	.globl	CBQ_GetFullInfo
+	.def	CBQ_GetFullInfo;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_GetFullInfo
+CBQ_GetFullInfo:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$32, %rsp
+	.seh_stackalloc	32
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movq	%r8, 32(%rbp)
+	movq	%r9, 40(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L137
+	movl	$3, %eax
+	jmp	.L138
+.L137:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L139
+	movl	$1, %eax
+	jmp	.L138
+.L139:
+	cmpq	$0, 24(%rbp)
+	je	.L140
+	movq	16(%rbp), %rax
+	movl	64(%rax), %edx
+	movq	24(%rbp), %rax
+	movl	%edx, (%rax)
+.L140:
+	cmpq	$0, 32(%rbp)
+	je	.L141
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rdx
+	movq	32(%rbp), %rax
+	movq	%rdx, (%rax)
+.L141:
+	cmpq	$0, 40(%rbp)
+	je	.L142
+	movq	16(%rbp), %rcx
+	call	CBQ_GetCallAmount
+	movq	40(%rbp), %rdx
+	movq	%rax, (%rdx)
+.L142:
+	cmpq	$0, 48(%rbp)
+	je	.L143
+	movq	16(%rbp), %rax
+	movl	24(%rax), %edx
+	movq	48(%rbp), %rax
+	movl	%edx, (%rax)
+.L143:
+	cmpq	$0, 56(%rbp)
+	je	.L144
+	movq	16(%rbp), %rax
+	movq	32(%rax), %rdx
+	movq	56(%rbp), %rax
+	movq	%rdx, (%rax)
+.L144:
+	movl	$0, %eax
+.L138:
+	addq	$32, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.globl	CBQ_strIntoHeap
+	.def	CBQ_strIntoHeap;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_strIntoHeap
+CBQ_strIntoHeap:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$48, %rsp
+	.seh_stackalloc	48
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	$0, -8(%rbp)
+	jmp	.L146
+.L147:
+	addq	$1, -8(%rbp)
+.L146:
+	movq	16(%rbp), %rdx
+	movq	-8(%rbp), %rax
+	addq	%rdx, %rax
+	movzbl	(%rax), %eax
+	testb	%al, %al
+	jne	.L147
+	movq	-8(%rbp), %rax
+	movq	%rax, %rcx
+	call	malloc
+	movq	%rax, -16(%rbp)
+	jmp	.L148
+.L149:
+	movq	16(%rbp), %rdx
+	movq	-8(%rbp), %rax
+	addq	%rdx, %rax
+	movq	-16(%rbp), %rcx
+	movq	-8(%rbp), %rdx
+	addq	%rcx, %rdx
+	movzbl	(%rax), %eax
+	movb	%al, (%rdx)
+.L148:
+	movq	-8(%rbp), %rax
+	leaq	-1(%rax), %rdx
+	movq	%rdx, -8(%rbp)
+	testq	%rax, %rax
+	jne	.L149
+	movq	-16(%rbp), %rax
+	addq	$48, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+	.align 8
+.LC14:
+	.ascii "Debug System status:\12* Assert-like macros is active\12* Drawing queue scheme is active\12* Output base log is active\12\0"
+	.text
+	.globl	CBQ_outDebugSysStatus__
+	.def	CBQ_outDebugSysStatus__;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_outDebugSysStatus__
+CBQ_outDebugSysStatus__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$32, %rsp
+	.seh_stackalloc	32
+	.seh_endprologue
+	leaq	.LC14(%rip), %rcx
+	call	puts
+	nop
+	addq	$32, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC15:
+	.ascii "Queue scheme:\0"
+.LC16:
+	.ascii "\12\0"
+	.text
+	.def	CBQ_drawScheme__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_drawScheme__
+CBQ_drawScheme__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$64, %rsp
+	.seh_stackalloc	64
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	leaq	.LC15(%rip), %rcx
+	call	puts
+	movq	$0, -8(%rbp)
+	jmp	.L153
+.L156:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	-8(%rbp), %rdx
+	salq	$5, %rdx
+	addq	%rdx, %rax
+	movq	%rax, -24(%rbp)
+	movq	-24(%rbp), %rax
+	movl	24(%rax), %eax
+	cmpl	$64, %eax
+	jle	.L154
+	movq	-24(%rbp), %rax
+	movl	24(%rax), %eax
+	cmpl	$90, %eax
+	jg	.L154
+	movq	-24(%rbp), %rax
+	movl	24(%rax), %eax
+	movsbl	%al, %eax
+	movl	%eax, %ecx
+	call	putchar
+	jmp	.L155
+.L154:
+	movl	$45, %ecx
+	call	putchar
+.L155:
+	addq	$1, -8(%rbp)
+.L153:
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, -8(%rbp)
+	jb	.L156
+	movl	$10, %ecx
+	call	putchar
+	movq	$0, -16(%rbp)
+	jmp	.L157
+.L162:
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	cmpq	%rax, -16(%rbp)
+	jne	.L158
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, -16(%rbp)
+	jne	.L158
+	movl	$98, %ecx
+	call	putchar
+	jmp	.L159
+.L158:
+	movq	16(%rbp), %rax
+	movq	48(%rax), %rax
+	cmpq	%rax, -16(%rbp)
+	jne	.L160
+	movl	$114, %ecx
+	call	putchar
+	jmp	.L159
+.L160:
+	movq	16(%rbp), %rax
+	movq	56(%rax), %rax
+	cmpq	%rax, -16(%rbp)
+	jne	.L161
+	movl	$115, %ecx
+	call	putchar
+	jmp	.L159
+.L161:
+	movl	$46, %ecx
+	call	putchar
+.L159:
+	addq	$1, -16(%rbp)
+.L157:
+	movq	16(%rbp), %rax
+	movq	8(%rax), %rax
+	cmpq	%rax, -16(%rbp)
+	jb	.L162
+	leaq	.LC16(%rip), %rcx
+	call	puts
+	movl	$1, %ecx
+	movq	__imp___acrt_iob_func(%rip), %rax
+	call	*%rax
+	movq	%rax, %rcx
+	call	fflush
+	nop
+	addq	$64, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.globl	CBQ_drawScheme_chk__
+	.def	CBQ_drawScheme_chk__;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_drawScheme_chk__
+CBQ_drawScheme_chk__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$48, %rsp
+	.seh_stackalloc	48
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	16(%rbp), %rax
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
+	jne	.L164
+	movl	$3, %eax
+	jmp	.L165
+.L164:
+	movq	-8(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L166
+	movl	$1, %eax
+	jmp	.L165
+.L166:
+	movq	-8(%rbp), %rax
+	movq	%rax, %rcx
+	call	CBQ_drawScheme__
+	movl	$0, %eax
+.L165:
+	addq	$48, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.globl	CBQ_SetTimeout
+	.def	CBQ_SetTimeout;	.scl	2;	.type	32;	.endef
+	.seh_proc	CBQ_SetTimeout
+CBQ_SetTimeout:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$96, %rsp
+	.seh_stackalloc	96
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movl	%edx, 24(%rbp)
+	movl	%r8d, 32(%rbp)
+	movq	%r9, 40(%rbp)
+	movl	$0, -8(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L168
+	movl	$3, %eax
+	jmp	.L175
+.L168:
+	movq	16(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L170
+	movl	$1, %eax
+	jmp	.L175
+.L170:
+	movq	40(%rbp), %rax
+	cmpq	16(%rbp), %rax
+	je	.L171
+	cmpq	$0, 40(%rbp)
+	jne	.L172
+	movl	$3, %eax
+	jmp	.L175
+.L172:
+	movq	40(%rbp), %rax
+	movl	(%rax), %eax
+	cmpl	$1363758665, %eax
+	je	.L171
+	movl	$1, %eax
+	jmp	.L175
+.L171:
+	cmpl	$0, 32(%rbp)
+	je	.L173
+	call	clock
+	movl	24(%rbp), %edx
+	imull	$1000, %edx, %edx
+	addl	%edx, %eax
+	movl	%eax, -4(%rbp)
+	jmp	.L174
+.L173:
+	call	clock
+	movl	24(%rbp), %edx
+	addl	%edx, %eax
+	movl	%eax, -4(%rbp)
+.L174:
+	movq	48(%rbp), %r8
+	movq	40(%rbp), %rcx
+	movl	$0, %eax
+	movl	-4(%rbp), %edx
+	movl	%edx, %r9d
+	movabsq	$-4294967296, %rdx
+	andq	%rdx, %rax
+	orq	%r9, %rax
+	movq	16(%rbp), %rdx
+	movq	64(%rbp), %r9
+	movl	56(%rbp), %r10d
+	movq	%r8, 64(%rsp)
+	movq	%rcx, 56(%rsp)
+	movq	%rax, 48(%rsp)
+	movq	%rdx, 40(%rsp)
+	movl	$4, 32(%rsp)
+	movl	%r10d, %r8d
+	leaq	CBQ_setTimeoutFrame__(%rip), %rdx
+	movq	16(%rbp), %rcx
+	call	CBQ_Push
+	movl	%eax, -8(%rbp)
+	movl	-8(%rbp), %eax
+.L175:
+	addq	$96, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.def	CBQ_setTimeoutFrame__;	.scl	3;	.type	32;	.endef
+	.seh_proc	CBQ_setTimeoutFrame__
+CBQ_setTimeoutFrame__:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	pushq	%rbx
+	.seh_pushreg	%rbx
+	subq	$104, %rsp
+	.seh_stackalloc	104
+	leaq	128(%rsp), %rbp
+	.seh_setframe	%rbp, 128
+	.seh_endprologue
+	movl	%ecx, 0(%rbp)
+	movq	%rdx, 8(%rbp)
+	movl	$0, -36(%rbp)
+	call	clock
+	movq	8(%rbp), %rdx
+	addq	$8, %rdx
+	movl	(%rdx), %edx
+	cmpl	%edx, %eax
+	jl	.L177
+	movq	8(%rbp), %rax
+	movq	(%rax), %rdx
+	movq	8(%rbp), %rax
+	addq	$16, %rax
+	movq	(%rax), %rax
+	cmpq	%rax, %rdx
+	jne	.L178
+	movq	8(%rbp), %rax
+	addq	$24, %rax
+	movq	(%rax), %rax
+	movq	8(%rbp), %rdx
+	addq	$32, %rdx
+	movl	0(%rbp), %ecx
+	subl	$4, %ecx
+	call	*%rax
+	movl	%eax, -36(%rbp)
+	jmp	.L179
+.L178:
+	movl	$0, %r9d
+	movq	8(%rbp), %rax
+	leaq	32(%rax), %r8
+	movl	0(%rbp), %eax
+	leal	-4(%rax), %ecx
+	movq	8(%rbp), %rax
+	addq	$24, %rax
+	movq	(%rax), %rdx
+	movq	8(%rbp), %rax
+	addq	$16, %rax
+	movq	(%rax), %rax
+	movq	%r9, 40(%rsp)
+	movl	$0, 32(%rsp)
+	movq	%r8, %r9
+	movl	%ecx, %r8d
+	movq	%rax, %rcx
+	call	CBQ_Push
+	movl	%eax, -36(%rbp)
+	jmp	.L179
+.L177:
+	movq	8(%rbp), %rax
+	addq	$24, %rax
+	movq	(%rax), %rax
+	movq	%rax, %rbx
+	movq	8(%rbp), %rax
+	addq	$16, %rax
+	movq	(%rax), %rax
+	movq	%rax, %r11
+	movl	$0, %eax
+	movq	8(%rbp), %rdx
+	addq	$8, %rdx
+	movl	(%rdx), %edx
+	movl	%edx, %ecx
+	movabsq	$-4294967296, %rdx
+	andq	%rdx, %rax
+	orq	%rcx, %rax
+	movq	8(%rbp), %rdx
+	movq	(%rdx), %rdx
+	movq	%rdx, %r9
+	cmpl	$4, 0(%rbp)
+	je	.L180
+	movq	8(%rbp), %rdx
+	leaq	32(%rdx), %r8
+	jmp	.L181
+.L180:
+	movl	$0, %r8d
+.L181:
+	movl	0(%rbp), %edx
+	leal	-4(%rdx), %r10d
+	movq	8(%rbp), %rdx
+	movq	(%rdx), %rcx
+	movq	%rbx, 64(%rsp)
+	movq	%r11, 56(%rsp)
+	movq	%rax, 48(%rsp)
+	movq	%r9, 40(%rsp)
+	movl	$4, 32(%rsp)
+	movq	%r8, %r9
+	movl	%r10d, %r8d
+	leaq	CBQ_setTimeoutFrame__(%rip), %rdx
+	call	CBQ_Push
+	movl	%eax, -36(%rbp)
+.L179:
+	movl	-36(%rbp), %eax
+	addq	$104, %rsp
+	popq	%rbx
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+	.align 16
+.LC6:
+	.long	0
+	.long	-2147483648
+	.long	16447
+	.long	0
+	.align 16
+.LC7:
+	.long	-858993459
+	.long	-1932735284
+	.long	16383
+	.long	0
+	.align 16
+.LC8:
+	.long	0
+	.long	-2147483648
+	.long	16446
+	.long	0
+	.ident	"GCC: (Rev2, Built by MSYS2 project) 9.2.0"
+	.def	malloc;	.scl	2;	.type	32;	.endef
+	.def	printf;	.scl	2;	.type	32;	.endef
+	.def	free;	.scl	2;	.type	32;	.endef
+	.def	realloc;	.scl	2;	.type	32;	.endef
+	.def	puts;	.scl	2;	.type	32;	.endef
+	.def	putchar;	.scl	2;	.type	32;	.endef
+	.def	fflush;	.scl	2;	.type	32;	.endef
+	.def	clock;	.scl	2;	.type	32;	.endef

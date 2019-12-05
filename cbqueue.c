@@ -149,6 +149,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
 
     CBQ_MSGPRINT("Queue size changing...");
 
+    /* by selected mode with auto-dec/inc params */
     if (changeTowards == CBQ_INC_SIZE) {
         errSt = CBQ_incSize__(queue, 0);
         if (errSt)
@@ -159,19 +160,20 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
         if (errSt)
             return errSt;
 
-    /* CBQ_CUSTOM_SIZE */
+    /* by new custom size */
     } else {
         if (customNewSize <= 0 || customNewSize > CBQ_QUEUE_MAX_SIZE)
             return CBQ_ERR_ARG_OUT_OF_RANGE;
 
         if (customNewSize == queue->size)
-            return 0;
+            return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
 
+        /* inc */
         if (customNewSize > queue->size) {
             errSt = CBQ_incSize__(queue, customNewSize);
             if (errSt)
                 return errSt;
-
+        /* dec */
         } else {
             errSt = CBQ_decSize__(queue, customNewSize);
             if (errSt)
@@ -284,7 +286,8 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
         oldSize++;
     } while (oldSize != newIncSize);
 
-    trustedQueue->status = CBQ_ST_STABLE;
+    if (trustedQueue->status == CBQ_ST_FULL)
+        trustedQueue->status = CBQ_ST_STABLE;
 
     CBQ_MSGPRINT("Queue size incremented");
     CBQ_DRAWSCHEME_IN(trustedQueue);
@@ -330,6 +333,16 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
     if (errSt)
         return errSt;
 
+    /* when after offset there is no free cell left */
+    if (trustedQueue->sId == newDecSize) {
+        trustedQueue->sId = 0;
+        trustedQueue->status = CBQ_ST_FULL;
+    }
+
+    /* if there are no cells to free or the new size is identical to the old */
+    if (trustedQueue->size == newDecSize)
+        return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
+
     /* free unused container args */
     for (size_t i = newDecSize; i < trustedQueue->size; i++)
         CBQ_COARGFREE_P__(trustedQueue->coArr[i]);
@@ -339,6 +352,10 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
     if (errSt)
         return errSt;
 
+    /* A minimum of one empty container is guaranteed
+     * even if the queue has been filled
+     */
+
     CBQ_MSGPRINT("Queue size decremented");
     CBQ_DRAWSCHEME_IN(trustedQueue);
 
@@ -347,12 +364,14 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
 
 size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newDecSize)
 {
-    size_t tmpSize, callsSize;
+    size_t callsSize;
 
     callsSize = CBQ_GetCallAmount(trustedQueue);
 
+/* This code is give minimum one free cell
     if (newDecSize < MIN_SIZE || newDecSize < callsSize) {
-        /* Align new Size */
+        size_t tmpSize;
+        // align new Size
         tmpSize = (size_t)((long double) callsSize * DEC_BUFF_PERC);
 
         if (!tmpSize || tmpSize > newDecSize)
@@ -360,8 +379,14 @@ size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newDecSize)
         else
             newDecSize = tmpSize;
     }
+*/
+    /* bound of size minimum */
+    if (newDecSize < callsSize)
+        newDecSize = callsSize;
+    if (newDecSize < MIN_SIZE)
+        newDecSize = MIN_SIZE;
 
-    /* it is worth reducing the inc size */
+    // it is worth reducing the inc size
     if (trustedQueue->incSize > INIT_INC_SIZE)
         trustedQueue->incSize >>= 1;
 
