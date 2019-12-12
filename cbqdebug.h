@@ -1,6 +1,10 @@
 #ifndef CBQDEBUG_H
 #define CBQDEBUG_H
 
+    #ifdef __cplusplus
+    extern "C" {
+    #endif // __cplusplus
+
 /* set that macros define to activate
  debug mode before including cbq headers */
 
@@ -90,5 +94,10 @@
             ((void)0)
 
     #endif // CBQD_SCHEME
+
+
+    #ifdef __cplusplus
+    }
+    #endif // __cplusplus
 
 #endif // CBQDEBUG_H

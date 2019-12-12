@@ -85,6 +85,19 @@ int counterPusherCB(int argc, CBQArg_t* argv)
     return 0;
 }
 
+#define ALPH_SIZE 26
+
+/*
+void CBQ_drawArgpAsChars__(CBQueue_t* trustedQueue)
+{
+    struct CBQContainer_t* co_r;
+    for (size_t i = 0; i < trustedQueue->size; i++) {
+        co_r = *trustedQueue->coArr[i];
+        printf("%c", co_r->args % ALPH_SIZE + 'a');
+    }
+    printf("\n");
+} */
+
 #if defined(_INC_CONIO) || defined(CONIO_H)
 void CBQ_T_ControlTest(void)
 {
@@ -196,6 +209,7 @@ void CBQ_T_ControlTest(void)
 
         printf("Status: %d, size: " SZ_PRTF ", engaged size: "
         SZ_PRTF " run in CB: %s\n", qStatus, qSize, qEngagedSize, inCB? "true" : "false");
+        // drawArgpAsChars(&queue);
 
     } while(!quit);
 
@@ -639,5 +653,3 @@ void CBQ_T_SetTimeout_AutoGame(void)
 
     ASRT(CBQ_QueueFree(&queue),"Failed to free")
 }
-
-

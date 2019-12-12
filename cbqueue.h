@@ -1,8 +1,12 @@
 #ifndef CBQUEUE_H
 #define CBQUEUE_H
 
+    #ifdef __cplusplus
+    extern "C" {
+    #endif // __cplusplus
+
     /* At c99 */
-    #if __STDC_VERSION__ < 199901L
+    #if !defined(__cplusplus) && __STDC_VERSION__ < 199901L
         #error Needs "c99" version
     #endif
 
@@ -225,5 +229,9 @@ int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* g
     int* getSizeMode, size_t* getSizeMaxLimit);
 
 ////////////////////////////////////////////////////////////////////////////////
+
+    #ifdef __cplusplus
+    }
+    #endif // __cplusplus
 
 #endif // CBQUEUE_H
