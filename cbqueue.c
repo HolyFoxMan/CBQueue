@@ -4,8 +4,8 @@
 static int CBQ_containerInit__(CBQContainer_t*);
 static int CBQ_reallocSizeToAccepted__(CBQueue_t*, size_t);
 static int CBQ_offsetToBeginning__(CBQueue_t*);
-static void CBQ_containersSwapping__(POT_REG CBQContainer_t*, POT_REG CBQContainer_t*, POT_REG size_t);
-static void CBQ_containersCopy__(POT_REG CBQContainer_t*, POT_REG CBQContainer_t*, POT_REG size_t);
+static void CBQ_containersSwapping__(POT_REG CBQContainer_t*, POT_REG CBQContainer_t*, POT_REG size_t, int);
+static void CBQ_containersCopy__(POT_REG CBQContainer_t*, POT_REG CBQContainer_t*, POT_REG size_t, int);
 
 /* Incrementation */
 static size_t CBQ_calcNewIncSize__(CBQueue_t*);
@@ -409,11 +409,17 @@ int CBQ_reallocSizeToAccepted__(CBQueue_t* trustedQueue, size_t newSize)
 
 /* Offset function was designed to resize to a greater or lesser degree in realloc function.
  * The function puts the queue in order from its various states in which resizing would be difficult.
- *
+ * In some cases, data is exchanged between cells, this is done to save information about allocated memory
+ * for arguments in free cells. There is memory information for each cell. For this reason, information
+ * in empty cells cannot be ignored.
+ * Important information! After processing the full queue, the store pointer will be outside
+ * (equal to the current queue size).
  */
 int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
 {
-    register size_t i, j;    // universal iteration variables
+    /* vars, that are used in #4, #5 and #6 cases */
+    register size_t i;        // universal iteration variable
+    CBQContainer_t* tmpCoArr; // temp memory space for cells
 
     /* ------b---------
      * b---------------
@@ -426,6 +432,7 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
         trustedQueue->rId = trustedQueue->sId = 0;
         return 0;
     }
+// end of #1
 
     /* s-----r+++++++++
      * ------r+++++++++s
@@ -440,7 +447,7 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
      */
     if (!trustedQueue->sId)
         trustedQueue->sId = trustedQueue->size;
-
+// end of #2
 
     /* r+++++++++s------
      */
@@ -450,76 +457,104 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
      */
     if (!trustedQueue->rId)
         return 0;
-
+// end of #3
 
     /* ------r+++++++++s
      * r+++++++++s------
      */
-    /* #4 Simple part where reader with cycle offsets. It moves elements to start
+    /* #4 Simple part where reader with cycle swapping. It swap elements to start
      * at first enganged index (at read pointer) to last. Once the store pointer
      * is on the first idle cell. By #1 processing with filled from read pointer
      * to end of array is possible in this stage.
      */
     if (trustedQueue->rId < trustedQueue->sId) {
 
-    /* j - the number of iterations or a new storage pointer position (after offsets) */
-    j = trustedQueue->sId - trustedQueue->rId;
-    CBQ_containersSwapping__(trustedQueue->coArr + trustedQueue->rId, trustedQueue->coArr, j);
+    i = trustedQueue->sId - trustedQueue->rId; // the number of iterations or a new storage pointer position (after offsets)
+    CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId), trustedQueue->coArr, i, 0);
+// end of #4
 
+    /* ++s------r+++++++
+     * ++-------~~~~~~~~    (move cells in temp at r point)
+     * ~~-------~~~~~~~~    (in temp all engaged cells)
+     *           -------    (swap free cells with last by reverse iterations)
+     * ++++++++++-------    (move from temp)
+     * r+++++++++s------
+     *
+     * second case (full queue):
+     * +++++++++b+++++++
+     * +++++++++~~~~~~~~
+     * ~~~~~~~~~~~~~~~~~    (no free cells for swapping)
+     * +++++++++++++++++
+     * r++++++++++++++++s
+     */
+    /* #5, #6 The last queue states is where st. pointer returns to start cells in array
+     * and its index has become less than index of read pointer or equal to that.
+     * Situation where any pointers indicates first cell will not occure on that stage.
+     * There are two options - when we have free cells or not.
+     * In the first case all busy cells are written in restored order into allocated memory.
+     * Then the free cells are shifted to the end of the array by swapping.
+     * Here the situation is similar to #4 part, but now the cells are changing from the end.
+     * After all, we copy back the occupied cells from the beginning.
+     * The second option (#6) requires less memory and cycles.
+     * We reserve the first half of the cells, shift the second to the beginning
+     * (as in # 4) and copy the first at the end.
+     */
+    } else if (trustedQueue->status == CBQ_ST_STABLE) {
 
+        i = CBQ_GetCallAmount(trustedQueue); // as new sId pos
+
+        tmpCoArr = (CBQContainer_t*) malloc(sizeof(CBQContainer_t) * i);
+        if (tmpCoArr == NULL)
+            return CBQ_ERR_MEM_ALLOC_FAILED;
+
+        /* copy cells between rId and last cell */
+        CBQ_containersCopy__(trustedQueue->coArr + (trustedQueue->rId), tmpCoArr, trustedQueue->size - trustedQueue->rId, 0);
+        /* copy cells before sId into next free cells */
+        CBQ_containersCopy__(trustedQueue->coArr, tmpCoArr + (trustedQueue->size - trustedQueue->rId), trustedQueue->sId, 0);
+        /* copy space of free cells to end of array with swap in reverse (to avoid data overlay) */
+        CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId - 1), // at last free cell
+                                 trustedQueue->coArr + (trustedQueue->size - 1), trustedQueue->size - i, 1);
+        /* copy to start array from temp */
+        CBQ_containersCopy__(tmpCoArr, trustedQueue->coArr, i, 0);
+
+        free(tmpCoArr);
+// end of #5
+
+    /* #6 */
     } else {
-        /* ++s------r+++++++
-         * ---------++++++++    (temp: ++)
-         * ++++++++---------    (temp: ++)
-         * ++++++++++-------
-         * r+++++++++s------
-         * same example:
-         * +++++++++b+++++++
-         * ---------++++++++    (temp: +++++++++)
-         * ++++++++---------    (temp: +++++++++)
-         * +++++++++++++++++
-         * r++++++++++++++++s
-         */
-        /* #5 The last queue states is where st. pointer returns to start cells in array
-         * and its index has become less than index of read pointer or equal to that.
-         * Situation where any pointers indicates first cell will not occure on that stage.
-         * Before moves cells at rd. pointer the stage saves data of engaged cells before
-         * st. pointer in heap memory. And after that saved data is moved to cells
-         * at rd. pointer. This is similar to the usual swap of values between two variables
-         * with using of third (buffer) variable.
-         * This is not the best practice but this can be replaced by a better alternative.
-         */
-        CBQContainer_t* tmpCoArr;
-
         tmpCoArr = (CBQContainer_t*) malloc(sizeof(CBQContainer_t) * trustedQueue->sId);
         if (tmpCoArr == NULL)
             return CBQ_ERR_MEM_ALLOC_FAILED;
 
-        CBQ_containersCopy__(trustedQueue->coArr, tmpCoArr, trustedQueue->sId);
-
-        /* j - num of cells at red point to end of array */
- //       j = trustedQueue->size - trustedQueue->rId;
- //       CBQ_containersSwapping__(trustedQueue->coArr + trustedQueue->rId, trustedQueue->coArr, j);
-
-        for (i = trustedQueue->rId, j = 0; i < trustedQueue->size; i++, j++)
-            trustedQueue->coArr[j] = trustedQueue->coArr[i];
-
-        //CBQ_containersCopy__()
-        for (i = 0; i < trustedQueue->sId; i++, j++)
-            trustedQueue->coArr[j] = tmpCoArr[i];
+        /* copy cells before sId into temp */
+        CBQ_containersCopy__(trustedQueue->coArr, tmpCoArr, trustedQueue->sId, 0);
+        i = trustedQueue->size - trustedQueue->rId; // get size of second part
+        /* swap cells with second part */
+        CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId), trustedQueue->coArr, i, 0);
+        /* copy first part into place after seconf part */
+        CBQ_containersCopy__(tmpCoArr, trustedQueue->coArr + (i), trustedQueue->sId, 0);
+        i = trustedQueue->size; // to outside (for new sId index)
 
         free(tmpCoArr);
     }
+// end of #6
 
-    /* After #4 or #5 stages pointers gets new indexes. New value of st. pointer
-     * was recieved after offset last cell. And this indicates the first idle cell
-     * not engaged if that queue is full.
+    /* After #4, #5 or #6 stages pointers gets new indexes. New value of st. pointer
+     * was recieved after last cell. If the queue is completed, then the pointer
+     * will be outside the array (equal to the current size).
+     * This will change as necessary after this function.
      */
     trustedQueue->rId = 0;
-    trustedQueue->sId = j;
+    trustedQueue->sId = i;
 
     return 0;
 }
+
+#define SWAP_BY_TEMP(A, B, TEMP) \
+    TEMP = B; \
+    B = A; \
+    A = TEMP
+
 
 /* Accelerated cycle
  * srcp, destp - pointers of areas in queue
@@ -528,23 +563,32 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
  * tmpCo - for swaping memory info (not pointer)
  */
 /* POT_REG - potential register var, same as register, if 64 compile */
-void CBQ_containersSwapping__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* destp, POT_REG size_t len)
+void CBQ_containersSwapping__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* destp, POT_REG size_t len, int reverse_iter)
 {
     CBQContainer_t tmpCo;
 
-    do {    // data swap (memory information)
-        tmpCo = *destp;
-        *destp = *srcp;
-        *srcp = tmpCo;  // destp data
-        ++srcp, ++destp;
-    } while(--len);
+    if (reverse_iter)
+        do {    // data swap (memory information)
+            SWAP_BY_TEMP(*srcp, *destp, tmpCo);
+            --srcp, --destp;
+        } while(--len);
+    else
+        do {    // data swap (memory information)
+            SWAP_BY_TEMP(*srcp, *destp, tmpCo);
+            ++srcp, ++destp;
+        } while(--len);
 }
 
-void CBQ_containersCopy__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* destp, POT_REG size_t len)
+void CBQ_containersCopy__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* destp, POT_REG size_t len, int reverse_iter)
 {
-    do {
-        *destp++ = *srcp++;
-    } while(--len);
+    if (reverse_iter)
+        do {
+            *destp-- = *srcp--;
+        } while(--len);
+    else
+        do {
+            *destp++ = *srcp++;
+        } while(--len);
 }
 
 /* ---------------- Container Args Methods ---------------- */
@@ -558,12 +602,6 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
     container->argMax = newSize;
-
-    return 0;
-}
-
-int CBQ_coSwapArgMemInfo(CBQContainer_t* cSrc, CBQContainer_t* cDest)
-{
 
     return 0;
 }
@@ -766,6 +804,8 @@ char* CBQ_strIntoHeap(const char* str)
 
     return buff;
 }
+
+/* Debug */
 
 #ifdef CBQD_STATUS
     void CBQ_outDebugSysStatus__(void)

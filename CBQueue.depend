@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1576143060 source:e:\coding\cbqueue\cbqtbase.c
+1576147036 source:e:\coding\cbqueue\cbqtbase.c
 	"cbqtest.h"
 
 1575232315 e:\coding\cbqueue\cbqtest.h
@@ -7,7 +7,7 @@
 	<conio.h>
 	"cbqueue.h"
 
-1576143369 e:\coding\cbqueue\cbqueue.h
+1576146931 e:\coding\cbqueue\cbqueue.h
 	<stdlib.h>
 	<time.h>
 	"cbqdebug.h"
@@ -15,7 +15,7 @@
 1576143099 e:\coding\cbqueue\cbqdebug.h
 	<stdio.h>
 
-1576142892 source:e:\coding\cbqueue\cbqueue.c
+1576194426 source:e:\coding\cbqueue\cbqueue.c
 	"cbqlocal.h"
 
 1575826035 e:\coding\cbqueue\cbqlocal.h
