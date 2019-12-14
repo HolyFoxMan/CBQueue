@@ -74,14 +74,19 @@ int counterCB(int argc, CBQArg_t* argv)
 {
     static int count = 0;
     count++;
-    printf("CB: counter is %d\n", count);
+    if (argc) {
+        printf("CB: func counter is %d, arg cointer: %d\n", count, argv[0].iVar);
+    if (argv[0].iVar != count)
+        printf("CB: Warning! Counter value mismatch\n");
+    } else
+        printf("CB: func counter is %d\n", count);
     fflush(stdout);
     return 0;
 }
 
 int counterPusherCB(int argc, CBQArg_t* argv)
 {
-    ASRT(CBQ_PushVoid(argv[0].qVar, counterCB), "Failed to push counter cb")
+    ASRT(CBQ_PushStatic(argv[0].qVar, counterCB, 1, (CBQArg_t) {.iVar = argv[1].iVar}), "Failed to push counter cb")
     return 0;
 }
 
@@ -108,6 +113,7 @@ void CBQ_T_ControlTest(void)
     size_t customSize,
         qSize,
         qEngagedSize;
+    static int counter = 0;
 
 //      resultByteSize;
 //  unsigned char* saveStateBuffer = NULL;
@@ -143,10 +149,11 @@ void CBQ_T_ControlTest(void)
 
             case 'P':
             case 'p': {
+                counter++;
                 if (!inCB)
-                    ASRT(CBQ_PushVoid(&queue, counterCB), "Failed to push")
+                    ASRT(CBQ_PushStatic(&queue, counterCB, 1, (CBQArg_t) {.iVar = counter}), "Failed to push")
                 else
-                    ASRT(CBQ_PushStatic(&queue, counterPusherCB, 1, (CBQArg_t) {.qVar = &queue}), "Failed to push")
+                    ASRT(CBQ_PushStatic(&queue, counterPusherCB, 2, (CBQArg_t) {.qVar = &queue}, (CBQArg_t) {.iVar = counter}), "Failed to push")
                 break;
             }
 
