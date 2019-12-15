@@ -765,6 +765,19 @@ size_t CBQ_GetCallAmount(CBQueue_t* queue)
     return 0;
 }
 
+size_t CBQ_GetSizeInBytes(CBQueue_t* queue)
+{
+    size_t bSize;
+
+    OPT_BASE_ERR_CHECK(queue);
+
+    bSize = sizeof(CBQueue_t) + queue->size * sizeof(CBQContainer_t);
+    for (size_t i = 0; i < queue->size; i++)
+        bSize += queue->coArr[i].argMax * sizeof(CBQArg_t);
+
+    return bSize;
+}
+
 int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
     int* getSizeMode, size_t* getSizeMaxLimit)
     {

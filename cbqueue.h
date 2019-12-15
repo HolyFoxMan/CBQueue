@@ -224,7 +224,7 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
     (TRUSTED_QUEUE).size
 
 size_t CBQ_GetCallAmount(CBQueue_t* queue);
-
+size_t CBQ_GetSizeInBytes(CBQueue_t* queue);
 int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
     int* getSizeMode, size_t* getSizeMaxLimit);
 
