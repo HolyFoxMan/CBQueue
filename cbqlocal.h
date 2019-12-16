@@ -77,6 +77,23 @@
 
     };
 
+    #define CBQ_ALLOC_METHODS 1
+    #if CBQ_ALLOC_METHODS == 1     // POSIX
+
+        #define CBQ_MALLOC(size) \
+            malloc(size)
+        #define CBQ_REALLOC(pointer, size) \
+            realloc(pointer, size)
+        #define CBQ_MEMFREE(pointer) \
+            free(pointer)
+
+    #endif
+
+    #define SWAP_BY_TEMP(A, B, TEMP) \
+    TEMP = B; \
+    B = A; \
+    A = TEMP
+
     #define BASE_ERR_CHECK(QUEUE) \
         if ((QUEUE) == NULL) \
             return CBQ_ERR_ARG_NULL_POINTER; \

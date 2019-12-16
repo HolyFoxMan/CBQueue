@@ -18,7 +18,7 @@ static size_t CBQ_decSizeAlignment__(CBQueue_t*, size_t);
 
 static int CBQ_coIncMaxArgSize__(CBQContainer_t*, size_t);
 #define CBQ_COARGFREE_P__(P_CONTAINER) \
-    free(P_CONTAINER.args)
+    CBQ_MEMFREE(P_CONTAINER.args)
 
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 
@@ -94,14 +94,21 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLim
     } else
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
-    iniQueue.coArr = (CBQContainer_t*) malloc( sizeof(CBQContainer_t) * size);
+    iniQueue.coArr = (CBQContainer_t*) CBQ_MALLOC( sizeof(CBQContainer_t) * size);
     if (iniQueue.coArr == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
     /* Containers init */
     for (size_t i = 0; i < size; i++)
-        if (CBQ_containerInit__(&iniQueue.coArr[i]))
+        if (CBQ_containerInit__(&iniQueue.coArr[i])) {
+
+            do {  // when mem alloc failed
+                CBQ_COARGFREE_P__(&iniQueue.coArr[i]);
+            } while (--i >= 0);
+
+            CBQ_MEMFREE(iniQueue.coArr);
             return CBQ_ERR_MEM_ALLOC_FAILED;
+        }
 
     /* set init status */
     iniQueue.initSt = CBQ_IN_INITED;
@@ -129,7 +136,7 @@ int CBQ_QueueFree(CBQueue_t* queue)
         CBQ_COARGFREE_P__(queue->coArr[i]);
 
     /* free containers data */
-    free(queue->coArr);
+    CBQ_MEMFREE(queue->coArr);
 
     queue->initSt = CBQ_IN_FREE;
 
@@ -251,7 +258,7 @@ int CBQ_containerInit__(CBQContainer_t* container)
         #endif // CBQD_SCHEME
     };
 
-    tmpContainer.args = (CBQArg_t*) malloc( sizeof(CBQArg_t) * DEF_CO_ARG);
+    tmpContainer.args = (CBQArg_t*) CBQ_MALLOC( sizeof(CBQArg_t) * DEF_CO_ARG);
     if (tmpContainer.args == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
@@ -281,12 +288,24 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
     if (errSt)
         return errSt;
 
-    do {
-        errSt = CBQ_containerInit__(&trustedQueue->coArr[oldSize]);
-        if (errSt)
-            return errSt;
-        oldSize++;
-    } while (oldSize != newIncSize);
+    for (register size_t i = oldSize; i != newIncSize; i++) {
+        errSt = CBQ_containerInit__(&trustedQueue->coArr[i]);
+
+        if (errSt) {  // to initial state
+            while (i != oldSize) {
+                CBQ_COARGFREE_P__(trustedQueue->coArr[i]);
+                --i;
+            }
+
+            if (CBQ_reallocSizeToAccepted__(trustedQueue, oldSize))
+                return CBQ_ERR_MEM_ALLOC_FAILED; // totally failed
+
+            if (trustedQueue->sId == oldSize)
+                trustedQueue->sId = 0; // if in the past the queue was full
+
+            return CBQ_ERR_MEM_BUT_RESTORED;
+        }
+    }
 
     if (trustedQueue->status == CBQ_ST_FULL)
         trustedQueue->status = CBQ_ST_STABLE;
@@ -397,10 +416,13 @@ size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newDecSize)
 
 int CBQ_reallocSizeToAccepted__(CBQueue_t* trustedQueue, size_t newSize)
 {
+    void* reallocp; // for safety old data
 
-    trustedQueue->coArr = (CBQContainer_t*) realloc(trustedQueue->coArr, sizeof(CBQContainer_t) * newSize);
-    if (trustedQueue->coArr == NULL)
+    reallocp = CBQ_REALLOC(trustedQueue->coArr, sizeof(CBQContainer_t) * newSize);
+    if (reallocp == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
+
+    trustedQueue->coArr = (CBQContainer_t*) reallocp;
 
     trustedQueue->size = newSize;
 
@@ -503,7 +525,7 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
 
         i = CBQ_GetCallAmount(trustedQueue); // as new sId pos
 
-        tmpCoArr = (CBQContainer_t*) malloc(sizeof(CBQContainer_t) * i);
+        tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(sizeof(CBQContainer_t) * i);
         if (tmpCoArr == NULL)
             return CBQ_ERR_MEM_ALLOC_FAILED;
 
@@ -517,12 +539,12 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
         /* copy to start array from temp */
         CBQ_containersCopy__(tmpCoArr, trustedQueue->coArr, i, 0);
 
-        free(tmpCoArr);
+        CBQ_MEMFREE(tmpCoArr);
 // end of #5
 
     /* #6 */
     } else {
-        tmpCoArr = (CBQContainer_t*) malloc(sizeof(CBQContainer_t) * trustedQueue->sId);
+        tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(sizeof(CBQContainer_t) * trustedQueue->sId);
         if (tmpCoArr == NULL)
             return CBQ_ERR_MEM_ALLOC_FAILED;
 
@@ -535,7 +557,7 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
         CBQ_containersCopy__(tmpCoArr, trustedQueue->coArr + (i), trustedQueue->sId, 0);
         i = trustedQueue->size; // to outside (for new sId index)
 
-        free(tmpCoArr);
+        CBQ_MEMFREE(tmpCoArr);
     }
 // end of #6
 
@@ -549,12 +571,6 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
 
     return 0;
 }
-
-#define SWAP_BY_TEMP(A, B, TEMP) \
-    TEMP = B; \
-    B = A; \
-    A = TEMP
-
 
 /* Accelerated cycle
  * srcp, destp - pointers of areas in queue
@@ -571,12 +587,12 @@ void CBQ_containersSwapping__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer
         do {    // data swap (memory information)
             SWAP_BY_TEMP(*srcp, *destp, tmpCo);
             --srcp, --destp;
-        } while(--len);
+        } while (--len);
     else
         do {    // data swap (memory information)
             SWAP_BY_TEMP(*srcp, *destp, tmpCo);
             ++srcp, ++destp;
-        } while(--len);
+        } while (--len);
 }
 
 void CBQ_containersCopy__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* destp, POT_REG size_t len, int reverse_iter)
@@ -584,23 +600,26 @@ void CBQ_containersCopy__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* 
     if (reverse_iter)
         do {
             *destp-- = *srcp--;
-        } while(--len);
+        } while (--len);
     else
         do {
             *destp++ = *srcp++;
-        } while(--len);
+        } while (--len);
 }
 
 /* ---------------- Container Args Methods ---------------- */
 int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
 {
+    void* reallocp;
+
     if (newSize > MAX_CO_ARG)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
-    container->args = (CBQArg_t*) realloc(container->args, sizeof(CBQArg_t) * newSize);
-    if (container->args == NULL)
+    reallocp = CBQ_REALLOC(container->args, sizeof(CBQArg_t) * newSize);
+    if (reallocp == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
+    container->args = (CBQArg_t*) reallocp;
     container->argMax = newSize;
 
     return 0;
@@ -779,7 +798,7 @@ size_t CBQ_GetSizeInBytes(CBQueue_t* queue)
 }
 
 int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
-    int* getSizeMode, size_t* getSizeMaxLimit)
+    int* getSizeMode, size_t* getSizeMaxLimit, size_t* getSizeInBytes)
     {
         BASE_ERR_CHECK(queue);
 
@@ -798,6 +817,9 @@ int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* g
         if (getSizeMaxLimit)
             *getSizeMaxLimit = queue->sizeMaxLimit;
 
+        if (getSizeInBytes)
+            *getSizeInBytes = CBQ_GetSizeInBytes(queue);
+
         return 0;
     }
 
@@ -810,9 +832,9 @@ char* CBQ_strIntoHeap(const char* str)
     while (str[size])
         size++;
 
-    buff = (char*) malloc(sizeof (char) * size);
+    buff = (char*) CBQ_MALLOC(sizeof (char) * size);
 
-    while(size--)
+    while (size--)
         buff[size] = str[size];
 
     return buff;

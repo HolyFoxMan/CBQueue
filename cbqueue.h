@@ -145,6 +145,7 @@
         CBQ_ERR_ARG_NULL_POINTER,
         CBQ_ERR_ARG_OUT_OF_RANGE,
         CBQ_ERR_MEM_ALLOC_FAILED,
+        CBQ_ERR_MEM_BUT_RESTORED,
         CBQ_ERR_STATIC_SIZE_OVERFLOW,
         CBQ_ERR_LIMIT_SIZE_OVERFLOW,
         CBQ_ERR_MAX_SIZE_OVERFLOW,
@@ -226,7 +227,7 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
 size_t CBQ_GetCallAmount(CBQueue_t* queue);
 size_t CBQ_GetSizeInBytes(CBQueue_t* queue);
 int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
-    int* getSizeMode, size_t* getSizeMaxLimit);
+    int* getSizeMode, size_t* getSizeMaxLimit, size_t* getSizeInBytes);
 
 ////////////////////////////////////////////////////////////////////////////////
 
