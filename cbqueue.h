@@ -185,6 +185,13 @@ int CBQ_QueueFree(CBQueue_t* queue);
 #define CBQ_PushVoid(queue, func) \
     CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, 0, CBQ_NO_STPARAMS)
 
+
+#define GET_ARG_COUNT(...) INTERNAL_GET_ARG_COUNT_PRIVATE(0, ## __VA_ARGS__, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+#define INTERNAL_GET_ARG_COUNT_PRIVATE(_0, _1_, _2_, _3_, _4_, _5_, _6_, _7_, _8_, _9_, _10_, _11_, _12_, _13_, _14_, _15_, _16_, _17_, _18_, _19_, _20_, count, ...) count
+#define CBQ_PushN(queue, func, ...) \
+    CBQ_Push(queue, func, GET_ARG_COUNT(__VA_ARGS__), (CBQArg_t[]) {__VA_ARGS__}, 0, CBQ_NO_STPARAMS)
+
+
 /* -------- set timeout macroses -------- */
 #define CBQ_SetTimeoutVoid(queue, delay, isSec, target_queue, func)  \
     CBQ_SetTimeout(queue, delay, isSec, target_queue, func, 0, CBQ_NO_VPARAMS)

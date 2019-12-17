@@ -427,6 +427,7 @@ int addAllNumsCB(int argc, CBQArg_t* args)
     for(i = 0, sum = 0; i < argc; i++)
         sum += args[i].iVar;
 
+    printf("Arg count: %d\n", argc);
     printf("CB: The sum is %d\n", sum);
 
     return 0;
@@ -474,6 +475,9 @@ int calcNumsCB(int argc, CBQArg_t* args)
     return 0;
 }
 
+#define P_LINE(EXP) \
+    printf("%s\n", MVAL_TO_STR(EXP))
+
 void CBQ_T_Params(void)
 {
     CBQueue_t queue;
@@ -511,6 +515,10 @@ void CBQ_T_Params(void)
     printf("Test with combine parameters: multiplication\n");
     ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with combine params")
     ASRT(CBQ_Exec(&queue, NULL), "Failed to exec with calculation")
+
+    CBQ_PushN(&queue, addAllNumsCB, {1}, {2}, {3}, {4}); // 10
+    // P_LINE(CBQ_PushN(&queue, addAllNumsCB, 1, 2, 3, 4));
+    CBQ_Exec(&queue, NULL);
 
     ASRT(CBQ_QueueFree(&queue),"Failed to free")
 }
