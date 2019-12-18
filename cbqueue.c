@@ -716,6 +716,72 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParam
     return 0;
 }
 
+int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams)
+{
+    int errSt;
+    CBQContainer_t* container;
+
+    /* base error checking */
+    OPT_BASE_ERR_CHECK(queue);
+
+    /* variable param check (optional), if only varParams pointer is null, vParamc not considered */
+    #ifndef NO_VPARAM_CHECK
+    if (varParams && varParamc <= 0)
+        return CBQ_ERR_VPARAM_VARIANCE;
+    #endif
+
+    /* status check */
+    if (queue->status == CBQ_ST_FULL) {
+
+        CBQ_MSGPRINT("Queue is full to push");
+
+        errSt = CBQ_incSize__(queue, 0);
+        if (errSt)
+            return errSt;
+
+        CBQ_MSGPRINT("Size incrementation was automatic");
+    }
+
+    /* set into container */
+    container = queue->coArr + queue->sId;  // container = &queue->coArr[queue->sId]
+
+    if (varParams) {
+
+        if (varParamc > container->argMax) {
+            errSt = CBQ_coIncMaxArgSize__(container, varParamc);
+            if (errSt)
+                return errSt;
+        }
+
+        CBQ_coCopyArgs__(varParams, container->args, varParamc);
+    }
+
+    container->argc = varParamc;
+    container->func = func;
+
+    /* debug for scheme */
+    #ifdef CBQD_SCHEME
+        container->label = queue->curLetter;
+        if (++queue->curLetter > 'Z')
+            queue->curLetter = 'A';
+    #endif // CBQD_SCHEME
+
+    /* store index */
+    queue->sId++;
+    if (queue->sId == queue->size)
+        queue->sId = 0;
+
+    if (queue->sId == queue->rId)
+        queue->status = CBQ_ST_FULL;
+    else
+        queue->status = CBQ_ST_STABLE;
+
+    CBQ_MSGPRINT("Queue is pushed");
+    CBQ_DRAWSCHEME_IN(queue);
+
+    return 0;
+}
+
 inline int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
 {
     CBQContainer_t* container;
