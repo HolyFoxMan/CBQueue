@@ -16,7 +16,7 @@
 
     /* Maximum (unstable) size of queue is 65536 */
 
-    /* ---------------- UNSAFETY MACROSES ---------------- */
+    /* ---------------- UNSAFETY MACROS ---------------- */
 
     /* Turn on that define if dont want base queue check on following methods:
      * push
@@ -36,6 +36,9 @@
 
     /* Register vars in functions with cycle (copy data) */
     #define REG_CYCLE_VARS
+
+    /* Do not restore memory after unsuccessful allocation (There will be a memory leak) */
+    // #define NO_REST_MEM_FAIL
 
     /* ---------------- UNSAFETY MACROSES ---------------- */
 
@@ -61,7 +64,7 @@
         char            cVar;                 // char
         char*           sVar;                 // string
         void*           pVar;                 // pointer (need explicit type conversion before using)
-        struct CBQueue_t*  qVar;          // pointer to queue in which can send new call
+        struct CBQueue_t*  qVar;       // pointer to queue in which can send new call
         int (*fVar)(int, CBQArg_t*);   // function pointer
 
     };

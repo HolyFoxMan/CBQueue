@@ -7,6 +7,8 @@ static int CBQ_reallocSizeToAccepted__(CBQueue_t*, size_t);
 static int CBQ_offsetToBeginning__(CBQueue_t*);
 static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, int);
 static void CBQ_containersCopy__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, int);
+static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, int);
+static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
 
 /* Incrementation */
 static size_t CBQ_calcNewIncSize__(CBQueue_t*);
@@ -21,8 +23,6 @@ static size_t CBQ_decSizeAlignment__(CBQueue_t*, size_t);
 /* Arguments */
 static int CBQ_coIncMaxArgSize__(CBQContainer_t*, size_t);
 static void CBQ_coCopyArgs__(MAY_REG CBQArg_t*, MAY_REG CBQArg_t*, MAY_REG int);
-#define CBQ_COARGFREE_P__(P_CONTAINER) \
-    CBQ_MEMFREE(P_CONTAINER.args)
 
 /* Callbacks */
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
@@ -65,6 +65,7 @@ static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit)
 {
+    int errSt;
     CBQueue_t iniQueue = {
         #ifndef NO_EXCEPTIONS_OF_BUSY
         .execSt = CBQ_EST_NO_EXEC,
@@ -104,16 +105,9 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLim
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
     /* Containers init */
-    for (size_t i = 0; i < size; i++)
-        if (CBQ_containerInit__(&iniQueue.coArr[i])) {
-
-            do {  // when mem alloc failed
-                CBQ_COARGFREE_P__(&iniQueue.coArr[i]);
-            } while (--i >= 0);
-
-            CBQ_MEMFREE(iniQueue.coArr);
-            return CBQ_ERR_MEM_ALLOC_FAILED;
-        }
+    errSt = CBQ_containersRangeInit__(iniQueue.coArr, size, REST_MEM);
+    if (errSt)
+        return errSt;
 
     /* set init status */
     iniQueue.initSt = CBQ_IN_INITED;
@@ -137,8 +131,7 @@ int CBQ_QueueFree(CBQueue_t* queue)
     #endif // NO_EXCEPTIONS_OF_BUSY
 
     /* free args data in containers */
-    for (size_t i = 0; i < queue->size; i++)
-        CBQ_COARGFREE_P__(queue->coArr[i]);
+    CBQ_containersRangeFree__(queue->coArr, queue->size);
 
     /* free containers data */
     CBQ_MEMFREE(queue->coArr);
@@ -272,6 +265,40 @@ int CBQ_containerInit__(CBQContainer_t* container)
     return 0;
 }
 
+int CBQ_containersRangeInit__(CBQContainer_t* coFirst, size_t len, int restore_pos_fail)
+{
+    MAY_REG CBQContainer_t* container = coFirst;
+    MAY_REG int iLen = len;
+    int errSt = 0;
+
+    do {
+        if (CBQ_containerInit__(container)) {
+            errSt = CBQ_ERR_MEM_ALLOC_FAILED;
+            break;
+        }
+        container++;
+    } while (--iLen);
+
+    if (errSt) {
+        if (!restore_pos_fail)
+            return CBQ_ERR_MEM_ALLOC_FAILED;
+
+        CBQ_containersRangeFree__(coFirst, len - iLen);
+
+        return CBQ_ERR_MEM_BUT_RESTORED;
+    }
+
+    return 0;
+}
+
+void CBQ_containersRangeFree__(MAY_REG CBQContainer_t* container, MAY_REG size_t len)
+{
+    do {
+        CBQ_MEMFREE(container->args);
+        container++;
+    } while (--len);
+}
+
 int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
 {
     int errSt;
@@ -293,14 +320,9 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
     if (errSt)
         return errSt;
 
-    for (register size_t i = oldSize; i != newIncSize; i++) {
-        errSt = CBQ_containerInit__(&trustedQueue->coArr[i]);
-
-        if (errSt) {  // to initial state
-            while (i != oldSize) {
-                CBQ_COARGFREE_P__(trustedQueue->coArr[i]);
-                --i;
-            }
+    /* init new allocated containers */
+    errSt = CBQ_containersRangeInit__(trustedQueue->coArr + oldSize, newIncSize - oldSize, REST_MEM);
+    if (errSt) {
 
             if (CBQ_reallocSizeToAccepted__(trustedQueue, oldSize))
                 return CBQ_ERR_MEM_ALLOC_FAILED; // totally failed
@@ -308,8 +330,7 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
             if (trustedQueue->sId == oldSize)
                 trustedQueue->sId = 0; // if in the past the queue was full
 
-            return CBQ_ERR_MEM_BUT_RESTORED;
-        }
+        return errSt;
     }
 
     if (trustedQueue->status == CBQ_ST_FULL)
@@ -370,8 +391,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
     }
 
     /* free unused container args */
-    for (size_t i = newDecSize; i < trustedQueue->size; i++)
-        CBQ_COARGFREE_P__(trustedQueue->coArr[i]);
+    CBQ_containersRangeFree__(trustedQueue->coArr + newDecSize, trustedQueue->size - newDecSize);
 
     /* mem reallocation */
     errSt = CBQ_reallocSizeToAccepted__(trustedQueue, newDecSize);

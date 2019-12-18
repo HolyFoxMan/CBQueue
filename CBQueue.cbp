@@ -56,7 +56,6 @@
 					<Add option="-std=c99" />
 					<Add option="-Og" />
 					<Add option="-g" />
-					<Add option="-DCBQ_DEBUG" />
 				</Compiler>
 			</Target>
 		</Build>

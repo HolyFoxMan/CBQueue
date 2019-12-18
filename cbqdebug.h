@@ -5,12 +5,12 @@
     extern "C" {
     #endif // __cplusplus
 
-/* set that macros define to activate
+/* set that macro define to activate
  debug mode before including cbq headers */
 
     #define CBQ_DEBUG
 
-    /* CBQ_NO_DEBUG is predefined macros in compiler args */
+    /* CBQ_NO_DEBUG is predefined macro which must be sets in compiler args */
     #ifdef CBQ_NO_DEBUG
         #undef CBQ_DEBUG
     #endif // CBQ_NO_DEBUG
@@ -82,7 +82,7 @@
 
 
     #ifdef CBQD_SCHEME
-    /* use only macros function CBQ_DRAWSCHEME(), not that method */
+    /* use only macro function CBQ_DRAWSCHEME(), not that method */
     int CBQ_drawScheme_chk__(void* queue);
 
     #define CBQ_DRAWSCHEME(P_QUEUE) \

@@ -118,4 +118,10 @@
         #define MAY_REG
     #endif
 
+    #ifndef NO_REST_MEM_FAIL
+        #define REST_MEM 1
+    #else
+        #define REST_MEM 0
+    #endif
+
 #endif // CBQLOCAL_H
