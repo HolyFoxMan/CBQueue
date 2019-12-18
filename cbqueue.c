@@ -826,6 +826,10 @@ inline int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
     else
         *funcRetSt = container->func(container->argc, container->args);
 
+    #ifdef CBQD_SCHEME
+    queue->coArr[queue->rId].label = '-';
+    #endif
+
     /* read index */
     queue->rId++;
     if (queue->rId == queue->size)
@@ -843,9 +847,6 @@ inline int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
 
     CBQ_MSGPRINT("Queue is popped");
 
-    #ifdef CBQD_SCHEME
-    container->label = '-';
-    #endif
     CBQ_DRAWSCHEME_IN(queue);
 
     return 0;

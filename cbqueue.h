@@ -42,11 +42,11 @@
 
     /* ---------------- UNSAFETY MACROSES ---------------- */
 
-    /* Macros for callback without static parameters which set into 4 param in CBQ_Exec function */
+    /* Macro for callback without static parameters which set into 4 param in CBQ_Exec function */
     #define CBQ_NO_STPARAMS \
         (CBQArg_t) {0}
 
-    /* Macros for callback without scalable parameters, same as null macros
+    /* Macro for callback without scalable parameters, same as null macros
     */
     #define CBQ_NO_VPARAMS NULL
 
@@ -169,7 +169,7 @@
     enum {
         CBQ_CUSTOM_SIZE,
         CBQ_INC_SIZE,
-        CBQ_DEC_SIZE,
+        CBQ_DEC_SIZE
     };
 
 /* ---------------- Base methods ---------------- */
@@ -240,6 +240,19 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
 
 #define CBQ_GETSIZE(TRUSTED_QUEUE) \
     (TRUSTED_QUEUE).size
+
+#define CBQ_ISFULL_P(TRUSTED_QUEUE_POINTER) \
+    ((TRUSTED_QUEUE_POINTER)->status == 2)
+
+#define CBQ_ISFULL(TRUSTED_QUEUE) \
+    ((TRUSTED_QUEUE_POINTER).status == 2)
+
+#define CBQ_ISEMPTY_P(TRUSTED_QUEUE_POINTER) \
+    (!(TRUSTED_QUEUE_POINTER)->status)
+
+#define CBQ_ISEMPTY(TRUSTED_QUEUE) \
+    (!(TRUSTED_QUEUE_POINTER).status)
+
 
 size_t CBQ_GetCallAmount(CBQueue_t* queue);
 size_t CBQ_GetSizeInBytes(CBQueue_t* queue);

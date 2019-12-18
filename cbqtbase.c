@@ -103,6 +103,15 @@ void CBQ_drawArgpAsChars__(CBQueue_t* trustedQueue)
     printf("\n");
 } */
 
+int fillQueueCB(int argc, CBQArg_t* args)
+{
+    do {
+        ASRT(CBQ_PushN(args[0].qVar, add, {1}, {2}, {3}), "Failed to push in CB")
+    } while (!CBQ_ISFULL_P(args[0].qVar));
+        ASRT(CBQ_PushN(args[0].qVar, add, {1}, {2}, {3}), "Failed to push in CB")
+    return 0;
+}
+
 #if defined(_INC_CONIO) || defined(CONIO_H)
 void CBQ_T_ControlTest(void)
 {
@@ -136,6 +145,7 @@ void CBQ_T_ControlTest(void)
             case 'I': case 'i':
             case 'F': case 'f':
             case 'D': case 'd':
+            case 'N': case 'n':
             // case 'S': case 's':
             // case 'L': case 'l':
                 system("cls");
@@ -195,6 +205,12 @@ void CBQ_T_ControlTest(void)
             case 'f': {
                 inCB = !inCB;
                 ASRT(CBQ_DRAWSCHEME(&queue),"")
+                break;
+            }
+
+            case 'N':
+            case 'n': {
+                ASRT(CBQ_PushN(&queue, fillQueueCB, {.qVar = &queue}), "")
                 break;
             }
 /*
