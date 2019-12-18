@@ -1,11 +1,12 @@
 #include "cbqlocal.h"
 
 /* ---------------- local methods declaration ---------------- */
+/* Container Methods */
 static int CBQ_containerInit__(CBQContainer_t*);
 static int CBQ_reallocSizeToAccepted__(CBQueue_t*, size_t);
 static int CBQ_offsetToBeginning__(CBQueue_t*);
-static void CBQ_containersSwapping__(POT_REG CBQContainer_t*, POT_REG CBQContainer_t*, POT_REG size_t, int);
-static void CBQ_containersCopy__(POT_REG CBQContainer_t*, POT_REG CBQContainer_t*, POT_REG size_t, int);
+static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, int);
+static void CBQ_containersCopy__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, int);
 
 /* Incrementation */
 static size_t CBQ_calcNewIncSize__(CBQueue_t*);
@@ -16,10 +17,14 @@ static int CBQ_incSize__(CBQueue_t*, size_t);
 static int CBQ_decSize__(CBQueue_t*, size_t);
 static size_t CBQ_decSizeAlignment__(CBQueue_t*, size_t);
 
+
+/* Arguments */
 static int CBQ_coIncMaxArgSize__(CBQContainer_t*, size_t);
+static void CBQ_coCopyArgs__(MAY_REG CBQArg_t*, MAY_REG CBQArg_t*, MAY_REG int);
 #define CBQ_COARGFREE_P__(P_CONTAINER) \
     CBQ_MEMFREE(P_CONTAINER.args)
 
+/* Callbacks */
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 
 //  DEBUG MACRO-FUNCS                                                         //
@@ -579,7 +584,7 @@ int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
  * tmpCo - for swaping memory info (not pointer)
  */
 /* POT_REG - potential register var, same as register, if 64 compile */
-void CBQ_containersSwapping__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* destp, POT_REG size_t len, int reverse_iter)
+void CBQ_containersSwapping__(MAY_REG CBQContainer_t* srcp, MAY_REG CBQContainer_t* destp, MAY_REG size_t len, int reverse_iter)
 {
     CBQContainer_t tmpCo;
 
@@ -595,7 +600,7 @@ void CBQ_containersSwapping__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer
         } while (--len);
 }
 
-void CBQ_containersCopy__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* destp, POT_REG size_t len, int reverse_iter)
+void CBQ_containersCopy__(MAY_REG CBQContainer_t* srcp, MAY_REG CBQContainer_t* destp, MAY_REG size_t len, int reverse_iter)
 {
     if (reverse_iter)
         do {
@@ -607,7 +612,7 @@ void CBQ_containersCopy__(POT_REG CBQContainer_t* srcp, POT_REG CBQContainer_t* 
         } while (--len);
 }
 
-/* ---------------- Container Args Methods ---------------- */
+/* ---------------- Args Methods ---------------- */
 int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
 {
     void* reallocp;
@@ -625,14 +630,19 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
     return 0;
 }
 
+void CBQ_coCopyArgs__(MAY_REG CBQArg_t* src, MAY_REG CBQArg_t* dest, MAY_REG int num)
+{
+    do {
+        *dest++ = *src++;
+    } while (--num);
+}
+
 /* ---------------- Call Methods ---------------- */
 int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...)
 {
     int errSt,
-        argcAll,
-        i;
+        argcAll;
     CBQContainer_t* container;
-    CBQArg_t* args;
 
     /* base error checking */
     OPT_BASE_ERR_CHECK(queue);
@@ -661,7 +671,6 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParam
 
     /* set into container */
     container = &queue->coArr[queue->sId];
-    args = &stParams;
 
     if (varParams)
         argcAll = stParamc + varParamc;
@@ -675,13 +684,11 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParam
     }
 
     if (stParamc)
-        for (i = 0; i < stParamc; i++)
-            container->args[i] = args[i];
+        CBQ_coCopyArgs__(&stParams, container->args, stParamc);
 
     /* in CB after static params are variable params*/
     if (varParams)
-        for (i = 0; i < varParamc; i++)
-            container->args[i + stParamc] = varParams[i];
+        CBQ_coCopyArgs__(varParams, container->args + stParamc, varParamc);
 
     container->argc = argcAll;
     container->func = func;

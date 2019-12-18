@@ -112,10 +112,10 @@
     enum { ST_QUEUE, ST_DELAY, ST_TRG_QUEUE, ST_FUNC };
 
     /* storing 64 bit value in register */
-    #if defined(LP64) || defined(_LP64)
-        #define POT_REG register
+    #ifdef REG_CYCLE_VARS
+        #define MAY_REG register
     #else
-        #define POT_REG
+        #define MAY_REG
     #endif
 
 #endif // CBQLOCAL_H

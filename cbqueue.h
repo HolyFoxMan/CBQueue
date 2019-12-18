@@ -34,6 +34,9 @@
     /* No dynamic args in push method check */
     // #define NO_VPARAM_CHECK
 
+    /* Register vars in functions with cycle (copy data) */
+    #define REG_CYCLE_VARS
+
     /* ---------------- UNSAFETY MACROSES ---------------- */
 
     /* Macros for callback without static parameters which set into 4 param in CBQ_Exec function */
