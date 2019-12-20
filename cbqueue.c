@@ -3,26 +3,26 @@
 /* ---------------- local methods declaration ---------------- */
 /* Container Methods */
 static int CBQ_containerInit__(CBQContainer_t*);
-static int CBQ_reallocSizeToAccepted__(CBQueue_t*, size_t);
-static int CBQ_offsetToBeginning__(CBQueue_t*);
+static int CBQ_reallocSize__(CBQueue_t*, size_t);
+static int CBQ_orderingDividedSegs__(CBQueue_t*, size_t*);
+static int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t*);
 static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, int);
-static void CBQ_containersCopy__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, int);
+static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG CBQContainer_t *restrict, MAY_REG size_t);
 static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, int);
 static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
 
 /* Incrementation */
-static size_t CBQ_calcNewIncSize__(CBQueue_t*);
+static void CBQ_IncSizeChange__(CBQueue_t*, int);
 static int CBQ_incSizeCheck__(CBQueue_t*, size_t);
 static int CBQ_incSize__(CBQueue_t*, size_t);
 
 /* Decrementation */
 static int CBQ_decSize__(CBQueue_t*, size_t);
-static size_t CBQ_decSizeAlignment__(CBQueue_t*, size_t);
 
 
 /* Arguments */
 static int CBQ_coIncMaxArgSize__(CBQContainer_t*, size_t);
-static void CBQ_coCopyArgs__(MAY_REG CBQArg_t*, MAY_REG CBQArg_t*, MAY_REG int);
+static void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict, MAY_REG CBQArg_t *restrict, MAY_REG int);
 
 /* Callbacks */
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
@@ -172,25 +172,44 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
         if (customNewSize <= 0 || customNewSize > CBQ_QUEUE_MAX_SIZE)
             return CBQ_ERR_ARG_OUT_OF_RANGE;
 
-        if (customNewSize == queue->size)
-            return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
+        ssize_t delta = (ssize_t) (customNewSize - queue->size);
 
         /* inc */
-        if (customNewSize > queue->size) {
-            errSt = CBQ_incSize__(queue, customNewSize);
+        if (delta) {
+            errSt = CBQ_incSize__(queue, delta);
             if (errSt)
                 return errSt;
         /* dec */
-        } else {
-            errSt = CBQ_decSize__(queue, customNewSize);
+        } else if (delta < 0) {
+            errSt = CBQ_decSize__(queue, -delta);
             if (errSt)
                 return errSt;
-        }
+        } else
+            return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
     }
 
     return 0;
 }
 
+/*
+int CBQ_ChangeSizeIncMode(CBQueue_t* queue, int newSizeIncMode, size_t newSizeMaxLimit, int tryToAdapt)
+{
+    int errSt;
+    int oldSM;
+    size_t oldSML;
+
+    BASE_ERR_CHECK(queue);
+
+    if (newSizeIncMode == CBQ_SM_LIMIT) {
+
+    }
+
+    queue->sizeMode = newSizeIncMode;
+    queue->sizeMaxLimit = newSizeMaxLimit;
+
+    return 0;
+}
+*/
 /* This part is unused. Methods of save and rest queue was complicated
  * for stored pointers of structs, strings and functions.
  * It only makes sense to independently save this data,
@@ -299,39 +318,68 @@ void CBQ_containersRangeFree__(MAY_REG CBQContainer_t* container, MAY_REG size_t
     } while (--len);
 }
 
-int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
+int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
 {
     int errSt;
-    size_t oldSize;
+    int usedGeneratedIncrement;
 
-    oldSize = trustedQueue->size;
-    if (!newIncSize)
-        newIncSize = CBQ_calcNewIncSize__(trustedQueue);
+    /* Checking new size */
+    if (!delta) {
+        usedGeneratedIncrement = 1;
+        delta = trustedQueue->incSize;
+    } else
+        usedGeneratedIncrement = 0;
 
-    errSt = CBQ_incSizeCheck__(trustedQueue, newIncSize);
+    errSt = CBQ_incSizeCheck__(trustedQueue, trustedQueue->size + delta);
     if (errSt)
         return errSt;
 
-    errSt = CBQ_offsetToBeginning__(trustedQueue);
+    /* Ordering cells */
+    if (!trustedQueue->sId) {   // segments are not divided, only the store pointer is offset
+        trustedQueue->sId = trustedQueue->size;
+    }
+    else if (trustedQueue->sId < trustedQueue->rId) {    // when segments of occupied cells are divided
+        size_t new_sId;
+        errSt = CBQ_orderingDividedSegs__(trustedQueue, &new_sId);
+        if (errSt)
+            return errSt;
+        trustedQueue->rId = 0;
+        trustedQueue->sId = new_sId;
+    }
+    else if (trustedQueue->status == CBQ_ST_FULL)  { // segments are also divided and there are no empty cells.
+        errSt = CBQ_orderingDividedSegsInFullQueue__(trustedQueue);
+        if (errSt)
+            return errSt;
+        trustedQueue->rId = 0;
+        trustedQueue->sId = trustedQueue->size;
+    }
+
+    /* Realloc mem to new size */
+    errSt = CBQ_reallocSize__(trustedQueue, trustedQueue->size + delta);
     if (errSt)
         return errSt;
 
-    errSt = CBQ_reallocSizeToAccepted__(trustedQueue, newIncSize);
-    if (errSt)
-        return errSt;
-
-    /* init new allocated containers */
-    errSt = CBQ_containersRangeInit__(trustedQueue->coArr + oldSize, newIncSize - oldSize, REST_MEM);
+    /* Init new allocated containers */
+    errSt = CBQ_containersRangeInit__(trustedQueue->coArr + trustedQueue->size, delta, REST_MEM);
     if (errSt) {
 
-            if (CBQ_reallocSizeToAccepted__(trustedQueue, oldSize))
-                return CBQ_ERR_MEM_ALLOC_FAILED; // totally failed
+        if (errSt != CBQ_ERR_MEM_BUT_RESTORED)
+            return errSt;
 
-            if (trustedQueue->sId == oldSize)
-                trustedQueue->sId = 0; // if in the past the queue was full
+        if (CBQ_reallocSize__(trustedQueue, trustedQueue->size))
+            return CBQ_ERR_MEM_ALLOC_FAILED; // totally failed
+
+        if (trustedQueue->sId == trustedQueue->size)
+            trustedQueue->sId = 0; // if in the past the queue was full
 
         return errSt;
     }
+
+    if (usedGeneratedIncrement)
+        CBQ_IncSizeChange__(trustedQueue, 1); // Up
+
+    /* Sets new incremented size and status */
+    trustedQueue->size += delta;
 
     if (trustedQueue->status == CBQ_ST_FULL)
         trustedQueue->status = CBQ_ST_STABLE;
@@ -342,65 +390,103 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t newIncSize)
     return 0;
 }
 
- size_t CBQ_calcNewIncSize__(CBQueue_t* trustedQueue)
+void CBQ_IncSizeChange__(CBQueue_t* trustedQueue, int direction)
 {
-    size_t newIncSize;
-
-    newIncSize = trustedQueue->size + trustedQueue->incSize;
-
-    trustedQueue->incSize <<= 1;
-    if (trustedQueue->incSize > MAX_INC_SIZE)
-        trustedQueue->incSize = MAX_INC_SIZE;
-
-    return newIncSize;
+    if (direction)  { // Up
+        trustedQueue->incSize <<= 1;
+        if (trustedQueue->incSize > MAX_INC_SIZE)
+            trustedQueue->incSize = MAX_INC_SIZE;
+    } else {    // Down
+        trustedQueue->incSize >>= 1;
+        if (trustedQueue->incSize < INIT_INC_SIZE)
+            trustedQueue->incSize = INIT_INC_SIZE;
+    }
 }
 
-int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t newSize)
+int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t delta)
 {
     if (trustedQueue->sizeMode == CBQ_SM_STATIC)
         return CBQ_ERR_STATIC_SIZE_OVERFLOW;
 
-    if (trustedQueue->sizeMode == CBQ_SM_LIMIT && newSize > trustedQueue->sizeMaxLimit)
+    if (trustedQueue->sizeMode == CBQ_SM_LIMIT && (trustedQueue->size + delta) > trustedQueue->sizeMaxLimit)
         return CBQ_ERR_LIMIT_SIZE_OVERFLOW;
 
-    if (trustedQueue->sizeMode == CBQ_SM_MAX && newSize > CBQ_QUEUE_MAX_SIZE)
+    if (trustedQueue->sizeMode == CBQ_SM_MAX && (trustedQueue->size + delta) > CBQ_QUEUE_MAX_SIZE)
         return CBQ_ERR_MAX_SIZE_OVERFLOW;
 
     return 0;
 }
 
-int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
+int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta)
 {
     int errSt;
+    size_t minimal, engCellSize;
+    ssize_t remainder;
 
-    /* align or get new size */
-    newDecSize = CBQ_decSizeAlignment__(trustedQueue, newDecSize);
+    /* Check and align delta */
+    engCellSize = CBQ_GetCallAmount(trustedQueue);
+    minimal = engCellSize > MIN_SIZE ?
+        engCellSize :
+        MIN_SIZE;
 
-    /* if there are no cells to free or the new size is identical to the old */
-    if (newDecSize == trustedQueue->size)
+    if (!delta)
+        delta = trustedQueue->size - engCellSize;
+
+    remainder = trustedQueue->size - minimal;
+    if (!remainder)
         return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
 
-    errSt = CBQ_offsetToBeginning__(trustedQueue);
-    if (errSt)
-        return errSt;
+    remainder -= delta;
+    if (remainder < 0)
+        delta += remainder; // to delta balance
 
-    /* when after offset there is no free cell left */
-    if (trustedQueue->sId == newDecSize) {
+    /* Offset or ordeing cells (for 4 cases)*/
+    /* ---b--- -> b------ */
+    if (trustedQueue->status == CBQ_ST_EMPTY)
+        trustedQueue->rId = trustedQueue->sId = 0;
+    else if (trustedQueue->rId) {
+
+    /* s--r+++ -> ---r+++s */
+        if (!trustedQueue->sId)
+            trustedQueue->sId = trustedQueue->size;
+
+    /* --r++s- -> r++s---   (if for example delta == 3, size - sId == 2) */
+        if (trustedQueue->rId < trustedQueue->sId && (trustedQueue->size - trustedQueue->sId < delta))
+            CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId), trustedQueue->coArr, engCellSize, 0);
+    /* ++s--r+ -> r+++s-- */
+        else {
+            errSt = CBQ_orderingDividedSegs__(trustedQueue, NULL);
+            if (errSt)
+                return errSt;
+        }
+        trustedQueue->rId = 0;
+    }
+
+    /* Free unused container args */
+    CBQ_containersRangeFree__(trustedQueue->coArr + (trustedQueue->size - delta), delta);
+
+    /* Mem reallocation */
+    errSt = CBQ_reallocSize__(trustedQueue, trustedQueue->size - delta);
+    if (errSt) {    // mem alloc error
+
+        #if REST_MEM == 1
+        int errStRest = 0;
+        errStRest = CBQ_containersRangeInit__(trustedQueue->coArr, delta, 1);
+        if (!errStRest)
+            return CBQ_ERR_MEM_BUT_RESTORED;
+        #endif // REST_MEM
+
+        return errSt;
+    }
+
+    CBQ_IncSizeChange__(trustedQueue, 0); // when reducing the size, it is logical to reduce the incSize var
+
+    /* Sets new size and check sId */
+    trustedQueue->size -= delta;
+    if (!remainder) { // no free cells left
         trustedQueue->sId = 0;
         trustedQueue->status = CBQ_ST_FULL;
     }
-
-    /* free unused container args */
-    CBQ_containersRangeFree__(trustedQueue->coArr + newDecSize, trustedQueue->size - newDecSize);
-
-    /* mem reallocation */
-    errSt = CBQ_reallocSizeToAccepted__(trustedQueue, newDecSize);
-    if (errSt)
-        return errSt;
-
-    /* A minimum of one empty container is guaranteed
-     * even if the queue has been filled
-     */
 
     CBQ_MSGPRINT("Queue size decremented");
     CBQ_DRAWSCHEME_IN(trustedQueue);
@@ -408,38 +494,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t newDecSize)
     return 0;
 }
 
-size_t CBQ_decSizeAlignment__(CBQueue_t* trustedQueue, size_t newDecSize)
-{
-    size_t callsSize;
-
-    callsSize = CBQ_GetCallAmount(trustedQueue);
-
-/* This code is give minimum one free cell
-    if (newDecSize < MIN_SIZE || newDecSize < callsSize) {
-        size_t tmpSize;
-        // align new Size
-        tmpSize = (size_t)((long double) callsSize * DEC_BUFF_PERC);
-
-        if (!tmpSize || tmpSize > newDecSize)
-            newDecSize = callsSize + MIN_SIZE;
-        else
-            newDecSize = tmpSize;
-    }
-*/
-    /* bound of size minimum */
-    if (newDecSize < callsSize)
-        newDecSize = callsSize;
-    if (newDecSize < MIN_SIZE)
-        newDecSize = MIN_SIZE;
-
-    // it is worth reducing the inc size
-    if (trustedQueue->incSize > INIT_INC_SIZE)
-        trustedQueue->incSize >>= 1;
-
-    return newDecSize;
-}
-
-int CBQ_reallocSizeToAccepted__(CBQueue_t* trustedQueue, size_t newSize)
+int CBQ_reallocSize__(CBQueue_t* trustedQueue, size_t newSize)
 {
     void* reallocp; // for safety old data
 
@@ -449,150 +504,79 @@ int CBQ_reallocSizeToAccepted__(CBQueue_t* trustedQueue, size_t newSize)
 
     trustedQueue->coArr = (CBQContainer_t*) reallocp;
 
-    trustedQueue->size = newSize;
-
     return 0;
 }
 
-/* Offset function was designed to resize to a greater or lesser degree in realloc function.
- * The function puts the queue in order from its various states in which resizing would be difficult.
- * In some cases, data is exchanged between cells, this is done to save information about allocated memory
- * for arguments in free cells. There is memory information for each cell. For this reason, information
- * in empty cells cannot be ignored.
- * Important information! After processing the full queue, the store pointer will be outside
- * (equal to the current queue size).
+/* ++s------r+++++++
+ * ++-------~~~~~~~~    (move cells in temp at r point)
+ * ~~-------~~~~~~~~    (in temp all engaged cells)
+ *           -------    (swap free cells with last by reverse iterations)
+ * ++++++++++-------    (move from temp)
+ * r+++++++++s------
+ * The last queue states is where st. pointer returns to start cells in array
+ * and its index has become less than index of read pointer or equal to that.
+ * Situation where any pointers indicates first cell will not occure on that stage.
+ * There are two options - when we have free cells or not.
+ * In the first case all busy cells are written in restored order into allocated memory.
+ * Then the free cells are shifted to the end of the array by swapping.
+ * Here the situation is similar to offset, but now the cells are changing from the end.
+ * After all, we copy back the occupied cells from the beginning.
  */
-int CBQ_offsetToBeginning__(CBQueue_t* trustedQueue)
+int CBQ_orderingDividedSegs__(CBQueue_t* trustedQueue, size_t* engCellSizeP)
 {
-    /* vars, that are used in #4, #5 and #6 cases */
-    register size_t i;        // universal iteration variable
-    CBQContainer_t* tmpCoArr; // temp memory space for cells
+    CBQContainer_t* tmpCoArr;
+    size_t engCellsSegSize;
 
-    /* ------b---------
-     * b---------------
-     */
-    /* #1 It is enough to change pointers in an empty queue.
-     * The status of the queue will indicate the states with 0 (first) store cell.
-     * That pointer will be in its original place.
-     */
-    if (trustedQueue->status == CBQ_ST_EMPTY) {
-        trustedQueue->rId = trustedQueue->sId = 0;
-        return 0;
-    }
-// end of #1
+    engCellsSegSize = CBQ_GetCallAmount(trustedQueue); // as new sId pos
 
-    /* s-----r+++++++++
-     * ------r+++++++++s
-     */
-    /* #2 Store pointer which indicates on first cell may set items before at last position.
-     * So, all engaged cells will only be up to the last position in queue array.
-     * In this way queue always have read pointer which is smaller than store pointer.
-     * Case with an empty queue will regulated by #2 stage.
-     * The store pointer always indicates on first potentially idle cell and on that
-     * situation is necessary offsets values of previous cells which are located on
-     * end of queue array.
-     */
-    if (!trustedQueue->sId)
-        trustedQueue->sId = trustedQueue->size;
-// end of #2
+    tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(sizeof(CBQContainer_t) * engCellsSegSize);
+    if (tmpCoArr == NULL)
+        return CBQ_ERR_MEM_ALLOC_FAILED;
 
-    /* r+++++++++s------
-     */
-    /* #3 In any situations where read pointer is settled on 0 index no need to offsets.
-     * Empty queues are do not reach this stage. And in the moment with a store pointer in #1
-     * it will miss pointer to first vacant index like after another one parts.
-     */
-    if (!trustedQueue->rId)
-        return 0;
-// end of #3
+    /* copy cells between rId and last cell */
+    CBQ_containersCopy__(trustedQueue->coArr + (trustedQueue->rId), tmpCoArr, trustedQueue->size - trustedQueue->rId);
+    /* copy cells before sId into next free cells */
+    CBQ_containersCopy__(trustedQueue->coArr, tmpCoArr + (trustedQueue->size - trustedQueue->rId), trustedQueue->sId);
+    /* copy space of free cells to end of array with swap in reverse (to avoid data overlay) */
+    CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId - 1), // at last free cell
+                             trustedQueue->coArr + (trustedQueue->size - 1), trustedQueue->size - engCellsSegSize, 1);
+    /* copy to start array from temp */
+    CBQ_containersCopy__(tmpCoArr, trustedQueue->coArr, engCellsSegSize);
 
-    /* ------r+++++++++s
-     * r+++++++++s------
-     */
-    /* #4 Simple part where reader with cycle swapping. It swap elements to start
-     * at first enganged index (at read pointer) to last. Once the store pointer
-     * is on the first idle cell. By #1 processing with filled from read pointer
-     * to end of array is possible in this stage.
-     */
-    if (trustedQueue->rId < trustedQueue->sId) {
+    CBQ_MEMFREE(tmpCoArr);
 
-    i = trustedQueue->sId - trustedQueue->rId; // the number of iterations or a new storage pointer position (after offsets)
-    CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId), trustedQueue->coArr, i, 0);
-// end of #4
+    if (engCellSizeP)
+        *engCellSizeP = engCellsSegSize;
+    return 0;
+}
 
-    /* ++s------r+++++++
-     * ++-------~~~~~~~~    (move cells in temp at r point)
-     * ~~-------~~~~~~~~    (in temp all engaged cells)
-     *           -------    (swap free cells with last by reverse iterations)
-     * ++++++++++-------    (move from temp)
-     * r+++++++++s------
-     *
-     * second case (full queue):
-     * +++++++++b+++++++
-     * +++++++++~~~~~~~~
-     * ~~~~~~~~~~~~~~~~~    (no free cells for swapping)
-     * +++++++++++++++++
-     * r++++++++++++++++s
-     */
-    /* #5, #6 The last queue states is where st. pointer returns to start cells in array
-     * and its index has become less than index of read pointer or equal to that.
-     * Situation where any pointers indicates first cell will not occure on that stage.
-     * There are two options - when we have free cells or not.
-     * In the first case all busy cells are written in restored order into allocated memory.
-     * Then the free cells are shifted to the end of the array by swapping.
-     * Here the situation is similar to #4 part, but now the cells are changing from the end.
-     * After all, we copy back the occupied cells from the beginning.
-     * The second option (#6) requires less memory and cycles.
-     * We reserve the first half of the cells, shift the second to the beginning
-     * (as in # 4) and copy the first at the end.
-     */
-    } else if (trustedQueue->status == CBQ_ST_STABLE) {
+/* +++++++++b+++++++
+ * +++++++++~~~~~~~~
+ * ~~~~~~~~~~~~~~~~~    (no free cells for swapping)
+ * +++++++++++++++++
+ * r++++++++++++++++s
+ * Looks like ordering with divided segments, but this requires less memory and cycles.
+ * We reserve the first half of the cells, shift the second to the beginning
+ * and copy the first at the end.
+ */
+int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t* trustedQueue)
+{
+    CBQContainer_t* tmpCoArr;
+    size_t sizeOfSegment;
 
-        i = CBQ_GetCallAmount(trustedQueue); // as new sId pos
+    tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(sizeof(CBQContainer_t) * trustedQueue->sId);
+    if (tmpCoArr == NULL)
+        return CBQ_ERR_MEM_ALLOC_FAILED;
 
-        tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(sizeof(CBQContainer_t) * i);
-        if (tmpCoArr == NULL)
-            return CBQ_ERR_MEM_ALLOC_FAILED;
+    /* copy cells before sId into temp */
+    CBQ_containersCopy__(trustedQueue->coArr, tmpCoArr, trustedQueue->sId);
+    sizeOfSegment = trustedQueue->size - trustedQueue->rId; // get size of second part
+    /* swap cells with second part */
+    CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId), trustedQueue->coArr, sizeOfSegment, 0);
+    /* copy first part into place after seconf part */
+    CBQ_containersCopy__(tmpCoArr, trustedQueue->coArr + (sizeOfSegment), trustedQueue->sId);
 
-        /* copy cells between rId and last cell */
-        CBQ_containersCopy__(trustedQueue->coArr + (trustedQueue->rId), tmpCoArr, trustedQueue->size - trustedQueue->rId, 0);
-        /* copy cells before sId into next free cells */
-        CBQ_containersCopy__(trustedQueue->coArr, tmpCoArr + (trustedQueue->size - trustedQueue->rId), trustedQueue->sId, 0);
-        /* copy space of free cells to end of array with swap in reverse (to avoid data overlay) */
-        CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId - 1), // at last free cell
-                                 trustedQueue->coArr + (trustedQueue->size - 1), trustedQueue->size - i, 1);
-        /* copy to start array from temp */
-        CBQ_containersCopy__(tmpCoArr, trustedQueue->coArr, i, 0);
-
-        CBQ_MEMFREE(tmpCoArr);
-// end of #5
-
-    /* #6 */
-    } else {
-        tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(sizeof(CBQContainer_t) * trustedQueue->sId);
-        if (tmpCoArr == NULL)
-            return CBQ_ERR_MEM_ALLOC_FAILED;
-
-        /* copy cells before sId into temp */
-        CBQ_containersCopy__(trustedQueue->coArr, tmpCoArr, trustedQueue->sId, 0);
-        i = trustedQueue->size - trustedQueue->rId; // get size of second part
-        /* swap cells with second part */
-        CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId), trustedQueue->coArr, i, 0);
-        /* copy first part into place after seconf part */
-        CBQ_containersCopy__(tmpCoArr, trustedQueue->coArr + (i), trustedQueue->sId, 0);
-        i = trustedQueue->size; // to outside (for new sId index)
-
-        CBQ_MEMFREE(tmpCoArr);
-    }
-// end of #6
-
-    /* After #4, #5 or #6 stages pointers gets new indexes. New value of st. pointer
-     * was recieved after last cell. If the queue is completed, then the pointer
-     * will be outside the array (equal to the current size).
-     * This will change as necessary after this function.
-     */
-    trustedQueue->rId = 0;
-    trustedQueue->sId = i;
+    CBQ_MEMFREE(tmpCoArr);
 
     return 0;
 }
@@ -620,16 +604,11 @@ void CBQ_containersSwapping__(MAY_REG CBQContainer_t* srcp, MAY_REG CBQContainer
         } while (--len);
 }
 
-void CBQ_containersCopy__(MAY_REG CBQContainer_t* srcp, MAY_REG CBQContainer_t* destp, MAY_REG size_t len, int reverse_iter)
+void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict srcp, MAY_REG CBQContainer_t *restrict destp, MAY_REG size_t len)
 {
-    if (reverse_iter)
-        do {
-            *destp-- = *srcp--;
-        } while (--len);
-    else
-        do {
-            *destp++ = *srcp++;
-        } while (--len);
+    do {
+        *destp++ = *srcp++;
+    } while (--len);
 }
 
 /* ---------------- Args Methods ---------------- */
@@ -650,7 +629,7 @@ int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
     return 0;
 }
 
-void CBQ_coCopyArgs__(MAY_REG CBQArg_t* src, MAY_REG CBQArg_t* dest, MAY_REG int num)
+void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *restrict dest, MAY_REG int num)
 {
     do {
         *dest++ = *src++;
