@@ -89,7 +89,7 @@
         /* containers */
         size_t  size;
         struct  CBQContainer_t* coArr;
-        int     sizeMode;
+        int     incSizeMode;
         size_t  sizeMaxLimit;
         size_t  incSize;
 
@@ -156,6 +156,8 @@
         CBQ_ERR_LIMIT_SIZE_OVERFLOW,
         CBQ_ERR_MAX_SIZE_OVERFLOW,
         CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT,
+        CBQ_ERR_ENGCELLS_NOT_FIT_IN_NEWSIZE,
+        CBQ_ERR_SIZE_NOT_FIT_IN_LIMIT,
         CBQ_ERR_QUEUE_IS_EMPTY,
         CBQ_ERR_IS_BUSY,
         CBQ_ERR_VPARAM_VARIANCE
@@ -220,6 +222,7 @@ int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec, CBQueue_t* target
 
 /* ---------------- Additional methods ---------------- */
 int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
+int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, int tryToAdaptSize, int adaptSizeMaxLimit);
 int CBQ_Clear(CBQueue_t* queue);
 char* CBQ_strIntoHeap(const char* str);
 

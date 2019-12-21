@@ -17,7 +17,7 @@ static int CBQ_incSizeCheck__(CBQueue_t*, size_t);
 static int CBQ_incSize__(CBQueue_t*, size_t);
 
 /* Decrementation */
-static int CBQ_decSize__(CBQueue_t*, size_t);
+static int CBQ_decSize__(CBQueue_t*, size_t, int);
 
 
 /* Arguments */
@@ -63,7 +63,7 @@ static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 //                                                                            //
 
 /* ---------------- Base methods ---------------- */
-int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit)
+int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t sizeMaxLimit)
 {
     int errSt;
     CBQueue_t iniQueue = {
@@ -91,12 +91,12 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLim
     if (size <= 0 || size > CBQ_QUEUE_MAX_SIZE)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
-    if (sizeMode == CBQ_SM_STATIC || sizeMode == CBQ_SM_MAX) {
+    if (incSizeMode == CBQ_SM_STATIC || incSizeMode == CBQ_SM_MAX) {
         iniQueue.sizeMaxLimit = 0;
-        iniQueue.sizeMode = sizeMode;
-    } else if (sizeMode == CBQ_SM_LIMIT && sizeMaxLimit > 0 && sizeMaxLimit <= CBQ_QUEUE_MAX_SIZE && sizeMaxLimit >= size) {
+        iniQueue.incSizeMode = incSizeMode;
+    } else if (incSizeMode == CBQ_SM_LIMIT && sizeMaxLimit > 0 && sizeMaxLimit <= CBQ_QUEUE_MAX_SIZE && sizeMaxLimit >= size) {
         iniQueue.sizeMaxLimit = sizeMaxLimit;
-        iniQueue.sizeMode = sizeMode;
+        iniQueue.incSizeMode = incSizeMode;
     } else
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
@@ -163,7 +163,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
             return errSt;
 
     } else if (changeTowards == CBQ_DEC_SIZE) {
-        errSt = CBQ_decSize__(queue, 0);
+        errSt = CBQ_decSize__(queue, 0, 0);
         if (errSt)
             return errSt;
 
@@ -181,7 +181,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
                 return errSt;
         /* dec */
         } else if (delta < 0) {
-            errSt = CBQ_decSize__(queue, -delta);
+            errSt = CBQ_decSize__(queue, -delta, 0);
             if (errSt)
                 return errSt;
         } else
@@ -191,25 +191,50 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
     return 0;
 }
 
-/*
-int CBQ_ChangeSizeIncMode(CBQueue_t* queue, int newSizeIncMode, size_t newSizeMaxLimit, int tryToAdapt)
+
+int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, int tryToAdaptSize, int adaptSizeMaxLimit)
 {
     int errSt;
-    int oldSM;
-    size_t oldSML;
 
     BASE_ERR_CHECK(queue);
 
-    if (newSizeIncMode == CBQ_SM_LIMIT) {
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+    if (queue->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
 
+    CBQ_MSGPRINT("Queue size mode changing...");
+
+    if (newIncSizeMode != CBQ_SM_LIMIT) {
+        queue->sizeMaxLimit = 0;
+        queue->incSizeMode = newIncSizeMode;
+        return 0;
+    } else {
+        if (newSizeMaxLimit <= 0 || newSizeMaxLimit > CBQ_QUEUE_MAX_SIZE)
+            return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+        /* size does not fit into new limits */
+        if (queue->size > newSizeMaxLimit && tryToAdaptSize) {
+
+            /* without size max limit adaptation flag the function just give an error */
+            errSt = CBQ_decSize__(queue, queue->size - newSizeMaxLimit, !adaptSizeMaxLimit);
+            if (errSt)
+                return errSt;
+
+            if (newSizeMaxLimit != queue->size)
+                newSizeMaxLimit = queue->size;
+
+        } else
+            return CBQ_ERR_SIZE_NOT_FIT_IN_LIMIT;
+
+        queue->incSizeMode = CBQ_SM_LIMIT;
+        queue->sizeMaxLimit = newSizeMaxLimit;
     }
-
-    queue->sizeMode = newSizeIncMode;
-    queue->sizeMaxLimit = newSizeMaxLimit;
 
     return 0;
 }
-*/
+
+
 /* This part is unused. Methods of save and rest queue was complicated
  * for stored pointers of structs, strings and functions.
  * It only makes sense to independently save this data,
@@ -405,40 +430,41 @@ void CBQ_IncSizeChange__(CBQueue_t* trustedQueue, int direction)
 
 int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t delta)
 {
-    if (trustedQueue->sizeMode == CBQ_SM_STATIC)
+    if (trustedQueue->incSizeMode == CBQ_SM_STATIC)
         return CBQ_ERR_STATIC_SIZE_OVERFLOW;
 
-    if (trustedQueue->sizeMode == CBQ_SM_LIMIT && (trustedQueue->size + delta) > trustedQueue->sizeMaxLimit)
+    if (trustedQueue->incSizeMode == CBQ_SM_LIMIT && (trustedQueue->size + delta) > trustedQueue->sizeMaxLimit)
         return CBQ_ERR_LIMIT_SIZE_OVERFLOW;
 
-    if (trustedQueue->sizeMode == CBQ_SM_MAX && (trustedQueue->size + delta) > CBQ_QUEUE_MAX_SIZE)
+    if (trustedQueue->incSizeMode == CBQ_SM_MAX && (trustedQueue->size + delta) > CBQ_QUEUE_MAX_SIZE)
         return CBQ_ERR_MAX_SIZE_OVERFLOW;
 
     return 0;
 }
 
-int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta)
+int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int noAlignByUsedCells)
 {
     int errSt;
-    size_t minimal, engCellSize;
+    size_t engCellSize;
     ssize_t remainder;
 
     /* Check and align delta */
     engCellSize = CBQ_GetCallAmount(trustedQueue);
-    minimal = engCellSize > MIN_SIZE ?
-        engCellSize :
-        MIN_SIZE;
 
     if (!delta)
         delta = trustedQueue->size - engCellSize;
 
-    remainder = trustedQueue->size - minimal;
+    remainder = trustedQueue->size - (engCellSize > MIN_SIZE? engCellSize : MIN_SIZE);
     if (!remainder)
         return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
 
     remainder -= delta;
-    if (remainder < 0)
-        delta += remainder; // to delta balance
+    if (remainder < 0) {
+        if (!noAlignByUsedCells)
+            delta += remainder; // to delta balance
+        else
+            return CBQ_ERR_ENGCELLS_NOT_FIT_IN_NEWSIZE;
+    }
 
     /* Offset or ordeing cells (for 4 cases)*/
     /* ---b--- -> b------ */
@@ -871,7 +897,7 @@ size_t CBQ_GetSizeInBytes(CBQueue_t* queue)
 }
 
 int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
-    int* getSizeMode, size_t* getSizeMaxLimit, size_t* getSizeInBytes)
+    int* getIncSizeMode, size_t* getSizeMaxLimit, size_t* getSizeInBytes)
     {
         BASE_ERR_CHECK(queue);
 
@@ -884,8 +910,8 @@ int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* g
         if (getEngagedSize)
             *getEngagedSize = CBQ_GetCallAmount(queue);
 
-        if (getSizeMode)
-            *getSizeMode = queue->sizeMode;
+        if (getIncSizeMode)
+            *getIncSizeMode = queue->incSizeMode;
 
         if (getSizeMaxLimit)
             *getSizeMaxLimit = queue->sizeMaxLimit;
