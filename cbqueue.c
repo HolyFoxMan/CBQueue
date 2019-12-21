@@ -163,7 +163,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
             return errSt;
 
     } else if (changeTowards == CBQ_DEC_SIZE) {
-        errSt = CBQ_decSize__(queue, 0, 0);
+        errSt = CBQ_decSize__(queue, 0, 1);
         if (errSt)
             return errSt;
 
@@ -181,7 +181,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
                 return errSt;
         /* dec */
         } else if (delta < 0) {
-            errSt = CBQ_decSize__(queue, -delta, 0);
+            errSt = CBQ_decSize__(queue, -delta, 1);
             if (errSt)
                 return errSt;
         } else
@@ -214,18 +214,23 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMa
             return CBQ_ERR_ARG_OUT_OF_RANGE;
 
         /* size does not fit into new limits */
-        if (queue->size > newSizeMaxLimit && tryToAdaptSize) {
+        if (newSizeMaxLimit < queue->size) {
 
-            /* without size max limit adaptation flag the function just give an error */
-            errSt = CBQ_decSize__(queue, queue->size - newSizeMaxLimit, !adaptSizeMaxLimit);
-            if (errSt)
-                return errSt;
+            if (tryToAdaptSize) {
+                errSt = CBQ_decSize__(queue, queue->size - newSizeMaxLimit, adaptSizeMaxLimit);
+                /* without size max limit adaptation flag the function may just give an error and close */
+                if (errSt)
+                    return errSt;
 
-            if (newSizeMaxLimit != queue->size)
+                /* if it was not possible to equalize even after size decrementing */
+                if (newSizeMaxLimit != queue->size)
+                    newSizeMaxLimit = queue->size;
+            }
+            else if (adaptSizeMaxLimit)
                 newSizeMaxLimit = queue->size;
-
-        } else
-            return CBQ_ERR_SIZE_NOT_FIT_IN_LIMIT;
+            else
+                return CBQ_ERR_SIZE_NOT_FIT_IN_LIMIT;
+        }
 
         queue->incSizeMode = CBQ_SM_LIMIT;
         queue->sizeMaxLimit = newSizeMaxLimit;
@@ -243,7 +248,6 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMa
  * However, this can affect the complexity of adding a call to the queue.
  * And there will be a need to register all used types in the future in calls.
  */
-
 /*
 int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize)
 {
@@ -442,7 +446,7 @@ int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t delta)
     return 0;
 }
 
-int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int noAlignByUsedCells)
+int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
 {
     int errSt;
     size_t engCellSize;
@@ -460,7 +464,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int noAlignByUsedCells)
 
     remainder -= delta;
     if (remainder < 0) {
-        if (!noAlignByUsedCells)
+        if (alignToUsedCells)
             delta += remainder; // to delta balance
         else
             return CBQ_ERR_ENGCELLS_NOT_FIT_IN_NEWSIZE;

@@ -146,6 +146,7 @@ void CBQ_T_ControlTest(void)
             case 'F': case 'f':
             case 'D': case 'd':
             case 'N': case 'n':
+            case 'M': case 'm':
             // case 'S': case 's':
             // case 'L': case 'l':
                 system("cls");
@@ -211,6 +212,51 @@ void CBQ_T_ControlTest(void)
             case 'N':
             case 'n': {
                 ASRT(CBQ_PushN(&queue, fillQueueCB, {.qVar = &queue}), "")
+                break;
+            }
+
+            case 'M':
+            case 'm': {
+                int nISM, tryToAdaptSize, adaptSML;
+                size_t nSML;
+
+                printf("Select new size Mode:\n%d - static\n%d - limit\n%d - max size\n9 - cancel\n",
+                       CBQ_SM_STATIC, CBQ_SM_LIMIT, CBQ_SM_MAX);
+                do {
+                    scanf("%d", &nISM);
+                    fflush(stdin);
+                    if (nISM == CBQ_SM_STATIC || nISM == CBQ_SM_LIMIT || nISM == CBQ_SM_MAX || nISM == 9)
+                        break;
+                    else
+                        printf("Wrong value\n");
+                } while(0);
+
+                if (nISM == 9)
+                    break;
+
+                if (nISM == CBQ_SM_LIMIT) {
+                    printf("Type new limit size:\n");
+                    scanf(SZ_PRTF, &nSML);
+                    fflush(stdin);
+                }
+
+                printf("Change the size of the queue, if it does not fit? (y/other any key)");
+                scanf("%d", &key);
+                fflush(stdin);
+                if (key == 'Y' || key == 'y')
+                    tryToAdaptSize = 1;
+                else
+                    tryToAdaptSize = 0;
+
+                printf("Align max size limit, if it affects busy cells? (y/other any key)");
+                scanf("%d", &key);
+                fflush(stdin);
+                if (key == 'Y' || key == 'y')
+                    adaptSML = 1;
+                else
+                    adaptSML = 0;
+
+                ASRT(CBQ_ChangeIncSizeMode(&queue, nISM, nSML, tryToAdaptSize, adaptSML), "")
                 break;
             }
 /*
