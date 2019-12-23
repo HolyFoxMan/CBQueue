@@ -20,8 +20,8 @@ static int CBQ_incSize__(CBQueue_t*, size_t);
 static int CBQ_decSize__(CBQueue_t*, size_t, int);
 
 /* Arguments */
-static int CBQ_coIncMaxArgSize__(CBQContainer_t*, size_t);
-static void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict, MAY_REG CBQArg_t *restrict, MAY_REG int);
+static int CBQ_coIncArgsCapacity__(CBQContainer_t*, unsigned int);
+static void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict, MAY_REG CBQArg_t *restrict, MAY_REG unsigned int);
 
 /* Callbacks */
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
@@ -62,7 +62,7 @@ static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 //                                                                            //
 
 /* ---------------- Base methods ---------------- */
-int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t sizeMaxLimit)
+int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t maxSizeLimit)
 {
     int errSt;
     CBQueue_t iniQueue = {
@@ -91,10 +91,10 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t sizeMax
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
     if (incSizeMode == CBQ_SM_STATIC || incSizeMode == CBQ_SM_MAX) {
-        iniQueue.sizeMaxLimit = 0;
+        iniQueue.maxSizeLimit = 0;
         iniQueue.incSizeMode = incSizeMode;
-    } else if (incSizeMode == CBQ_SM_LIMIT && sizeMaxLimit > 0 && sizeMaxLimit <= CBQ_QUEUE_MAX_SIZE && sizeMaxLimit >= size) {
-        iniQueue.sizeMaxLimit = sizeMaxLimit;
+    } else if (incSizeMode == CBQ_SM_LIMIT && maxSizeLimit > 0 && maxSizeLimit <= CBQ_QUEUE_MAX_SIZE && maxSizeLimit >= size) {
+        iniQueue.maxSizeLimit = maxSizeLimit;
         iniQueue.incSizeMode = incSizeMode;
     } else
         return CBQ_ERR_ARG_OUT_OF_RANGE;
@@ -191,7 +191,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
 }
 
 
-int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, int tryToAdaptSize, int adaptSizeMaxLimit)
+int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSizeLimit, int tryToAdaptSize, int adaptMaxSizeLimit)
 {
     int errSt;
 
@@ -205,34 +205,34 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMa
     CBQ_MSGPRINT("Queue size mode changing...");
 
     if (newIncSizeMode != CBQ_SM_LIMIT) {
-        queue->sizeMaxLimit = 0;
+        queue->maxSizeLimit = 0;
         queue->incSizeMode = newIncSizeMode;
         return 0;
     } else {
-        if (newSizeMaxLimit <= 0 || newSizeMaxLimit > CBQ_QUEUE_MAX_SIZE)
+        if (newMaxSizeLimit < CBQ_QUEUE_MIN_SIZE || newMaxSizeLimit > CBQ_QUEUE_MAX_SIZE)
             return CBQ_ERR_ARG_OUT_OF_RANGE;
 
         /* size does not fit into new limits */
-        if (newSizeMaxLimit < queue->size) {
+        if (newMaxSizeLimit < queue->size) {
 
             if (tryToAdaptSize) {
-                errSt = CBQ_decSize__(queue, queue->size - newSizeMaxLimit, adaptSizeMaxLimit);
+                errSt = CBQ_decSize__(queue, queue->size - newMaxSizeLimit, adaptMaxSizeLimit);
                 /* without size max limit adaptation flag the function may just give an error and close */
                 if (errSt)
                     return errSt;
 
                 /* if it was not possible to equalize even after size decrementing */
-                if (newSizeMaxLimit != queue->size)
-                    newSizeMaxLimit = queue->size;
+                if (newMaxSizeLimit != queue->size)
+                    newMaxSizeLimit = queue->size;
             }
-            else if (adaptSizeMaxLimit)
-                newSizeMaxLimit = queue->size;
+            else if (adaptMaxSizeLimit)
+                newMaxSizeLimit = queue->size;
             else
                 return CBQ_ERR_SIZE_NOT_FIT_IN_LIMIT;
         }
 
         queue->incSizeMode = CBQ_SM_LIMIT;
-        queue->sizeMaxLimit = newSizeMaxLimit;
+        queue->maxSizeLimit = newMaxSizeLimit;
     }
 
     return 0;
@@ -295,7 +295,7 @@ int CBQ_containerInit__(CBQContainer_t* container)
 {
     CBQContainer_t tmpContainer = {
     	.func = NULL,
-        .argMax = DEF_CO_ARG,
+        .capacity = INIT_CAP_ARGS,
         .argc = 0
 
         #ifdef CBQD_SCHEME
@@ -303,7 +303,7 @@ int CBQ_containerInit__(CBQContainer_t* container)
         #endif // CBQD_SCHEME
     };
 
-    tmpContainer.args = (CBQArg_t*) CBQ_MALLOC( sizeof(CBQArg_t) * DEF_CO_ARG);
+    tmpContainer.args = (CBQArg_t*) CBQ_MALLOC( sizeof(CBQArg_t) * INIT_CAP_ARGS);
     if (tmpContainer.args == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
@@ -363,8 +363,9 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
         return errSt;
 
     /* Ordering cells */
-    if (!trustedQueue->sId) {   // segments are not divided, only the store pointer is offset
-        trustedQueue->sId = trustedQueue->size;
+    if (!trustedQueue->sId) {
+        if (trustedQueue->status != CBQ_ST_EMPTY)
+            trustedQueue->sId = trustedQueue->size;
     }
     else if (trustedQueue->sId < trustedQueue->rId) {    // when segments of occupied cells are divided
         size_t new_sId;
@@ -436,7 +437,7 @@ int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t delta)
     if (trustedQueue->incSizeMode == CBQ_SM_STATIC)
         return CBQ_ERR_STATIC_SIZE_OVERFLOW;
 
-    if (trustedQueue->incSizeMode == CBQ_SM_LIMIT && (trustedQueue->size + delta) > trustedQueue->sizeMaxLimit)
+    if (trustedQueue->incSizeMode == CBQ_SM_LIMIT && (trustedQueue->size + delta) > trustedQueue->maxSizeLimit)
         return CBQ_ERR_LIMIT_SIZE_OVERFLOW;
 
     if (trustedQueue->incSizeMode == CBQ_SM_MAX && (trustedQueue->size + delta) > CBQ_QUEUE_MAX_SIZE)
@@ -457,7 +458,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
     if (!delta)
         delta = trustedQueue->size - engCellSize;
 
-    remainder = (ssize_t) trustedQueue->size - (ssize_t) (engCellSize > MIN_SIZE? engCellSize : MIN_SIZE);
+    remainder = (ssize_t) trustedQueue->size - (ssize_t) (engCellSize > CBQ_QUEUE_MIN_SIZE? engCellSize : CBQ_QUEUE_MIN_SIZE);
     if (!remainder)
         return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
 
@@ -641,24 +642,24 @@ void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict srcp, MAY_REG C
 }
 
 /* ---------------- Args Methods ---------------- */
-int CBQ_coIncMaxArgSize__(CBQContainer_t* container, size_t newSize)
+int CBQ_coIncArgsCapacity__(CBQContainer_t* container, unsigned int newCapacity)
 {
     void* reallocp;
 
-    if (newSize > MAX_CO_ARG)
+    if (newCapacity > MAX_CAP_ARGS)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
-    reallocp = CBQ_REALLOC(container->args, sizeof(CBQArg_t) * newSize);
+    reallocp = CBQ_REALLOC(container->args, sizeof(CBQArg_t) * (size_t) newCapacity);
     if (reallocp == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
     container->args = (CBQArg_t*) reallocp;
-    container->argMax = newSize;
+    container->capacity = newCapacity;
 
     return 0;
 }
 
-void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *restrict dest, MAY_REG int num)
+void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *restrict dest, MAY_REG unsigned int num)
 {
     do {
         *dest++ = *src++;
@@ -666,22 +667,18 @@ void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *re
 }
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...)
+int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...)
 {
-    int errSt,
-        argcAll;
+    int errSt;
+    unsigned int argcAll;
     CBQContainer_t* container;
 
     /* base error checking */
     OPT_BASE_ERR_CHECK(queue);
 
-    /* static arg range check */
-    if (stParamc < 0)
-        return CBQ_ERR_ARG_OUT_OF_RANGE;
-
     /* variable param check (optional), if only varParams pointer is null, vParamc not considered */
     #ifndef NO_VPARAM_CHECK
-    if (varParams && varParamc <= 0)
+    if (varParams && !varParamc)
         return CBQ_ERR_VPARAM_VARIANCE;
     #endif
 
@@ -705,8 +702,8 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParam
     else
         argcAll = stParamc;
 
-    if (argcAll > container->argMax) {
-        errSt = CBQ_coIncMaxArgSize__(container, argcAll);
+    if (argcAll > container->capacity) {
+        errSt = CBQ_coIncArgsCapacity__(container, argcAll);
         if (errSt)
             return errSt;
     }
@@ -744,7 +741,7 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParam
     return 0;
 }
 
-int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams)
+int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams)
 {
     int errSt;
     CBQContainer_t* container;
@@ -754,7 +751,7 @@ int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* va
 
     /* variable param check (optional), if only varParams pointer is null, vParamc not considered */
     #ifndef NO_VPARAM_CHECK
-    if (varParams && varParamc <= 0)
+    if (varParams && !varParamc)
         return CBQ_ERR_VPARAM_VARIANCE;
     #endif
 
@@ -775,8 +772,8 @@ int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* va
 
     if (varParams) {
 
-        if (varParamc > container->argMax) {
-            errSt = CBQ_coIncMaxArgSize__(container, varParamc);
+        if (varParamc > container->capacity) {
+            errSt = CBQ_coIncArgsCapacity__(container, varParamc);
             if (errSt)
                 return errSt;
         }
@@ -832,7 +829,7 @@ inline int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
     if (funcRetSt == NULL)
         container->func(container->argc, container->args);
     else
-        *funcRetSt = container->func(container->argc, container->args);
+        *funcRetSt = container->func( (int) container->argc, container->args);
 
     #ifdef CBQD_SCHEME
     queue->coArr[queue->rId].label = '-';
@@ -894,13 +891,13 @@ size_t CBQ_GetSizeInBytes(CBQueue_t* queue)
 
     bSize = sizeof(CBQueue_t) + queue->size * sizeof(CBQContainer_t);
     for (size_t i = 0; i < queue->size; i++)
-        bSize += queue->coArr[i].argMax * sizeof(CBQArg_t);
+        bSize += (size_t) queue->coArr[i].capacity * sizeof(CBQArg_t);
 
     return bSize;
 }
 
 int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
-    int* getIncSizeMode, size_t* getSizeMaxLimit, size_t* getSizeInBytes)
+    int* getIncSizeMode, size_t* getMaxSizeLimit, size_t* getSizeInBytes)
     {
         BASE_ERR_CHECK(queue);
 
@@ -916,8 +913,8 @@ int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* g
         if (getIncSizeMode)
             *getIncSizeMode = queue->incSizeMode;
 
-        if (getSizeMaxLimit)
-            *getSizeMaxLimit = queue->sizeMaxLimit;
+        if (getMaxSizeLimit)
+            *getMaxSizeLimit = queue->maxSizeLimit;
 
         if (getSizeInBytes)
             *getSizeInBytes = CBQ_GetSizeInBytes(queue);
@@ -1030,13 +1027,10 @@ int CBQ_drawScheme_chk__(void* queue)
 #endif // CBQD_SCHEME
 
 /* ---------------- Callback Methods ---------------- */
-/* push CB after delay, like JS func. Needs time.h lib
-*/
 
-//static int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args);
-
+/* push CB after delay, like JS func. Needs time.h lib */
 int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec,
-    CBQueue_t* targetQueue, QCallback func, int vParamc, CBQArg_t* vParams)
+    CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams)
 {
     clock_t targetTime;
     int retst = 0;

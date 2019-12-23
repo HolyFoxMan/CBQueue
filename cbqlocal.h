@@ -12,15 +12,16 @@
         #define SSIZE_MAX / 2 - 1
     #endif
 
+// Limits:
+
     #define CBQ_QUEUE_MAX_SIZE  SSIZE_MAX
-    #define MIN_SIZE        1
-    #define DEC_BUFF_PERC   1.1L
+    #define CBQ_QUEUE_MIN_SIZE  1
 
-    #define INIT_INC_SIZE   8
-    #define MAX_INC_SIZE    16384
+    #define INIT_INC_SIZE       8
+    #define MAX_INC_SIZE        16384
 
-    #define MAX_CO_ARG      20
-    #define DEF_CO_ARG      5
+    #define MAX_CAP_ARGS        20
+    #define INIT_CAP_ARGS        5
 
     /* Getting bytes for header in save state data
      * Its  int:
@@ -70,10 +71,10 @@
     typedef struct CBQContainer_t CBQContainer_t;
     struct CBQContainer_t {
 
-        QCallback   func;
-        int         argMax;
-        int         argc;
-        CBQArg_t*   args;
+        QCallback       func;
+        unsigned int    capacity;
+        unsigned int    argc;
+        CBQArg_t*       args;
 
         #ifdef CBQD_SCHEME
         int label;

@@ -151,7 +151,7 @@
         size_t  size;
         struct  CBQContainer_t* coArr;
         int     incSizeMode;
-        size_t  sizeMaxLimit;
+        size_t  maxSizeLimit;
         size_t  incSize;
 
         /* pointers */
@@ -270,10 +270,10 @@ int CBQ_QueueFree(CBQueue_t* queue);
     CBQ_SetTimeout(queue, delay, isSec, queue, func, 0, CBQ_NO_VPARAMS)
 
 /* Method pushes callbacks by static and variable passing of parameters (in run-time) */
-int CBQ_Push(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams, int stParamc, CBQArg_t stParams, ...);
-int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, int varParamc, CBQArg_t* varParams);
+int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...);
+int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
-int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec, CBQueue_t* targetQueue, QCallback func, int vParamc, CBQArg_t* vParams);
+int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec, CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams);
 
 /* ---------------- Additional methods ---------------- */
 int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
