@@ -1,13 +1,13 @@
 #include "cbqtest.h"
 
 /* ---------------- Hello World ---------------- */
-int funcHW(int argc, CBQArg_t* argv)
+int funcHW(UNUSED int argc, UNUSED CBQArg_t* argv)
 {
     printf("CB HW: Hello, world!\n");
     return 0;
 }
 
-int funcHU(int argc, CBQArg_t* argv)
+int funcHU(UNUSED int argc, CBQArg_t* argv)
 {
     printf("CB age: Hello, %s! Your age is %d.\n", argv[0].sVar, argv[1].iVar);
     free(argv[0].sVar);
@@ -84,7 +84,7 @@ int counterCB(int argc, CBQArg_t* argv)
     return 0;
 }
 
-int counterPusherCB(int argc, CBQArg_t* argv)
+int counterPusherCB(UNUSED int argc, CBQArg_t* argv)
 {
     ASRT(CBQ_PushStatic(argv[0].qVar, counterCB, 1, (CBQArg_t) {.iVar = argv[1].iVar}), "Failed to push counter cb")
     return 0;
@@ -103,7 +103,7 @@ void CBQ_drawArgpAsChars__(CBQueue_t* trustedQueue)
     printf("\n");
 } */
 
-int fillQueueCB(int argc, CBQArg_t* args)
+int fillQueueCB(UNUSED int argc, CBQArg_t* args)
 {
     do {
         ASRT(CBQ_PushN(args[0].qVar, add, {1}, {2}, {3}), "Failed to push in CB")
@@ -118,7 +118,8 @@ void CBQ_T_ControlTest(void)
     int quit = 0,
         key,
         inCB = 0,
-        qStatus;
+        qStatus,
+        errSt = 0;
     size_t customSize,
         qSize,
         qEngagedSize,
@@ -163,9 +164,11 @@ void CBQ_T_ControlTest(void)
             case 'p': {
                 counter++;
                 if (!inCB)
-                    ASRT(CBQ_PushStatic(&queue, counterCB, 1, (CBQArg_t) {.iVar = counter}), "Failed to push")
+                    ASRT(errSt = CBQ_PushStatic(&queue, counterCB, 1, (CBQArg_t) {.iVar = counter}), "Failed to push")
                 else
-                    ASRT(CBQ_PushStatic(&queue, counterPusherCB, 2, (CBQArg_t) {.qVar = &queue}, (CBQArg_t) {.iVar = counter}), "Failed to push")
+                    ASRT(errSt = CBQ_PushStatic(&queue, counterPusherCB, 2, (CBQArg_t) {.qVar = &queue}, (CBQArg_t) {.iVar = counter}), "Failed to push")
+                    if (errSt)
+                        counter--;
                 break;
             }
 
@@ -217,7 +220,7 @@ void CBQ_T_ControlTest(void)
 
             case 'M':
             case 'm': {
-                int nISM, tryToAdaptSize, adaptSML;
+                int nISM, tryToAdaptSize = 0, adaptSML = 0;
                 size_t nSML;
 
                 printf("Select new size Mode:\n%d - static\n%d - limit\n%d - max size\n9 - cancel\n",
@@ -238,23 +241,19 @@ void CBQ_T_ControlTest(void)
                     printf("Type new limit size:\n");
                     scanf(SZ_PRTF, &nSML);
                     fflush(stdin);
+
+                    printf("Change the size of the queue, if it does not fit? (y/other any key)");
+                    scanf("%d", &key);
+                    fflush(stdin);
+                    if (key == 'Y' || key == 'y')
+                        tryToAdaptSize = 1;
+
+                    printf("Align max size limit, if it affects busy cells? (y/other any key)");
+                    scanf("%d", &key);
+                    fflush(stdin);
+                    if (key == 'Y' || key == 'y')
+                        adaptSML = 1;
                 }
-
-                printf("Change the size of the queue, if it does not fit? (y/other any key)");
-                scanf("%d", &key);
-                fflush(stdin);
-                if (key == 'Y' || key == 'y')
-                    tryToAdaptSize = 1;
-                else
-                    tryToAdaptSize = 0;
-
-                printf("Align max size limit, if it affects busy cells? (y/other any key)");
-                scanf("%d", &key);
-                fflush(stdin);
-                if (key == 'Y' || key == 'y')
-                    adaptSML = 1;
-                else
-                    adaptSML = 0;
 
                 ASRT(CBQ_ChangeIncSizeMode(&queue, nISM, nSML, tryToAdaptSize, adaptSML), "")
                 break;
@@ -415,7 +414,7 @@ void CBQ_T_SizemodeTest(void)
 
 }
 
-int selfExecCB(int argc, CBQArg_t* argv)
+int selfExecCB(UNUSED int argc, CBQArg_t* argv)
 {
     static int part = 0;
     int sterr;
@@ -434,13 +433,13 @@ int selfExecCB(int argc, CBQArg_t* argv)
     return 0;
 }
 
-int changeSizeCB(int argc, CBQArg_t* argv)
+int changeSizeCB(UNUSED int argc, CBQArg_t* argv)
 {
     return CBQ_ChangeSize(argv[0].qVar, argv[1].iVar, argv[2].szVar);
 }
 
 
-int freeQueueCB(int argc, CBQArg_t* argv)
+int freeQueueCB(UNUSED int argc, CBQArg_t* argv)
 {
     return CBQ_QueueFree(argv[0].qVar);
 }

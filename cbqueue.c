@@ -10,15 +10,14 @@ static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContain
 static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG CBQContainer_t *restrict, MAY_REG size_t);
 static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, int);
 static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
+static void CBQ_IncIterSizeChange__(CBQueue_t*, int);
 
 /* Incrementation */
-static void CBQ_IncSizeChange__(CBQueue_t*, int);
 static int CBQ_incSizeCheck__(CBQueue_t*, size_t);
 static int CBQ_incSize__(CBQueue_t*, size_t);
 
 /* Decrementation */
 static int CBQ_decSize__(CBQueue_t*, size_t, int);
-
 
 /* Arguments */
 static int CBQ_coIncMaxArgSize__(CBQContainer_t*, size_t);
@@ -316,7 +315,7 @@ int CBQ_containerInit__(CBQContainer_t* container)
 int CBQ_containersRangeInit__(CBQContainer_t* coFirst, size_t len, int restore_pos_fail)
 {
     MAY_REG CBQContainer_t* container = coFirst;
-    MAY_REG int iLen = len;
+    MAY_REG size_t remLen = len;
     int errSt = 0;
 
     do {
@@ -325,13 +324,13 @@ int CBQ_containersRangeInit__(CBQContainer_t* coFirst, size_t len, int restore_p
             break;
         }
         container++;
-    } while (--iLen);
+    } while (--remLen);
 
     if (errSt) {
         if (!restore_pos_fail)
             return CBQ_ERR_MEM_ALLOC_FAILED;
 
-        CBQ_containersRangeFree__(coFirst, len - iLen);
+        CBQ_containersRangeFree__(coFirst, len - remLen);
 
         return CBQ_ERR_MEM_BUT_RESTORED;
     }
@@ -405,7 +404,7 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
     }
 
     if (usedGeneratedIncrement)
-        CBQ_IncSizeChange__(trustedQueue, 1); // Up
+        CBQ_IncIterSizeChange__(trustedQueue, 1); // Up
 
     /* Sets new incremented size and status */
     trustedQueue->size += delta;
@@ -419,7 +418,7 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
     return 0;
 }
 
-void CBQ_IncSizeChange__(CBQueue_t* trustedQueue, int direction)
+void CBQ_IncIterSizeChange__(CBQueue_t* trustedQueue, int direction)
 {
     if (direction)  { // Up
         trustedQueue->incSize <<= 1;
@@ -458,7 +457,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
     if (!delta)
         delta = trustedQueue->size - engCellSize;
 
-    remainder = trustedQueue->size - (engCellSize > MIN_SIZE? engCellSize : MIN_SIZE);
+    remainder = (ssize_t) trustedQueue->size - (ssize_t) (engCellSize > MIN_SIZE? engCellSize : MIN_SIZE);
     if (!remainder)
         return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
 
@@ -509,7 +508,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
         return errSt;
     }
 
-    CBQ_IncSizeChange__(trustedQueue, 0); // when reducing the size, it is logical to reduce the incSize var
+    CBQ_IncIterSizeChange__(trustedQueue, 0); // when reducing the size, it is logical to reduce the incSize var
 
     /* Sets new size and check sId */
     trustedQueue->size -= delta;

@@ -8,7 +8,11 @@
         #define false 0
     #endif
 
-    #define CBQ_QUEUE_MAX_SIZE  65536
+    #ifndef SSIZE_MAX
+        #define SSIZE_MAX / 2 - 1
+    #endif
+
+    #define CBQ_QUEUE_MAX_SIZE  SSIZE_MAX
     #define MIN_SIZE        1
     #define DEC_BUFF_PERC   1.1L
 

@@ -16,6 +16,7 @@
 
     /* Maximum (unstable) size of queue is 65536 */
 
+
     /* ---------------- UNSAFETY MACROS ---------------- */
 
     /* Turn on that define if dont want base queue check on following methods:
@@ -40,34 +41,94 @@
     /* Do not restore memory after unsuccessful allocation (There will be a memory leak) */
     // #define NO_REST_MEM_FAIL
 
-    /* ---------------- UNSAFETY MACROSES ---------------- */
+    /* Disable stdint.h type declarations for CBQArg_t */
+    // #define NO_FIX_ARGTYPES
 
-    /* Macro for callback without static parameters which set into 4 param in CBQ_Exec function */
-    #define CBQ_NO_STPARAMS \
-        (CBQArg_t) {0}
 
-    /* Macro for callback without scalable parameters, same as null macros
-    */
-    #define CBQ_NO_VPARAMS NULL
+    /* ---------------- Argument structure ---------------- */
 
     /* Union type has argument base element which contain
      * used variables for function calls in queue.
+     * What to consider:
+     * The Ñ99 standard defines types with platform independent fixed size.
+     * long is not more stably fixed, but it is also defined here.
+     * It should also be remembered that unsigned floating point numbers
+     * do not exist in C/C++, because because there are no analogues
+     * of CPU commands.
+     * A fixed size of 64 bit integers on a 32 bit machine will work,
+     * but not in one machine instruction (which makes arithmetic slow).
      */
+     #ifndef NO_FIX_ARGTYPES
+        #include <stdint.h>
+    #endif
+
     typedef union CBQArg_t CBQArg_t;
     union CBQArg_t {
 
-        int             iVar;                 // integer
+    #ifdef NO_FIX_ARGTYPES
+        unsigned char   utiVar;               // tiny unsigned integer (byte)
+        unsigned short  usiVar;               // short int (machine word)
         unsigned int    uiVar;                // unsigned integer
-        unsigned char   tuiVar;               // tiny unsigned integer (byte)
-        size_t          szVar;                // size_t
+        unsigned long long ulliVar;           // for maximum int value
+        signed char     tiVar;
+        signed short    siVar;
+        signed int      iVar;
+        signed long long lliVar;
+    #else
+        uint8_t         utiVar;
+        uint16_t        usiVar;
+        uint32_t        uiVar;
+        uint64_t        ulliVar;
+        int8_t          tiVar;
+        int16_t         siVar;
+        int32_t         iVar;
+        int64_t         lliVar;
+    #endif
+        unsigned long   uliVar;
+        signed long     liVar;
+        size_t          szVar;                // size_t (unsigned)
+        ssize_t         sszVar;               // signed size_t
+        float           flVar;                // float
         double          dVar;                 // double
         char            cVar;                 // char
         char*           sVar;                 // string
         void*           pVar;                 // pointer (need explicit type conversion before using)
         struct CBQueue_t*  qVar;       // pointer to queue in which can send new call
         int (*fVar)(int, CBQArg_t*);   // function pointer
-
     };
+
+
+    /* ---------------- Callback function ---------------- */
+
+    /* Type func pointer for functions which must be called
+     * in the queue after earlier stored calls. Function poiner
+     * may have various arguments, what has been defined
+     * CBQArg_t union type. The number of arguments issued at
+     * first var - argc.
+     * If you do not use argc/argv, then with a strict check (-Wextra flag),
+     * the compiler may issue a warning.
+     * Add a UNUSED macro in the your callback declare in
+     * the corresponding argument definition:
+     *  int funCB(UNUSED int argc, CBQArg_t* args) or
+     *  int funCB(int argc, CBQArg_t* args UNUSED)
+     */
+    #ifdef __GNUC__
+        #define UNUSED __attribute((unused))
+    #else
+        #define UNUSED
+    #endif
+
+    /* Macro for callback without static parameters which set into 4 param in CBQ_Exec function */
+    #define CBQ_NO_STPARAMS \
+        (CBQArg_t) {0}
+
+    /* Macro for callback without scalable parameters, same as null macros */
+    #define CBQ_NO_VPARAMS NULL
+
+    typedef int (*QCallback) (int argc, CBQArg_t* args);
+
+
+    /* ---------------- Queue (main) structure ---------------- */
 
     /* Main structure of callback queue instance
      * Used for async function calls support.
@@ -132,13 +193,7 @@
         CBQ_SI_HUGE =           8192
     };
 
-    /* Type func pointer for functions which must be called
-     * in the queue after earlier stored calls. Function poiner
-     * may have various arguments, what has been defined
-     * CBQArg_t union type. The number of arguments issued at
-     * first var - argc.
-     */
-    typedef int (*QCallback) (int argc, CBQArg_t* args);
+    /* ---------------- Queue functions ---------------- */
 
     /* List of possible return statuses by callback queue methods.
      * First CBQ_SUCCESSFUL is simple zero constant which is used

@@ -75,26 +75,26 @@ void CBQ_T_GAMEFLY(void)
 
 }
 
-int startComponents(int argc, CBQArg_t* argv)
+int startComponents(UNUSED int argc, UNUSED CBQArg_t* argv)
 {
 
     return 0;
 }
 
-int playerStart(int argc, CBQArg_t* argv)
+int playerStart(UNUSED int argc, UNUSED CBQArg_t* argv)
 {
     gamefly_s.status = GF_PAUSE;
     return 0;
 }
 
-int showMsg(int argc, CBQArg_t* argv)
+int showMsg(UNUSED int argc, CBQArg_t* argv)
 {
     CBQ_Push(argv[0].qVar, loopMsg, 0, NULL, 2, (CBQArg_t) {.qVar = argv[0].qVar}, (CBQArg_t) {.sVar = argv[1].sVar});
 
     return 0;
 }
 
-int loopMsg(int argc, CBQArg_t* argv)
+int loopMsg(UNUSED int argc, CBQArg_t* argv)
 {
     printf("%s", argv[1].sVar);
     fflush(stdout);
