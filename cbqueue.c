@@ -173,18 +173,19 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
 
         ssize_t delta = (ssize_t) (customNewSize - queue->size);
 
+        if (!delta)
+            return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
         /* inc */
-        if (delta) {
+        else if (delta > 0) {
             errSt = CBQ_incSize__(queue, delta);
             if (errSt)
                 return errSt;
         /* dec */
-        } else if (delta < 0) {
+        } else {
             errSt = CBQ_decSize__(queue, -delta, 1);
             if (errSt)
                 return errSt;
-        } else
-            return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
+        }
     }
 
     return 0;
@@ -355,7 +356,10 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
     if (!delta) {
         usedGeneratedIncrement = 1;
         delta = trustedQueue->incSize;
-    } else
+    }
+    else if (delta > CBQ_QUEUE_MAX_SIZE)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
+    else
         usedGeneratedIncrement = 0;
 
     errSt = CBQ_incSizeCheck__(trustedQueue, trustedQueue->size + delta);
@@ -457,6 +461,8 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
 
     if (!delta)
         delta = trustedQueue->size - engCellSize;
+    else if (delta > CBQ_QUEUE_MAX_SIZE)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
 
     remainder = (ssize_t) trustedQueue->size - (ssize_t) (engCellSize > CBQ_QUEUE_MIN_SIZE? engCellSize : CBQ_QUEUE_MIN_SIZE);
     if (!remainder)

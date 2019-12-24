@@ -242,16 +242,16 @@ void CBQ_T_ControlTest(void)
                     scanf(SZ_PRTF, &nSML);
                     fflush(stdin);
 
-                    printf("Change the size of the queue, if it does not fit? (y/other any key)");
+                    printf("Change the size of the queue, if it does not fit? (1/0)");
                     scanf("%d", &key);
                     fflush(stdin);
-                    if (key == 'Y' || key == 'y')
+                    if (key == 1)
                         tryToAdaptSize = 1;
 
-                    printf("Align max size limit, if it affects busy cells? (y/other any key)");
+                    printf("Align max size limit, if it affects busy cells? (1/0)");
                     scanf("%d", &key);
                     fflush(stdin);
-                    if (key == 'Y' || key == 'y')
+                    if (key == 1)
                         adaptSML = 1;
                 }
 
