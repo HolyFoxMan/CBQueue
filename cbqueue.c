@@ -10,9 +10,10 @@ static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContain
 static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG CBQContainer_t *restrict, MAY_REG size_t);
 static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, int);
 static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
-static void CBQ_IncIterSizeChange__(CBQueue_t*, int);
+static void CBQ_incIterSizeChange__(CBQueue_t*, int);
 
 /* Incrementation */
+static int CBQ_getIncIterVector__(CBQueue_t* trustedQueue);
 static int CBQ_incSizeCheck__(CBQueue_t*, size_t);
 static int CBQ_incSize__(CBQueue_t*, size_t);
 
@@ -234,6 +235,7 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSiz
 
         queue->incSizeMode = CBQ_SM_LIMIT;
         queue->maxSizeLimit = newMaxSizeLimit;
+        queue->incSize = INIT_INC_SIZE;
     }
 
     return 0;
@@ -363,8 +365,14 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
         usedGeneratedIncrement = 0;
 
     errSt = CBQ_incSizeCheck__(trustedQueue, trustedQueue->size + delta);
-    if (errSt)
-        return errSt;
+    if (errSt) {
+        /* Overflow */
+        if (usedGeneratedIncrement && trustedQueue->status != CBQ_SM_STATIC) {
+            CBQ_incIterSizeChange__(trustedQueue, 0);
+            delta = (trustedQueue->status == CBQ_SM_LIMIT? trustedQueue->maxSizeLimit : CBQ_QUEUE_MAX_SIZE) - trustedQueue->size;
+        } else
+            return errSt;
+    }
 
     /* Ordering cells */
     if (!trustedQueue->sId) {
@@ -409,7 +417,7 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
     }
 
     if (usedGeneratedIncrement)
-        CBQ_IncIterSizeChange__(trustedQueue, 1); // Up
+        CBQ_incIterSizeChange__(trustedQueue, CBQ_getIncIterVector__(trustedQueue));
 
     /* Sets new incremented size and status */
     trustedQueue->size += delta;
@@ -423,16 +431,32 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
     return 0;
 }
 
-void CBQ_IncIterSizeChange__(CBQueue_t* trustedQueue, int direction)
+void CBQ_incIterSizeChange__(CBQueue_t* trustedQueue, int direction)
 {
     if (direction)  { // Up
-        trustedQueue->incSize <<= 1;
+        trustedQueue->incSize <<= 1;    // * 2
         if (trustedQueue->incSize > MAX_INC_SIZE)
             trustedQueue->incSize = MAX_INC_SIZE;
     } else {    // Down
         trustedQueue->incSize >>= 1;
         if (trustedQueue->incSize < INIT_INC_SIZE)
             trustedQueue->incSize = INIT_INC_SIZE;
+    }
+}
+
+/* For CBQ_SM_LIMIT and CBQ_QUEUE_MAX_SIZE mods */
+int CBQ_getIncIterVector__(CBQueue_t* trustedQueue)
+{
+    if (trustedQueue->incSizeMode == CBQ_SM_LIMIT) {
+        if (trustedQueue->maxSizeLimit - trustedQueue->size > trustedQueue->size)
+            return 1;   // Up
+        else
+            return 0;   // Down
+    } else {
+        if (CBQ_QUEUE_MAX_SIZE - trustedQueue->size > trustedQueue->size)
+            return 1;
+        else
+            return 0;
     }
 }
 
@@ -487,15 +511,18 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
             trustedQueue->sId = trustedQueue->size;
 
     /* --r++s- -> r++s---   (if for example delta == 3, size - sId == 2) */
-        if (trustedQueue->rId < trustedQueue->sId && (trustedQueue->size - trustedQueue->sId < delta))
-            CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId), trustedQueue->coArr, engCellSize, 0);
+        if (trustedQueue->rId < trustedQueue->sId) {
+            if (trustedQueue->size - trustedQueue->sId < delta) {
+                CBQ_containersSwapping__(trustedQueue->coArr + (trustedQueue->rId), trustedQueue->coArr, engCellSize, 0);
+                trustedQueue->rId = 0;
+            }
     /* ++s--r+ -> r+++s-- */
-        else {
+        } else {
             errSt = CBQ_orderingDividedSegs__(trustedQueue, NULL);
             if (errSt)
                 return errSt;
+            trustedQueue->rId = 0;
         }
-        trustedQueue->rId = 0;
     }
 
     /* Free unused container args */
@@ -515,14 +542,16 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
         return errSt;
     }
 
-    CBQ_IncIterSizeChange__(trustedQueue, 0); // when reducing the size, it is logical to reduce the incSize var
+    CBQ_incIterSizeChange__(trustedQueue, 0); // when reducing the size, it is logical to reduce the incSize var
 
-    /* Sets new size and check sId */
+    /* Sets new size and sId */
     trustedQueue->size -= delta;
-    if (!remainder) { // no free cells left
+    trustedQueue->sId = trustedQueue->rId + engCellSize;
+    if (trustedQueue->sId == trustedQueue->size)
         trustedQueue->sId = 0;
+
+    if (!remainder) // no free cells left
         trustedQueue->status = CBQ_ST_FULL;
-    }
 
     CBQ_MSGPRINT("Queue size decremented");
     CBQ_DRAWSCHEME_IN(trustedQueue);
