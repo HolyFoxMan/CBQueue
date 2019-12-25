@@ -11,13 +11,8 @@ static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG
 static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, int);
 static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
 static void CBQ_incIterSizeChange__(CBQueue_t*, int);
-
-/* Incrementation */
 static int CBQ_getIncIterVector__(CBQueue_t* trustedQueue);
-static int CBQ_incSizeCheck__(CBQueue_t*, size_t);
-static int CBQ_incSize__(CBQueue_t*, size_t);
-
-/* Decrementation */
+static int CBQ_incSize__(CBQueue_t*, size_t, int);
 static int CBQ_decSize__(CBQueue_t*, size_t, int);
 
 /* Arguments */
@@ -158,7 +153,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
 
     /* by selected mode with auto-dec/inc params */
     if (changeTowards == CBQ_INC_SIZE) {
-        errSt = CBQ_incSize__(queue, 0);
+        errSt = CBQ_incSize__(queue, 0, 1);
         if (errSt)
             return errSt;
 
@@ -178,12 +173,12 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
             return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
         /* inc */
         else if (delta > 0) {
-            errSt = CBQ_incSize__(queue, delta);
+            errSt = CBQ_incSize__(queue, delta, 0);
             if (errSt)
                 return errSt;
         /* dec */
         } else {
-            errSt = CBQ_decSize__(queue, -delta, 1);
+            errSt = CBQ_decSize__(queue, -delta, 0);
             if (errSt)
                 return errSt;
         }
@@ -349,29 +344,38 @@ void CBQ_containersRangeFree__(MAY_REG CBQContainer_t* container, MAY_REG size_t
     } while (--len);
 }
 
-int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta)
+int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta, int alignToMaxSizeLimit)
 {
     int errSt;
     int usedGeneratedIncrement;
+    size_t remainder;
 
-    /* Checking new size */
+    /* in static mode, the size cannot increase */
+    if (trustedQueue->incSizeMode == CBQ_SM_STATIC)
+        return CBQ_ERR_STATIC_SIZE_OVERFLOW;
+
+    /* Get generated delta */
     if (!delta) {
         usedGeneratedIncrement = 1;
         delta = trustedQueue->incSize;
     }
-    else if (delta > CBQ_QUEUE_MAX_SIZE)
-        return CBQ_ERR_ARG_OUT_OF_RANGE;
     else
         usedGeneratedIncrement = 0;
 
-    errSt = CBQ_incSizeCheck__(trustedQueue, trustedQueue->size + delta);
-    if (errSt) {
-        /* Overflow */
-        if (usedGeneratedIncrement && trustedQueue->status != CBQ_SM_STATIC) {
-            CBQ_incIterSizeChange__(trustedQueue, 0);
-            delta = (trustedQueue->status == CBQ_SM_LIMIT? trustedQueue->maxSizeLimit : CBQ_QUEUE_MAX_SIZE) - trustedQueue->size;
+    /* Checking the delta */
+    remainder = (size_t) (trustedQueue->incSizeMode == CBQ_SM_LIMIT?
+                        trustedQueue->maxSizeLimit :
+                        CBQ_QUEUE_MAX_SIZE) - trustedQueue->size;
+
+    if (remainder < delta) {
+        /* if limit has been reached or the delta cannot be aligned */
+        if (!remainder || !alignToMaxSizeLimit) {
+            if (trustedQueue->incSizeMode == CBQ_SM_LIMIT)
+                return CBQ_ERR_LIMIT_SIZE_OVERFLOW;
+            else
+                return CBQ_ERR_MAX_SIZE_OVERFLOW;
         } else
-            return errSt;
+            delta = remainder;
     }
 
     /* Ordering cells */
@@ -458,20 +462,6 @@ int CBQ_getIncIterVector__(CBQueue_t* trustedQueue)
         else
             return 0;
     }
-}
-
-int CBQ_incSizeCheck__(CBQueue_t* trustedQueue, size_t delta)
-{
-    if (trustedQueue->incSizeMode == CBQ_SM_STATIC)
-        return CBQ_ERR_STATIC_SIZE_OVERFLOW;
-
-    if (trustedQueue->incSizeMode == CBQ_SM_LIMIT && (trustedQueue->size + delta) > trustedQueue->maxSizeLimit)
-        return CBQ_ERR_LIMIT_SIZE_OVERFLOW;
-
-    if (trustedQueue->incSizeMode == CBQ_SM_MAX && (trustedQueue->size + delta) > CBQ_QUEUE_MAX_SIZE)
-        return CBQ_ERR_MAX_SIZE_OVERFLOW;
-
-    return 0;
 }
 
 int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
@@ -722,7 +712,7 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t*
 
         CBQ_MSGPRINT("Queue is full to push");
 
-        errSt = CBQ_incSize__(queue, 0);
+        errSt = CBQ_incSize__(queue, 0, 1);
         if (errSt)
             return errSt;
 
@@ -795,7 +785,7 @@ int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQ
 
         CBQ_MSGPRINT("Queue is full to push");
 
-        errSt = CBQ_incSize__(queue, 0);
+        errSt = CBQ_incSize__(queue, 0, 1);
         if (errSt)
             return errSt;
 
