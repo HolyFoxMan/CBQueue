@@ -994,7 +994,7 @@ int CBQ_CheckVerIndexByFlag(int fInfoType)
     else if (fInfoType == CBQ_VI_VERSION)
         return verId & BYTE_MASK; // First Byte
     else
-        return 1 & verId >> (fInfoType + BYTE_SIZE -  1);
+        return 1 & verId >> (fInfoType + BYTE_OFFSET);
 }
 
 int CBQ_GetDifferencesVerIdMask(int comparedVerId)
