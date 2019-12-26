@@ -1187,5 +1187,5 @@ int CBQ_IsCustomisedVersion(void)
     if (!verId)
         return CBQ_ERR_VI_NOT_GENERATED;
 
-    return verId >> BYTE_SIZE;
+    return !!(verId >> BYTE_SIZE); // !! - convert to bool value
 }

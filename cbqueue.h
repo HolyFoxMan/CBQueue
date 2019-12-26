@@ -13,18 +13,14 @@
     #include <stdlib.h>
     #include <time.h>
 
-    #ifdef CBQ_NO_DEBUG
-    #undef CBQ_NO_DEBUG
+    /* Turn off this macro if you need some useful functions for debugging the library itself.
+     * This does not apply to performance analysis and other statistics.
+     */
+    // #define CBQ_NO_DEBUG
 
-        /* turn it on if you need some useful functions for debugging the library itself
-         * This does not apply to performance analysis and other statistics.
-         */
-        #define CBQ_NO_DEBUG
-
-    #endif
     #include "cbqdebug.h"
 
-    /* current version (needs to compare by verId function)
+    /* Current version (needs to compare by verId function).
      * Useful tip: use CBQ_T_EXPLORE_VERSION() from the cbqtest.h
      * to check the version of the library used.
      */
