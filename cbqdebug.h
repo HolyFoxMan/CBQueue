@@ -11,7 +11,7 @@
     #define CBQ_DEBUG
 
     /* CBQ_NO_DEBUG is predefined macro which must be sets in compiler args */
-    #ifdef CBQ_NO_DEBUG
+    #if defined(CBQ_NO_DEBUG) && defined(CBQ_DEBUG)
         #undef CBQ_DEBUG
     #endif // CBQ_NO_DEBUG
 

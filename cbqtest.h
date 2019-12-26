@@ -18,6 +18,9 @@
     #include <conio.h>
     #include "cbqueue.h"
 
+    #define CBQ_T_EXPLORE_VERSION() \
+        CBQ_T_VerIdInfo(CBQ_CUR_VERSION)
+
     /* Base tests */
     void CBQ_T_HelloWorld(void);
     void CBQ_T_ControlTest(void);
@@ -25,6 +28,7 @@
     void CBQ_T_Params(void);
     void CBQ_T_SetTimeout_AutoGame(void);
     void CBQ_T_SetTimeout(void);
+    void CBQ_T_VerIdInfo(int);
 
 #endif // CBQTEST_H
 

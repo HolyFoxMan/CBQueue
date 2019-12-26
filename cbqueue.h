@@ -12,12 +12,28 @@
 
     #include <stdlib.h>
     #include <time.h>
+
+    #ifdef CBQ_NO_DEBUG
+    #undef CBQ_NO_DEBUG
+
+        /* turn it on if you need some useful functions for debugging the library itself
+         * This does not apply to performance analysis and other statistics.
+         */
+        #define CBQ_NO_DEBUG
+
+    #endif
     #include "cbqdebug.h"
+
+    /* current version (needs to compare by verId function)
+     * Useful tip: use CBQ_T_EXPLORE_VERSION() from the cbqtest.h
+     * to check the version of the library used.
+     */
+    #define CBQ_CUR_VERSION 1
 
     /* Maximum (unstable) size of queue is 65536 */
 
 
-    /* ---------------- UNSAFETY MACROS ---------------- */
+    /* ---------------- UNSAFETY MACROS (not for lib version) ---------------- */
 
     /* Turn on that define if dont want base queue check on following methods:
      * push
@@ -36,7 +52,7 @@
     // #define NO_VPARAM_CHECK
 
     /* Register vars in functions with cycle (copy data) */
-    #define REG_CYCLE_VARS
+    // #define REG_CYCLE_VARS
 
     /* Do not restore memory after unsuccessful allocation (There will be a memory leak) */
     // #define NO_REST_MEM_FAIL
@@ -44,13 +60,17 @@
     /* Disable stdint.h type declarations for CBQArg_t */
     // #define NO_FIX_ARGTYPES
 
+    /* Enable to generate the identifier of the compiled library.
+     * Possibly unsafe, because it stores embedded information about the enabled flags.
+     */
+    #define GEN_VERID
 
     /* ---------------- Argument structure ---------------- */
 
     /* Union type has argument base element which contain
      * used variables for function calls in queue.
      * What to consider:
-     * The Ñ99 standard defines types with platform independent fixed size.
+     * The C99 standard defines types with platform independent fixed size.
      * long is not more stably fixed, but it is also defined here.
      * It should also be remembered that unsigned floating point numbers
      * do not exist in C/C++, because because there are no analogues
@@ -215,7 +235,9 @@
         CBQ_ERR_SIZE_NOT_FIT_IN_LIMIT,
         CBQ_ERR_QUEUE_IS_EMPTY,
         CBQ_ERR_IS_BUSY,
-        CBQ_ERR_VPARAM_VARIANCE
+        CBQ_ERR_VPARAM_VARIANCE,
+        /* VerId exception */
+        CBQ_ERR_VI_NOT_GENERATED = SHRT_MAX
     };
 
     /* These enums choose in "changeTowards" param from ChangeSize method
@@ -316,6 +338,35 @@ size_t CBQ_GetCallAmount(CBQueue_t* queue);
 size_t CBQ_GetSizeInBytes(CBQueue_t* queue);
 int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getSize, size_t *restrict getEngagedSize,
     int *restrict getIncSizeMode, size_t *restrict getMaxSizeLimit, size_t *restrict getSizeInBytes);
+
+/* VerId Information
+ * You can just call CBQ_T_EXPLORE_VERSION() from cbqtest.h to get readable information of used lib
+ */
+enum {  // flags for checking VerId by CBQ_CheckVerIndexByFlag function
+    CBQ_VI_VERSION,
+    CBQ_VI_DEBUG,       // starts after first byte
+    CBQ_VI_NBASECHECK,
+    CBQ_VI_NEXCOFBUSY,
+    CBQ_VI_NVPARAMCHECK,
+    CBQ_VI_REGCYCLEVARS,
+    CBQ_VI_NRESTMEMFAIL,
+    CBQ_VI_NFIXARGTYPES,
+    CBQ_VI_LAST_FLAG    // use it only when comparing with the return value from the CBQ_GetAvaliableFlagsRange function
+};
+/* Returns identification value with version and used flags of current lib build.
+ * If macro GEN_VERID has not been set, returns zero.
+ */
+int CBQ_GetVerIndex(void);
+/* Return 1/0 or version by selected flag (CBQ_VI_...)*/
+int CBQ_CheckVerIndexByFlag(int fInfoType);
+/* Return logic mask (version differences are indicated by a 1 in the first byte) */
+int CBQ_GetDifferencesVerIdMask(int comparedVerId);
+/* May compare with CBQ_VI_LAST_FLAG value to avoid error in CBQ_CheckVerIndexByFlag.
+ * But can returns error (CBQ_ERR_VI_NOT_GENERATED) if GEN_VERID has not been sets in used lib build.
+ */
+int CBQ_GetAvaliableFlagsRange(void);
+/* Returns 1 if version was configured (At 0, you can hope for complete safety) */
+int CBQ_IsCustomisedVersion(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -1104,8 +1104,88 @@ int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
 
 int CBQ_GetVerIndex(void)
 {
-    const int ver = 0;
+    const int verId =
+    #ifdef GEN_VERID
+        ((CBQ_CUR_VERSION & BYTE_MASK)? CBQ_CUR_VERSION & BYTE_MASK : 1)  // first byte
+        #if !defined(CBQ_NO_DEBUG) && defined(CBQ_DEBUG)
+        | 1 << 8
+        #endif  // debug id
+        #ifdef NO_BASE_CHECK
+        | 1 << 9
+        #endif // NO_BASE_CHECK
+        #ifdef NO_EXCEPTIONS_OF_BUSY
+        | 1 << 10
+        #endif // NO_EXCEPTIONS_OF_BUSY
+        #ifdef NO_VPARAM_CHECK
+        | 1 << 11
+        #endif // NO_VPARAM_CHECK
+        #ifdef REG_CYCLE_VARS
+        | 1 << 12
+        #endif // REG_CYCLE_VARS
+        #ifdef NO_REST_MEM_FAIL
+        | 1 << 13
+        #endif // NO_REST_MEM_FAIL
+        #ifdef NO_FIX_ARGTYPES
+        | 1 << 14
+        #endif // NO_FIX_ARGTYPES
+    #else // GEN_VERID
+        (int) 0
+    #endif
+        ;
 
+    return verId;
+}
 
-    return ver;
+int CBQ_CheckVerIndexByFlag(int fInfoType)
+{
+    int verId;
+    verId = CBQ_GetVerIndex();
+
+    if (!verId)
+        return CBQ_ERR_VI_NOT_GENERATED;
+
+    if (fInfoType < 0 || fInfoType >= CBQ_VI_LAST_FLAG)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
+    else if (fInfoType == CBQ_VI_VERSION)
+        return verId & BYTE_MASK; // First Byte
+    else
+        return 1 & verId >> (fInfoType + BYTE_SIZE -  1);
+}
+
+int CBQ_GetDifferencesVerIdMask(int comparedVerId)
+{
+    int verId;
+
+    verId = CBQ_GetVerIndex();
+    if (!verId)
+        return CBQ_ERR_VI_NOT_GENERATED;
+
+    if (!comparedVerId)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+    verId ^= comparedVerId;
+    if (verId & BYTE_MASK)  // have difference versions
+        verId = (verId & ~BYTE_MASK) | 1; // replace replace the value of the first byte with logic true (one)
+
+    return verId;
+}
+
+int CBQ_GetAvaliableFlagsRange(void)
+{
+    #ifdef GEN_VERID
+    return CBQ_VI_LAST_FLAG;
+    #else
+    return CBQ_ERR_VI_NOT_GENERATED;
+    #endif
+}
+
+int CBQ_IsCustomisedVersion(void)
+{
+    int verId;
+    verId = CBQ_GetVerIndex();
+
+    if (!verId)
+        return CBQ_ERR_VI_NOT_GENERATED;
+
+    return verId >> BYTE_SIZE;
 }

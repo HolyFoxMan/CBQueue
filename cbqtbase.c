@@ -729,3 +729,27 @@ void CBQ_T_SetTimeout_AutoGame(void)
 
     ASRT(CBQ_QueueFree(&queue),"Failed to free")
 }
+
+void CBQ_T_VerIdInfo(int APIVer)
+{
+    if (!CBQ_GetVerIndex()) {
+        printf("Information of current build not generated (Use GEN_VERID macro for it)\n");
+        return;
+    }
+    if (APIVer != CBQ_CheckVerIndexByFlag(CBQ_VI_VERSION))
+        printf("Warning! Variance of the API (cbqueue.h) version with the library version.\n"
+               "There may be problems using. API Version is \"%d\"\n", APIVer);
+    printf("VerId: %d\n", CBQ_GetVerIndex());
+    printf("Version: %d\n", CBQ_CheckVerIndexByFlag(CBQ_VI_VERSION));
+    if (CBQ_IsCustomisedVersion())
+        printf("This lib have custom configuration\n");
+    else
+        printf("This lib dont have custom configuration, its safe for use\n");
+    printf("Base check status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_NBASECHECK)? "false" : "true");
+    printf("Busy check status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_NEXCOFBUSY)? "false" : "true");
+    printf("Rest mem after fail status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_NRESTMEMFAIL)? "false" : "true");
+    printf("Fix arg types status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_NFIXARGTYPES)? "false" : "true");
+    printf("VParam check status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_NVPARAMCHECK)? "false" : "true");
+    printf("Register vars status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_REGCYCLEVARS)? "true" : "false");
+    printf("Debug status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_DEBUG)? "true" : "false");
+}
