@@ -103,6 +103,7 @@
     #endif
 
     #define BYTE_SIZE 8
+    #define BYTE_OFFSET 7
     #define BYTE_MASK 0xFF
 
 #endif // CBQLOCAL_H
