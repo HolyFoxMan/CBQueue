@@ -276,7 +276,7 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams);
 
 /* ---------------- Additional methods ---------------- */
-int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize);
+int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize, const int);
 int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, const int tryToAdaptSize, const int adaptSizeMaxLimit);
 int CBQ_Clear(CBQueue_t* queue);
 char* CBQ_strIntoHeap(const char* str);

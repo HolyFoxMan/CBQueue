@@ -138,7 +138,7 @@ int CBQ_QueueFree(CBQueue_t* queue)
     return 0;
 }
 
-int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize)
+int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize, const int adaptCSizeByLimits)
 {
     size_t errSt;
 
@@ -173,12 +173,12 @@ int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSi
             return CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT;
         /* inc */
         else if (delta > 0) {
-            errSt = CBQ_incSize__(queue, delta, 0);
+            errSt = CBQ_incSize__(queue, delta, adaptCSizeByLimits);
             if (errSt)
                 return errSt;
         /* dec */
         } else {
-            errSt = CBQ_decSize__(queue, -delta, 0);
+            errSt = CBQ_decSize__(queue, -delta, adaptCSizeByLimits);
             if (errSt)
                 return errSt;
         }
@@ -1100,4 +1100,12 @@ int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
             (CBQArg_t) {.fVar = args[ST_FUNC].fVar});
 
     return retst;
+}
+
+int CBQ_GetVerIndex(void)
+{
+    const int ver = 0;
+
+
+    return ver;
 }

@@ -189,19 +189,19 @@ void CBQ_T_ControlTest(void)
                 printf("Type new size\n");
                 scanf(SZ_PRTF, &customSize);
                 fflush(stdin);
-                ASRT(CBQ_ChangeSize(&queue, 0, customSize), "Failed to change size")
+                ASRT(CBQ_ChangeSize(&queue, 0, customSize, 0), "Failed to change size")
                 break;
             }
 
             case 'I':
             case 'i': {
-                ASRT(CBQ_ChangeSize(&queue, CBQ_INC_SIZE, 0), "Failed to increment size")
+                ASRT(CBQ_ChangeSize(&queue, CBQ_INC_SIZE, 0, 1), "Failed to increment size")
                 break;
             }
 
             case 'D':
             case 'd': {
-                ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0), "Failed to decrement size")
+                ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0, 1), "Failed to decrement size")
                 break;
             }
 
@@ -435,7 +435,7 @@ int selfExecCB(UNUSED int argc, CBQArg_t* argv)
 
 int changeSizeCB(UNUSED int argc, CBQArg_t* argv)
 {
-    return CBQ_ChangeSize(argv[0].qVar, argv[1].iVar, argv[2].szVar);
+    return CBQ_ChangeSize(argv[0].qVar, argv[1].iVar, argv[2].szVar, 1);
 }
 
 
@@ -443,7 +443,6 @@ int freeQueueCB(UNUSED int argc, CBQArg_t* argv)
 {
     return CBQ_QueueFree(argv[0].qVar);
 }
-
 
 void CBQ_T_BusyTest(void)
 {
