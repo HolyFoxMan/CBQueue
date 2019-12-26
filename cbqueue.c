@@ -10,10 +10,10 @@ static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContain
 static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG CBQContainer_t *restrict, MAY_REG size_t);
 static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, int);
 static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
-static void CBQ_incIterSizeChange__(CBQueue_t*, int);
+static void CBQ_incIterSizeChange__(CBQueue_t*, const int);
 static int CBQ_getIncIterVector__(CBQueue_t* trustedQueue);
-static int CBQ_incSize__(CBQueue_t*, size_t, int);
-static int CBQ_decSize__(CBQueue_t*, size_t, int);
+static int CBQ_incSize__(CBQueue_t*, size_t, const int);
+static int CBQ_decSize__(CBQueue_t*, size_t, const int);
 
 /* Arguments */
 static int CBQ_coIncArgsCapacity__(CBQContainer_t*, unsigned int);
@@ -138,7 +138,7 @@ int CBQ_QueueFree(CBQueue_t* queue)
     return 0;
 }
 
-int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
+int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize)
 {
     size_t errSt;
 
@@ -188,7 +188,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize)
 }
 
 
-int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSizeLimit, int tryToAdaptSize, int adaptMaxSizeLimit)
+int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSizeLimit, const int tryToAdaptSize, const int adaptMaxSizeLimit)
 {
     int errSt;
 
@@ -344,7 +344,7 @@ void CBQ_containersRangeFree__(MAY_REG CBQContainer_t* container, MAY_REG size_t
     } while (--len);
 }
 
-int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta, int alignToMaxSizeLimit)
+int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta, const int alignToMaxSizeLimit)
 {
     int errSt;
     int usedGeneratedIncrement;
@@ -435,7 +435,7 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta, int alignToMaxSizeLimit
     return 0;
 }
 
-void CBQ_incIterSizeChange__(CBQueue_t* trustedQueue, int direction)
+void CBQ_incIterSizeChange__(CBQueue_t* trustedQueue, const int direction)
 {
     if (direction)  { // Up
         trustedQueue->incSize <<= 1;    // * 2
@@ -464,7 +464,7 @@ int CBQ_getIncIterVector__(CBQueue_t* trustedQueue)
     }
 }
 
-int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, int alignToUsedCells)
+int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, const int alignToUsedCells)
 {
     int errSt;
     size_t engCellSize;
@@ -921,8 +921,8 @@ size_t CBQ_GetSizeInBytes(CBQueue_t* queue)
     return bSize;
 }
 
-int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
-    int* getIncSizeMode, size_t* getMaxSizeLimit, size_t* getSizeInBytes)
+int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getSize, size_t *restrict getEngagedSize,
+    int *restrict getIncSizeMode, size_t *restrict getMaxSizeLimit, size_t *restrict getSizeInBytes)
     {
         BASE_ERR_CHECK(queue);
 
@@ -1054,7 +1054,7 @@ int CBQ_drawScheme_chk__(void* queue)
 /* ---------------- Callback Methods ---------------- */
 
 /* push CB after delay, like JS func. Needs time.h lib */
-int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec,
+int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec,
     CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams)
 {
     clock_t targetTime;

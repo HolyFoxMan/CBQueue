@@ -273,11 +273,11 @@ int CBQ_QueueFree(CBQueue_t* queue);
 int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...);
 int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
-int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, int isSec, CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams);
+int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams);
 
 /* ---------------- Additional methods ---------------- */
-int CBQ_ChangeSize(CBQueue_t* queue, int changeTowards, size_t customNewSize);
-int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, int tryToAdaptSize, int adaptSizeMaxLimit);
+int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize);
+int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, const int tryToAdaptSize, const int adaptSizeMaxLimit);
 int CBQ_Clear(CBQueue_t* queue);
 char* CBQ_strIntoHeap(const char* str);
 
@@ -314,8 +314,8 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
 
 size_t CBQ_GetCallAmount(CBQueue_t* queue);
 size_t CBQ_GetSizeInBytes(CBQueue_t* queue);
-int CBQ_GetFullInfo(CBQueue_t* queue, int* getStatus, size_t* getSize, size_t* getEngagedSize,
-    int* getSizeMode, size_t* getSizeMaxLimit, size_t* getSizeInBytes);
+int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getSize, size_t *restrict getEngagedSize,
+    int *restrict getIncSizeMode, size_t *restrict getMaxSizeLimit, size_t *restrict getSizeInBytes);
 
 ////////////////////////////////////////////////////////////////////////////////
 
