@@ -6,9 +6,9 @@ static int CBQ_containerInit__(CBQContainer_t*);
 static int CBQ_reallocSize__(CBQueue_t*, size_t);
 static int CBQ_orderingDividedSegs__(CBQueue_t*, size_t*);
 static int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t*);
-static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, int);
+static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, const int);
 static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG CBQContainer_t *restrict, MAY_REG size_t);
-static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, int);
+static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, const int);
 static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
 static void CBQ_incIterSizeChange__(CBQueue_t*, const int);
 static int CBQ_getIncIterVector__(CBQueue_t* trustedQueue);
@@ -310,7 +310,7 @@ int CBQ_containerInit__(CBQContainer_t* container)
     return 0;
 }
 
-int CBQ_containersRangeInit__(CBQContainer_t* coFirst, size_t len, int restore_pos_fail)
+int CBQ_containersRangeInit__(CBQContainer_t* coFirst, size_t len, const int restore_pos_fail)
 {
     MAY_REG CBQContainer_t* container = coFirst;
     MAY_REG size_t remLen = len;
@@ -643,7 +643,7 @@ int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t* trustedQueue)
  * tmpCo - for swaping memory info (not pointer)
  */
 /* POT_REG - potential register var, same as register, if 64 compile */
-void CBQ_containersSwapping__(MAY_REG CBQContainer_t* srcp, MAY_REG CBQContainer_t* destp, MAY_REG size_t len, int reverse_iter)
+void CBQ_containersSwapping__(MAY_REG CBQContainer_t* srcp, MAY_REG CBQContainer_t* destp, MAY_REG size_t len, const int reverse_iter)
 {
     CBQContainer_t tmpCo;
 
