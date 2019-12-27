@@ -232,6 +232,7 @@
         CBQ_ERR_QUEUE_IS_EMPTY,
         CBQ_ERR_IS_BUSY,
         CBQ_ERR_VPARAM_VARIANCE,
+        CBQ_ERR_HURTS_USED_ARGS,
         /* VerId exception */
         CBQ_ERR_VI_NOT_GENERATED = SHRT_MAX
     };
@@ -297,6 +298,7 @@ int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* 
 int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize, const int);
 int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, const int tryToAdaptSize, const int adaptSizeMaxLimit);
 int CBQ_Clear(CBQueue_t* queue);
+int CBQ_SetNewCapacityArgs(CBQueue_t* queue, unsigned int newCapacity, const int passNonModifiableArgs);
 char* CBQ_strIntoHeap(const char* str);
 
 /* Not used
@@ -330,8 +332,8 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
     (!(TRUSTED_QUEUE_POINTER).status)
 
 
-size_t CBQ_GetCallAmount(CBQueue_t* queue);
-size_t CBQ_GetSizeInBytes(CBQueue_t* queue);
+int CBQ_GetCallAmount(CBQueue_t* queue, size_t* engSize);
+int CBQ_GetSizeInBytes(CBQueue_t* queue, size_t* byteSize);
 int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getSize, size_t *restrict getEngagedSize,
     int *restrict getIncSizeMode, size_t *restrict getMaxSizeLimit, size_t *restrict getSizeInBytes);
 

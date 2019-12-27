@@ -31,6 +31,7 @@ int add(int argc, CBQArg_t* argv)
 void CBQ_T_HelloWorld(void)
 {
     CBQueue_t queue;
+    size_t size;
     const char username [] = "User";
     int age = 20;
 
@@ -49,8 +50,10 @@ void CBQ_T_HelloWorld(void)
     /* Push summ calc function */
     ASRT(CBQ_Push(&queue, add, 0, NULL, 3, (CBQArg_t) {.iVar = 1}, (CBQArg_t) {.iVar = 2}, (CBQArg_t) {.iVar = 4}), "")
 
-    if (CBQ_HAVECALL(queue))
-        printf("main: calls num in queue: %llu\n", CBQ_GetCallAmount(&queue));
+    if (CBQ_HAVECALL(queue)) {
+        ASRT(CBQ_GetCallAmount(&queue, &size),"")
+        printf("main: calls num in queue: %llu\n", size);
+    }
 
     /* Execute first pushed function */
     ASRT(CBQ_Exec(&queue, 0), "")

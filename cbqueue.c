@@ -16,7 +16,7 @@ static int CBQ_incSize__(CBQueue_t*, size_t, const int);
 static int CBQ_decSize__(CBQueue_t*, size_t, const int);
 
 /* Arguments */
-static int CBQ_coIncArgsCapacity__(CBQContainer_t*, unsigned int);
+static int CBQ_coChangeArgsCapacity__(CBQContainer_t*, unsigned int, const int);
 static void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict, MAY_REG CBQArg_t *restrict, MAY_REG unsigned int);
 
 /* Callbacks */
@@ -471,7 +471,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, const int alignToUsedCe
     ssize_t remainder;
 
     /* Check and align delta */
-    engCellSize = CBQ_GetCallAmount(trustedQueue);
+    CBQ_GetCallAmount(trustedQueue, &engCellSize);
 
     if (!delta)
         delta = trustedQueue->size - engCellSize;
@@ -582,7 +582,7 @@ int CBQ_orderingDividedSegs__(CBQueue_t* trustedQueue, size_t* engCellSizeP)
     CBQContainer_t* tmpCoArr;
     size_t engCellsSegSize;
 
-    engCellsSegSize = CBQ_GetCallAmount(trustedQueue); // as new sId pos
+    CBQ_GetCallAmount(trustedQueue, &engCellsSegSize); // as new sId pos
 
     tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(sizeof(CBQContainer_t) * engCellsSegSize);
     if (tmpCoArr == NULL)
@@ -667,16 +667,21 @@ void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict srcp, MAY_REG C
 }
 
 /* ---------------- Args Methods ---------------- */
-int CBQ_coIncArgsCapacity__(CBQContainer_t* container, unsigned int newCapacity)
+int CBQ_coChangeArgsCapacity__(CBQContainer_t* container, unsigned int newCapacity, const int noCopyArgsData)
 {
     void* reallocp;
 
     if (newCapacity > MAX_CAP_ARGS)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
-
-    reallocp = CBQ_REALLOC(container->args, sizeof(CBQArg_t) * (size_t) newCapacity);
+    if (noCopyArgsData)
+        reallocp = CBQ_MALLOC(sizeof(CBQArg_t) * (size_t) newCapacity);
+    else
+        reallocp = CBQ_REALLOC(container->args, sizeof(CBQArg_t) * (size_t) newCapacity);
     if (reallocp == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
+
+    if (noCopyArgsData)
+        CBQ_MEMFREE(container->args);   // free old mem alloc
 
     container->args = (CBQArg_t*) reallocp;
     container->capacity = newCapacity;
@@ -728,7 +733,7 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t*
         argcAll = stParamc;
 
     if (argcAll > container->capacity) {
-        errSt = CBQ_coIncArgsCapacity__(container, argcAll);
+        errSt = CBQ_coChangeArgsCapacity__(container, argcAll, 1);
         if (errSt)
             return errSt;
     }
@@ -798,7 +803,7 @@ int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQ
     if (varParams) {
 
         if (varParamc > container->capacity) {
-            errSt = CBQ_coIncArgsCapacity__(container, varParamc);
+            errSt = CBQ_coChangeArgsCapacity__(container, varParamc, 1);
             if (errSt)
                 return errSt;
         }
@@ -892,33 +897,91 @@ int CBQ_Clear(CBQueue_t* queue)
     queue->rId = queue->sId = 0;
     queue->status = CBQ_ST_EMPTY;
 
+    #ifdef CBQD_SCHEME
+    for (size_t i = 0; i < queue->size; i++)
+        queue->coArr[i].label = '-';
+    #endif // CBQD_SCHEME
+    return 0;
+}
+
+int CBQ_SetNewCapacityArgs(CBQueue_t* queue, unsigned int newCapacity, const int passNonModifiableArgs)
+{
+    BASE_ERR_CHECK(queue);
+    size_t ptr;
+    CBQContainer_t* container;
+    int errSt;
+
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+        if (queue->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
+
+    if (newCapacity < INIT_CAP_ARGS || newCapacity > MAX_CAP_ARGS)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+    for (ptr = queue->rId; ptr != queue->sId; ptr++) {
+
+        container = queue->coArr + (ptr % queue->size);  // % helps to loop ptr into size frames
+
+        if (newCapacity < container->argc) {
+            if (passNonModifiableArgs)
+                continue;
+            else
+                return CBQ_ERR_HURTS_USED_ARGS;
+        } else if (newCapacity == container->argc)
+            continue;
+        else {
+            errSt = CBQ_coChangeArgsCapacity__(container, newCapacity, 0);
+            if (errSt)
+                return errSt;
+        }
+    }
+
+    for (ptr = queue->sId; ptr != queue->rId; ptr++) {
+
+        container = queue->coArr + (ptr % queue->size);
+
+        if (newCapacity == container->argc)
+            continue;
+        else {
+            errSt = CBQ_coChangeArgsCapacity__(container, newCapacity, 1);
+            if (errSt)
+                return errSt;
+        }
+    }
+
     return 0;
 }
 
 /* ---------------- Info Methods ---------------- */
-size_t CBQ_GetCallAmount(CBQueue_t* queue)
+int CBQ_GetCallAmount(CBQueue_t* queue, size_t* engSize)
 {
     OPT_BASE_ERR_CHECK(queue);
+    if (engSize == NULL)
+        return CBQ_ERR_ARG_NULL_POINTER;
 
     if (queue->rId < queue->sId)
-        return queue->sId - queue->rId;
+        *engSize =  queue->sId - queue->rId;
     else if (queue->status == CBQ_ST_FULL || queue->rId > queue->sId)
-        return queue->size - queue->rId + queue->sId;
+        *engSize = queue->size - queue->rId + queue->sId;
 
     return 0;
 }
 
-size_t CBQ_GetSizeInBytes(CBQueue_t* queue)
+int CBQ_GetSizeInBytes(CBQueue_t* queue, size_t* byteSize)
 {
     size_t bSize;
 
     OPT_BASE_ERR_CHECK(queue);
+    if (byteSize == NULL)
+        return CBQ_ERR_ARG_NULL_POINTER;
 
     bSize = sizeof(CBQueue_t) + queue->size * sizeof(CBQContainer_t);
     for (size_t i = 0; i < queue->size; i++)
         bSize += (size_t) queue->coArr[i].capacity * sizeof(CBQArg_t);
 
-    return bSize;
+    *byteSize = bSize;
+    return 0;
 }
 
 int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getSize, size_t *restrict getEngagedSize,
@@ -933,7 +996,7 @@ int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict 
             *getSize = queue->size;
 
         if (getEngagedSize)
-            *getEngagedSize = CBQ_GetCallAmount(queue);
+            CBQ_GetCallAmount(queue, getEngagedSize);
 
         if (getIncSizeMode)
             *getIncSizeMode = queue->incSizeMode;
@@ -942,7 +1005,7 @@ int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict 
             *getMaxSizeLimit = queue->maxSizeLimit;
 
         if (getSizeInBytes)
-            *getSizeInBytes = CBQ_GetSizeInBytes(queue);
+            CBQ_GetSizeInBytes(queue, getSizeInBytes);
 
         return 0;
     }
@@ -1190,4 +1253,7 @@ int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
     return retst;
 }
 
-
+int CBQ_RunSizeDiagnostic(void)
+{
+    return 0;
+}
