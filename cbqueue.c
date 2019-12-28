@@ -138,7 +138,6 @@ int CBQ_QueueFree(CBQueue_t* queue)
     queue->initSt = CBQ_IN_FREE;
 
     CBQ_MSGPRINT("Queue freed");
-
     return 0;
 }
 
@@ -188,6 +187,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSi
         }
     }
 
+    CBQ_MSGPRINT("Queue size is changed");
     return 0;
 }
 
@@ -217,6 +217,7 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSiz
         if (newMaxSizeLimit < queue->size) {
 
             if (tryToAdaptSize) {
+                CBQ_MSGPRINT("Queue size is adapt...");
                 errSt = CBQ_decSize__(queue, queue->size - newMaxSizeLimit, adaptMaxSizeLimit);
                 /* without size max limit adaptation flag the function may just give an error and close */
                 if (errSt)
@@ -237,6 +238,7 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSiz
         queue->incSize = INIT_INC_SIZE;
     }
 
+    CBQ_MSGPRINT("Queue size mode is changed");
     return 0;
 }
 
@@ -259,15 +261,18 @@ int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapac
         if (errSt)
             return errSt;
     }
+
+    CBQ_MSGPRINT("Queue init args cap is changed");
     return 0;
 }
 
 int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, const int passNonModifiableArgs)
 {
-    BASE_ERR_CHECK(queue);
     size_t ptr;
     CBQContainer_t* container;
     int errSt;
+
+    BASE_ERR_CHECK(queue);
 
     #ifndef NO_EXCEPTIONS_OF_BUSY
         if (queue->execSt == CBQ_EST_EXEC)
@@ -276,6 +281,8 @@ int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, c
 
     if (customCapacity < MIN_CAP_ARGS || customCapacity > MAX_CAP_ARGS)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+    CBQ_MSGPRINT("Queue call args cap is equalize");
 
     for (ptr = queue->rId; ptr != queue->sId; ptr++) {
 
@@ -308,6 +315,7 @@ int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, c
         }
     }
 
+    CBQ_MSGPRINT("Queue call args have equalized capacity");
     return 0;
 }
 
@@ -1092,7 +1100,7 @@ int CBQ_GetDifferencesVerIdMask(int comparedVerId)
 
     verId ^= comparedVerId;
     if (verId & BYTE_MASK)  // have difference versions
-        verId = (verId & ~BYTE_MASK) | 1; // replace replace the value of the first byte with logic true (one)
+        verId = (verId & ~BYTE_MASK) | 1; // replace the value of the first byte with logic true (one)
 
     return verId;
 }
