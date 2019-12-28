@@ -2,7 +2,6 @@
 
 /* ---------------- local methods declaration ---------------- */
 /* Container Methods */
-static int CBQ_containerInit__(CBQContainer_t*, unsigned int);
 static int CBQ_reallocSize__(CBQueue_t*, size_t);
 static int CBQ_orderingDividedSegs__(CBQueue_t*, size_t*);
 static int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t*);
@@ -364,27 +363,6 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size)
 }*/
 
 /* ---------------- Container methods ---------------- */
-int CBQ_containerInit__(CBQContainer_t* container, unsigned int iniArgCap)
-{
-    CBQContainer_t tmpContainer = {
-    	.func = NULL,
-        .capacity = iniArgCap,
-        .argc = 0
-
-        #ifdef CBQD_SCHEME
-        , .label = '-'
-        #endif // CBQD_SCHEME
-    };
-
-    tmpContainer.args = (CBQArg_t*) CBQ_MALLOC( sizeof(CBQArg_t) * iniArgCap);
-    if (tmpContainer.args == NULL)
-        return CBQ_ERR_MEM_ALLOC_FAILED;
-
-    *container = tmpContainer;
-
-    return 0;
-}
-
 int CBQ_containersRangeInit__(CBQContainer_t* coFirst, unsigned int iniArgCap, size_t len, const int restore_pos_fail)
 {
     MAY_REG CBQContainer_t* container = coFirst;
@@ -392,10 +370,22 @@ int CBQ_containersRangeInit__(CBQContainer_t* coFirst, unsigned int iniArgCap, s
     int errSt = 0;
 
     do {
-        if (CBQ_containerInit__(container, iniArgCap)) {
+        /* Container init */
+        *container = (CBQContainer_t) {
+            .func = NULL,
+            .capacity = iniArgCap,
+            .argc = 0
+
+            #ifdef CBQD_SCHEME
+            , .label = '-'
+            #endif // CBQD_SCHEME
+        };
+        container->args = (CBQArg_t*) CBQ_MALLOC(sizeof(CBQArg_t) * iniArgCap);
+        if (container->args == NULL) {
             errSt = CBQ_ERR_MEM_ALLOC_FAILED;
             break;
         }
+
         container++;
     } while (--remLen);
 
@@ -991,6 +981,8 @@ int CBQ_GetCallAmount(CBQueue_t* queue, size_t* engSize)
         *engSize =  queue->sId - queue->rId;
     else if (queue->status == CBQ_ST_FULL || queue->rId > queue->sId)
         *engSize = queue->size - queue->rId + queue->sId;
+    else
+        *engSize = 0;   // for empty queue
 
     return 0;
 }
