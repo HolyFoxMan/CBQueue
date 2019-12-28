@@ -39,7 +39,7 @@ void CBQ_T_HelloWorld(void)
     CBQ_OUTDEBUGSTATUS();
 
     /* Queue initialize */
-    ASRT(CBQ_QueueInit(&queue, 3, CBQ_SM_STATIC, 0), "")
+    ASRT(CBQ_QueueInit(&queue, 3, CBQ_SM_STATIC, 0, 0), "")
 
     /* Push hello world function into queue */
     ASRT(CBQ_Push(&queue, funcHW, 0, NULL, 0, CBQ_NO_STPARAMS), "")
@@ -134,7 +134,7 @@ void CBQ_T_ControlTest(void)
     CBQueue_t queue;
 
     CBQ_OUTDEBUGSTATUS();
-    ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0), "Failed to init")
+    ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0, 0), "Failed to init")
     quit = 0;
     printf("p - push, e - pop, c - change size, i - increment size, d - decrement size, q - exit.\n");
     do {
@@ -406,7 +406,7 @@ void CBQ_T_SizemodeTest(void)
     /* STATIC test */
     CBQueue_t queue;
 
-    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed")
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0), "Init failed")
     /* ----------------
      * b...............
      */
@@ -452,7 +452,7 @@ void CBQ_T_BusyTest(void)
     int errSt = 0;
     CBQueue_t queue;
 
-    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Init failed")
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0), "Init failed")
 
     ASRT(CBQ_Push(&queue, selfExecCB, 0, NULL, 1, (CBQArg_t) {.qVar = &queue}), "Push error")
 
@@ -552,7 +552,7 @@ void CBQ_T_Params(void)
             {.iVar = 15}
     };
 
-    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init")
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0), "Failed to init")
 
     /* Variable params passing, sum: 35 */
     ASRT(CBQ_PushVariable(&queue, addAllNumsCB, numc, nums),"Failed to push CB with variable params")
@@ -590,7 +590,7 @@ void CBQ_T_Params(void)
 void CBQ_T_SetTimeout(void)
 {
     CBQueue_t queue;
-    CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0);
+    CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0);
     int retst = 0;
 
     /* Hello world after 2 sec */
@@ -695,7 +695,7 @@ void CBQ_T_SetTimeout_AutoGame(void)
     };
     char field[F_H][F_W] = {0};
 
-    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0), "Failed to init")
+    ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0), "Failed to init")
 
     ASRT(CBQ_PushStatic(&queue, drawScreenCB, 3,
             (CBQArg_t) {.qVar = &queue},

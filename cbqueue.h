@@ -169,6 +169,7 @@
         int     incSizeMode;
         size_t  maxSizeLimit;
         size_t  incSize;
+        unsigned int initArgCap;
 
         /* pointers */
         size_t  rId;
@@ -183,13 +184,12 @@
     };
 
     /* Size mode have some states which selected by numbers:
-     * CBQ_SM_STATIC - after getting FULL flag the push method return error;
+     * CBQ_SM_STATIC - Queue size does not change. If we try to add a new call
+     * to the filled queue, you will receive an appropriate signal (error).
      * CBQ_SM_LIMIT - size can be auto incremented, but after out of size limit
-     * push method return error too. Limit of size can be defined by argument sizeLimit.
-     * Maximum limit is defined in CBQ_QUEUE_MAX_SIZE const;
-     * CBQ_SM_MAX - unstable mode where size is not checks by limit and FULL flag,
-     * but anyway new size will be no more constant which is defined in CBQ_QUEUE_MAX_SIZE.
-     * You may change that const, but possible risks of lack of memory.
+     * push method return error too. Limit of size can be defined by argument maxSizeLimit.
+     * (Maximum limit is defined in CBQ_QUEUE_MAX_SIZE const macro);
+     * CBQ_SM_MAX - The maximum limit is sets by CBQ_QUEUE_MAX_SIZE, this macro is hidden.
      */
     enum {
         CBQ_SM_STATIC,
@@ -197,21 +197,21 @@
         CBQ_SM_MAX
     };
 
-    /* Its can be chosed in sizeLimit, but you can set custom limit.
+    /* Its can be chosed in maxSizeLimit, but you can set custom limit.
      * By choosing custom you may get error part if started queue size
-     * will be bigger than size limit.
+     * will be bigger than CBQ_QUEUE_MAX_SIZE value.
      */
     enum {
-        CBQ_SI_TINY =           16,
-        CBQ_SI_SMALL =          64,
-        CBQ_SI_MEDIUM =         512,
-        CBQ_SI_BIG =            2048,
+        CBQ_SI_TINY =           8,
+        CBQ_SI_SMALL =          32,
+        CBQ_SI_MEDIUM =         128,
+        CBQ_SI_BIG =            1024,
         CBQ_SI_HUGE =           8192
     };
 
     /* ---------------- Queue functions ---------------- */
 
-    /* List of possible return statuses by callback queue methods.
+    /* List of possible return error statuses by callback queue methods.
      * First CBQ_SUCCESSFUL is simple zero constant which is used
      * almost in all standart C libs.
      */
@@ -233,6 +233,7 @@
         CBQ_ERR_IS_BUSY,
         CBQ_ERR_VPARAM_VARIANCE,
         CBQ_ERR_HURTS_USED_ARGS,
+        CBQ_ERR_INITCAP_IS_IDENTICAL,
         /* VerId exception */
         CBQ_ERR_VI_NOT_GENERATED = SHRT_MAX
     };
@@ -249,7 +250,7 @@
     };
 
 /* ---------------- Base methods ---------------- */
-int CBQ_QueueInit(CBQueue_t* queue, size_t size, int sizeMode, size_t sizeMaxLimit);
+int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t maxSizeLimit, unsigned int customInitArgsCapacity);
 int CBQ_QueueFree(CBQueue_t* queue);
 
 /* -------- push macroses -------- */
@@ -298,7 +299,8 @@ int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* 
 int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize, const int);
 int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, const int tryToAdaptSize, const int adaptSizeMaxLimit);
 int CBQ_Clear(CBQueue_t* queue);
-int CBQ_SetNewCapacityArgs(CBQueue_t* queue, unsigned int newCapacity, const int passNonModifiableArgs);
+int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, const int passNonModifiableArgs);
+int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity, const int tryEqualizeByIt);
 char* CBQ_strIntoHeap(const char* str);
 
 /* Not used

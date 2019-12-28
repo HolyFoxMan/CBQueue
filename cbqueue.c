@@ -2,23 +2,21 @@
 
 /* ---------------- local methods declaration ---------------- */
 /* Container Methods */
-static int CBQ_containerInit__(CBQContainer_t*);
+static int CBQ_containerInit__(CBQContainer_t*, unsigned int);
 static int CBQ_reallocSize__(CBQueue_t*, size_t);
 static int CBQ_orderingDividedSegs__(CBQueue_t*, size_t*);
 static int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t*);
 static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, const int);
 static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG CBQContainer_t *restrict, MAY_REG size_t);
-static int CBQ_containersRangeInit__(CBQContainer_t*, size_t, const int);
+static int CBQ_containersRangeInit__(CBQContainer_t*, unsigned int, size_t, const int);
 static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
 static void CBQ_incIterSizeChange__(CBQueue_t*, const int);
 static int CBQ_getIncIterVector__(CBQueue_t* trustedQueue);
 static int CBQ_incSize__(CBQueue_t*, size_t, const int);
 static int CBQ_decSize__(CBQueue_t*, size_t, const int);
-
 /* Arguments */
 static int CBQ_coChangeArgsCapacity__(CBQContainer_t*, unsigned int, const int);
 static void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict, MAY_REG CBQArg_t *restrict, MAY_REG unsigned int);
-
 /* Callbacks */
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 
@@ -58,7 +56,7 @@ static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 //                                                                            //
 
 /* ---------------- Base methods ---------------- */
-int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t maxSizeLimit)
+int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t maxSizeLimit, unsigned int customInitArgsCapacity)
 {
     int errSt;
     CBQueue_t iniQueue = {
@@ -83,8 +81,15 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t maxSize
     if (queue->initSt == CBQ_IN_INITED)
         return CBQ_ERR_ALREADY_INITED;
 
-    if (size <= 0 || size > CBQ_QUEUE_MAX_SIZE)
+    if (size < CBQ_QUEUE_MIN_SIZE || size > CBQ_QUEUE_MAX_SIZE)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+    if (customInitArgsCapacity) {
+        if (customInitArgsCapacity < MIN_CAP_ARGS || customInitArgsCapacity > MAX_CAP_ARGS)
+            return CBQ_ERR_ARG_OUT_OF_RANGE;
+        iniQueue.initArgCap = customInitArgsCapacity;
+    } else
+        iniQueue.initArgCap = INIT_CAP_ARGS;
 
     if (incSizeMode == CBQ_SM_STATIC || incSizeMode == CBQ_SM_MAX) {
         iniQueue.maxSizeLimit = 0;
@@ -93,14 +98,14 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t maxSize
         iniQueue.maxSizeLimit = maxSizeLimit;
         iniQueue.incSizeMode = incSizeMode;
     } else
-        return CBQ_ERR_ARG_OUT_OF_RANGE;
+        return CBQ_ERR_ARG_OUT_OF_RANGE;    // for incSizeMode and/or maxSizeLimit params
 
     iniQueue.coArr = (CBQContainer_t*) CBQ_MALLOC( sizeof(CBQContainer_t) * size);
     if (iniQueue.coArr == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
     /* Containers init */
-    errSt = CBQ_containersRangeInit__(iniQueue.coArr, size, REST_MEM);
+    errSt = CBQ_containersRangeInit__(iniQueue.coArr, iniQueue.initArgCap, size, REST_MEM);
     if (errSt)
         return errSt;
 
@@ -236,6 +241,76 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSiz
     return 0;
 }
 
+int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity, const int tryEqualizeByIt)
+{
+    int errSt;
+
+    BASE_ERR_CHECK(queue);
+
+    if (customInitCapacity < MIN_CAP_ARGS || customInitCapacity > MAX_CAP_ARGS)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+    if (customInitCapacity == queue->initArgCap)
+        return CBQ_ERR_INITCAP_IS_IDENTICAL;
+
+    queue->initArgCap = customInitCapacity;
+
+    if (tryEqualizeByIt) {
+        errSt = CBQ_EqualizeArgsCapByCustom(queue, customInitCapacity, 1);
+        if (errSt)
+            return errSt;
+    }
+    return 0;
+}
+
+int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, const int passNonModifiableArgs)
+{
+    BASE_ERR_CHECK(queue);
+    size_t ptr;
+    CBQContainer_t* container;
+    int errSt;
+
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+        if (queue->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
+
+    if (customCapacity < MIN_CAP_ARGS || customCapacity > MAX_CAP_ARGS)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+    for (ptr = queue->rId; ptr != queue->sId; ptr++) {
+
+        container = queue->coArr + (ptr % queue->size);  // % helps to loop ptr into size frames
+
+        if (customCapacity < container->argc) {
+            if (passNonModifiableArgs)
+                continue;
+            else
+                return CBQ_ERR_HURTS_USED_ARGS;
+        } else if (customCapacity == container->argc)
+            continue;
+        else {
+            errSt = CBQ_coChangeArgsCapacity__(container, customCapacity, 1);
+            if (errSt)
+                return errSt;
+        }
+    }
+
+    for (ptr = queue->sId; ptr != queue->rId; ptr++) {
+
+        container = queue->coArr + (ptr % queue->size);
+
+        if (customCapacity == container->argc)
+            continue;
+        else {
+            errSt = CBQ_coChangeArgsCapacity__(container, customCapacity, 0);
+            if (errSt)
+                return errSt;
+        }
+    }
+
+    return 0;
+}
 
 /* This part is unused. Methods of save and rest queue was complicated
  * for stored pointers of structs, strings and functions.
@@ -289,11 +364,11 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size)
 }*/
 
 /* ---------------- Container methods ---------------- */
-int CBQ_containerInit__(CBQContainer_t* container)
+int CBQ_containerInit__(CBQContainer_t* container, unsigned int iniArgCap)
 {
     CBQContainer_t tmpContainer = {
     	.func = NULL,
-        .capacity = INIT_CAP_ARGS,
+        .capacity = iniArgCap,
         .argc = 0
 
         #ifdef CBQD_SCHEME
@@ -301,7 +376,7 @@ int CBQ_containerInit__(CBQContainer_t* container)
         #endif // CBQD_SCHEME
     };
 
-    tmpContainer.args = (CBQArg_t*) CBQ_MALLOC( sizeof(CBQArg_t) * INIT_CAP_ARGS);
+    tmpContainer.args = (CBQArg_t*) CBQ_MALLOC( sizeof(CBQArg_t) * iniArgCap);
     if (tmpContainer.args == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
@@ -310,14 +385,14 @@ int CBQ_containerInit__(CBQContainer_t* container)
     return 0;
 }
 
-int CBQ_containersRangeInit__(CBQContainer_t* coFirst, size_t len, const int restore_pos_fail)
+int CBQ_containersRangeInit__(CBQContainer_t* coFirst, unsigned int iniArgCap, size_t len, const int restore_pos_fail)
 {
     MAY_REG CBQContainer_t* container = coFirst;
     MAY_REG size_t remLen = len;
     int errSt = 0;
 
     do {
-        if (CBQ_containerInit__(container)) {
+        if (CBQ_containerInit__(container, iniArgCap)) {
             errSt = CBQ_ERR_MEM_ALLOC_FAILED;
             break;
         }
@@ -405,7 +480,7 @@ int CBQ_incSize__(CBQueue_t* trustedQueue, size_t delta, const int alignToMaxSiz
         return errSt;
 
     /* Init new allocated containers */
-    errSt = CBQ_containersRangeInit__(trustedQueue->coArr + trustedQueue->size, delta, REST_MEM);
+    errSt = CBQ_containersRangeInit__(trustedQueue->coArr + trustedQueue->size, trustedQueue->initArgCap, delta, REST_MEM);
     if (errSt) {
 
         if (errSt != CBQ_ERR_MEM_BUT_RESTORED)
@@ -443,8 +518,8 @@ void CBQ_incIterSizeChange__(CBQueue_t* trustedQueue, const int direction)
             trustedQueue->incSize = MAX_INC_SIZE;
     } else {    // Down
         trustedQueue->incSize >>= 1;
-        if (trustedQueue->incSize < INIT_INC_SIZE)
-            trustedQueue->incSize = INIT_INC_SIZE;
+        if (trustedQueue->incSize < MIN_INC_SIZE)
+            trustedQueue->incSize = MIN_INC_SIZE;
     }
 }
 
@@ -524,7 +599,7 @@ int CBQ_decSize__(CBQueue_t* trustedQueue, size_t delta, const int alignToUsedCe
 
         #if REST_MEM == 1
         int errStRest = 0;
-        errStRest = CBQ_containersRangeInit__(trustedQueue->coArr, delta, 1);
+        errStRest = CBQ_containersRangeInit__(trustedQueue->coArr, trustedQueue->initArgCap, delta, 1);
         if (!errStRest)
             return CBQ_ERR_MEM_BUT_RESTORED;
         #endif // REST_MEM
@@ -667,20 +742,21 @@ void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict srcp, MAY_REG C
 }
 
 /* ---------------- Args Methods ---------------- */
-int CBQ_coChangeArgsCapacity__(CBQContainer_t* container, unsigned int newCapacity, const int noCopyArgsData)
+int CBQ_coChangeArgsCapacity__(CBQContainer_t* container, unsigned int newCapacity, const int copyArgsData)
 {
     void* reallocp;
 
     if (newCapacity > MAX_CAP_ARGS)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
-    if (noCopyArgsData)
-        reallocp = CBQ_MALLOC(sizeof(CBQArg_t) * (size_t) newCapacity);
-    else
+
+    if (copyArgsData)
         reallocp = CBQ_REALLOC(container->args, sizeof(CBQArg_t) * (size_t) newCapacity);
+    else
+        reallocp = CBQ_MALLOC(sizeof(CBQArg_t) * (size_t) newCapacity);
     if (reallocp == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
 
-    if (noCopyArgsData)
+    if (!copyArgsData)
         CBQ_MEMFREE(container->args);   // free old mem alloc
 
     container->args = (CBQArg_t*) reallocp;
@@ -689,11 +765,11 @@ int CBQ_coChangeArgsCapacity__(CBQContainer_t* container, unsigned int newCapaci
     return 0;
 }
 
-void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *restrict dest, MAY_REG unsigned int num)
+void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *restrict dest, MAY_REG unsigned int len)
 {
     do {
         *dest++ = *src++;
-    } while (--num);
+    } while (--len);
 }
 
 /* ---------------- Call Methods ---------------- */
@@ -733,7 +809,7 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t*
         argcAll = stParamc;
 
     if (argcAll > container->capacity) {
-        errSt = CBQ_coChangeArgsCapacity__(container, argcAll, 1);
+        errSt = CBQ_coChangeArgsCapacity__(container, argcAll, 0);
         if (errSt)
             return errSt;
     }
@@ -803,7 +879,7 @@ int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQ
     if (varParams) {
 
         if (varParamc > container->capacity) {
-            errSt = CBQ_coChangeArgsCapacity__(container, varParamc, 1);
+            errSt = CBQ_coChangeArgsCapacity__(container, varParamc, 0);
             if (errSt)
                 return errSt;
         }
@@ -901,55 +977,6 @@ int CBQ_Clear(CBQueue_t* queue)
     for (size_t i = 0; i < queue->size; i++)
         queue->coArr[i].label = '-';
     #endif // CBQD_SCHEME
-    return 0;
-}
-
-int CBQ_SetNewCapacityArgs(CBQueue_t* queue, unsigned int newCapacity, const int passNonModifiableArgs)
-{
-    BASE_ERR_CHECK(queue);
-    size_t ptr;
-    CBQContainer_t* container;
-    int errSt;
-
-    #ifndef NO_EXCEPTIONS_OF_BUSY
-        if (queue->execSt == CBQ_EST_EXEC)
-        return CBQ_ERR_IS_BUSY;
-    #endif // NO_EXCEPTIONS_OF_BUSY
-
-    if (newCapacity < INIT_CAP_ARGS || newCapacity > MAX_CAP_ARGS)
-        return CBQ_ERR_ARG_OUT_OF_RANGE;
-
-    for (ptr = queue->rId; ptr != queue->sId; ptr++) {
-
-        container = queue->coArr + (ptr % queue->size);  // % helps to loop ptr into size frames
-
-        if (newCapacity < container->argc) {
-            if (passNonModifiableArgs)
-                continue;
-            else
-                return CBQ_ERR_HURTS_USED_ARGS;
-        } else if (newCapacity == container->argc)
-            continue;
-        else {
-            errSt = CBQ_coChangeArgsCapacity__(container, newCapacity, 0);
-            if (errSt)
-                return errSt;
-        }
-    }
-
-    for (ptr = queue->sId; ptr != queue->rId; ptr++) {
-
-        container = queue->coArr + (ptr % queue->size);
-
-        if (newCapacity == container->argc)
-            continue;
-        else {
-            errSt = CBQ_coChangeArgsCapacity__(container, newCapacity, 1);
-            if (errSt)
-                return errSt;
-        }
-    }
-
     return 0;
 }
 

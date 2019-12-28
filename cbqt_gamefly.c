@@ -44,7 +44,7 @@ void CBQ_T_GAMEFLY(void)
 {
     CBQueue_t qGame;
 
-    CBQ_QueueInit(&qGame, CBQ_SI_TINY, CBQ_SM_MAX, 0);
+    CBQ_QueueInit(&qGame, CBQ_SI_TINY, CBQ_SM_MAX, 0, 0);
 
     gamefly_s.status = GF_PLAY;
 

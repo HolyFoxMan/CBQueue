@@ -11,16 +11,19 @@
         #define SSIZE_MAX / 2 - 1
     #endif
 
-// Limits:
+// Limits and inits values:
 
     #define CBQ_QUEUE_MAX_SIZE  SSIZE_MAX
+    /* init sizes written in cbqueue.h */
     #define CBQ_QUEUE_MIN_SIZE  1
 
+    #define MIN_INC_SIZE        1
     #define INIT_INC_SIZE       8
     #define MAX_INC_SIZE        16384
 
+    #define MIN_CAP_ARGS        2
+    #define INIT_CAP_ARGS       5
     #define MAX_CAP_ARGS        20
-    #define INIT_CAP_ARGS        5
 
     /* Queue init status types */
     enum {
