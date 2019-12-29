@@ -749,13 +749,12 @@ int CBQ_coChangeArgsCapacity__(CBQContainer_t* container, unsigned int newCapaci
 
     if (copyArgsData)
         reallocp = CBQ_REALLOC(container->args, sizeof(CBQArg_t) * (size_t) newCapacity);
-    else
+    else {
+        CBQ_MEMFREE(container->args);   // free old mem alloc
         reallocp = CBQ_MALLOC(sizeof(CBQArg_t) * (size_t) newCapacity);
+    }
     if (reallocp == NULL)
         return CBQ_ERR_MEM_ALLOC_FAILED;
-
-    if (!copyArgsData)
-        CBQ_MEMFREE(container->args);   // free old mem alloc
 
     container->args = (CBQArg_t*) reallocp;
     container->capacity = newCapacity;
@@ -1232,11 +1231,10 @@ int CBQ_drawScheme_chk__(void* queue)
 /* ---------------- Callback Methods ---------------- */
 
 /* push CB after delay, like JS func. Needs time.h lib */
-int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec,
+int CBQ_SetTimeout(CBQueue_t* queue, long delay, const int isSec,
     CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams)
 {
-    clock_t targetTime;
-    int retst = 0;
+    CBQTicks_t targetTime;
 
     BASE_ERR_CHECK(queue);
     if (targetQueue != queue) {
@@ -1244,40 +1242,34 @@ int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec,
     }
 
     if (isSec)
-        targetTime = clock() + (delay * CLOCKS_PER_SEC);
+        targetTime = CBQ_CURTICKS() + (CBQTicks_t)(delay * CBQ_TIC_P_SEC);
     else
-        targetTime = clock() + delay;
+        targetTime = CBQ_CURTICKS() + (CBQTicks_t)delay;
 
-    retst = CBQ_Push(queue, CBQ_setTimeoutFrame__, vParamc, vParams, ST_ARG_C,
+    return CBQ_Push(queue, CBQ_setTimeoutFrame__, vParamc, vParams, ST_ARG_C,
         (CBQArg_t) {.qVar = queue},
-        (CBQArg_t) {.uiVar = targetTime},
+        (CBQArg_t) {.liVar = targetTime},
         (CBQArg_t) {.qVar = targetQueue},
         (CBQArg_t) {.fVar = func});
-
-    return retst;
 }
 
 int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
 {
-    int retst = 0;
-
-    if (clock() >= (clock_t) args[ST_DELAY].uiVar) {
+    if (CBQ_CURTICKS() >= (CBQTicks_t) args[ST_DELAY].liVar) {
 
         if (args[ST_QUEUE].qVar == args[ST_TRG_QUEUE].qVar)
-            retst = args[ST_FUNC].fVar(argc - ST_ARG_C, args + ST_ARG_C);
+            return args[ST_FUNC].fVar(argc - ST_ARG_C, args + ST_ARG_C);
         else
-            retst = CBQ_Push(args[ST_TRG_QUEUE].qVar, args[ST_FUNC].fVar,
+            return CBQ_Push(args[ST_TRG_QUEUE].qVar, args[ST_FUNC].fVar,
                         argc - ST_ARG_C, args + ST_ARG_C, 0, CBQ_NO_STPARAMS);
 
     } else
-        retst = CBQ_Push(args[ST_QUEUE].qVar, CBQ_setTimeoutFrame__,
+        return CBQ_Push(args[ST_QUEUE].qVar, CBQ_setTimeoutFrame__,
             argc - ST_ARG_C, (argc - ST_ARG_C)? args + ST_ARG_C : NULL, ST_ARG_C,
             (CBQArg_t) {.qVar = args[ST_QUEUE].qVar},
-            (CBQArg_t) {.uiVar = args[ST_DELAY].uiVar},
+            (CBQArg_t) {.liVar = args[ST_DELAY].liVar},
             (CBQArg_t) {.qVar = args[ST_TRG_QUEUE].qVar},
             (CBQArg_t) {.fVar = args[ST_FUNC].fVar});
-
-    return retst;
 }
 
 int CBQ_RunSizeDiagnostic(void)

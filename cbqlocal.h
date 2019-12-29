@@ -7,13 +7,9 @@
         #error No lib version specified
     #endif
 
-    #ifndef SSIZE_MAX
-        #define SSIZE_MAX / 2 - 1
-    #endif
-
 // Limits and inits values:
 
-    #define CBQ_QUEUE_MAX_SIZE  SSIZE_MAX
+    #define CBQ_QUEUE_MAX_SIZE  (SIZE_MAX >> 1)
     /* init sizes written in cbqueue.h */
     #define CBQ_QUEUE_MIN_SIZE  1
 
@@ -68,6 +64,23 @@
         #define CBQ_MEMFREE(pointer) \
             free(pointer)
 
+    #else
+        #error Unknown choosed mem alloc methods
+    #endif
+
+    #define CBQ_TIMER_METHODS 1
+    #if CBQ_TIMER_METHODS == 1    // POSIX
+
+        #define CBQ_CURTICKS() \
+            ((CBQTicks_t)clock())
+
+        #define CBQ_TIC_P_SEC \
+            CLOCKS_PER_SEC
+
+        typedef clock_t CBQTicks_t;
+
+    #else // CBQ_TIMER_METHODS
+        #error Unknown choosed timer methods
     #endif
 
     #define SWAP_BY_TEMP(A, B, TEMP) \
