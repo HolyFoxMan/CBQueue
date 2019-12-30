@@ -7,7 +7,7 @@
 
     /* At c99 */
     #if !defined(__cplusplus) && __STDC_VERSION__ < 199901L
-        #error Needs "c99" version
+        #error Needs "c99" standart version
     #endif
 
     #include <stdlib.h>
@@ -265,11 +265,6 @@ int CBQ_QueueFree(CBQueue_t* queue);
 #define CBQ_PushVariable(queue, func, paramc, pVarParamArray) \
     CBQ_PushOnlyVP(queue, func, paramc, pVarParamArray)
 
-/* macros function for pushing CB without parameters */
-#define CBQ_PushVoid(queue, func) \
-    CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, 0, CBQ_NO_STPARAMS)
-
-
 #define GET_ARG_COUNT(...) INTERNAL_GET_ARG_COUNT_PRIVATE(0, ## __VA_ARGS__, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 #define INTERNAL_GET_ARG_COUNT_PRIVATE(_0, _1_, _2_, _3_, _4_, _5_, _6_, _7_, _8_, _9_, _10_, _11_, _12_, _13_, _14_, _15_, _16_, _17_, _18_, _19_, _20_, count, ...) count
 #define CBQ_PushN_(queue, func, ...) \
@@ -292,6 +287,7 @@ int CBQ_QueueFree(CBQueue_t* queue);
 /* Method pushes callbacks by static and variable passing of parameters (in run-time) */
 int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...);
 int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams);
+int CBQ_PushVoid(CBQueue_t* queue, QCallback func);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams);
 

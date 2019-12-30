@@ -910,7 +910,52 @@ int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQ
     return 0;
 }
 
-inline int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
+int CBQ_PushVoid(CBQueue_t* queue, QCallback func)
+{
+    /* base error checking */
+    OPT_BASE_ERR_CHECK(queue);
+
+    /* status check */
+    if (queue->status == CBQ_ST_FULL) {
+
+        int errSt;
+        CBQ_MSGPRINT("Queue is full to push");
+
+        errSt = CBQ_incSize__(queue, 0, 1);
+        if (errSt)
+            return errSt;
+
+        CBQ_MSGPRINT("Size incrementation was automatic");
+    }
+
+    /* set into container only func */
+    (queue->coArr + queue->sId)->func = func;
+    (queue->coArr + queue->sId)->argc = 0;
+
+    /* debug for scheme */
+    #ifdef CBQD_SCHEME
+        (queue->coArr + queue->sId)->label = queue->curLetter;
+        if (++queue->curLetter > 'Z')
+            queue->curLetter = 'A';
+    #endif // CBQD_SCHEME
+
+    /* store index */
+    queue->sId++;
+    if (queue->sId == queue->size)
+        queue->sId = 0;
+
+    if (queue->sId == queue->rId)
+        queue->status = CBQ_ST_FULL;
+    else
+        queue->status = CBQ_ST_STABLE;
+
+    CBQ_MSGPRINT("Queue is pushed");
+    CBQ_DRAWSCHEME_IN(queue);
+
+    return 0;
+}
+
+int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
 {
     CBQContainer_t* container;
 
@@ -928,9 +973,9 @@ inline int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
     #endif // NO_EXCEPTIONS_OF_BUSY
 
     /* inset from container and execute callback function */
-    container = &queue->coArr[queue->rId];
+    container = queue->coArr + queue->rId;
     if (funcRetSt == NULL)
-        container->func(container->argc, container->args);
+        container->func( (int) container->argc, container->args);
     else
         *funcRetSt = container->func( (int) container->argc, container->args);
 
@@ -1272,7 +1317,7 @@ int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
             (CBQArg_t) {.fVar = args[ST_FUNC].fVar});
 }
 
-int CBQ_RunSizeDiagnostic(void)
+int CBQ_RunOptSizeFinder(void)
 {
     return 0;
 }
