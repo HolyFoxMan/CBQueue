@@ -54,10 +54,10 @@
             int st = (EXP); \
             if (!!(st)) { \
                 if ((STR)[0]) \
-                    printf("----------------\nError\nMessage \"%s\"\nReturned code %d\nBy expression\t%s\nIn file\t%s\nOn line %d\n\n", \
+                    printf("----------------\nError\nMessage \"%s\"\nReturned val: %d\nBy expression\t%s\nIn file\t%s\nOn line %d\n\n", \
                     STR, st, MVAL_TO_STR(EXP),MVAL_TO_STR(__FILE__),__LINE__); \
                     else \
-                    printf("----------------\nError\nReturned code %d\nBy expression %s\tIn file %s\nOn line %d\n\n", \
+                    printf("----------------\nError\nReturned val: %d\nBy expression %s\tIn file %s\nOn line %d\n\n", \
                     st, MVAL_TO_STR(EXP),MVAL_TO_STR(__FILE__),__LINE__); \
             } \
         }

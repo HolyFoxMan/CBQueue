@@ -520,12 +520,12 @@ int calcNumsCB(int argc, CBQArg_t* args)
 
     switch(args[1].cVar) {
     case '+': {
-        CBQ_PushVariable(args[0].qVar, addAllNumsCB, argc - 2, args + 2);
+        CBQ_PushOnlyVP(args[0].qVar, addAllNumsCB, argc - 2, args + 2);
         printf("Addition selected\n");
         break;
     }
     case '*': {
-        CBQ_PushVariable(args[0].qVar, mulAllNumsCB, argc - 2, args + 2);
+        CBQ_PushOnlyVP(args[0].qVar, mulAllNumsCB, argc - 2, args + 2);
         printf("Multiplication selected\n");
         break;
     }
@@ -555,7 +555,7 @@ void CBQ_T_Params(void)
     ASRT(CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0), "Failed to init")
 
     /* Variable params passing, sum: 35 */
-    ASRT(CBQ_PushVariable(&queue, addAllNumsCB, numc, nums),"Failed to push CB with variable params")
+    ASRT(CBQ_PushOnlyVP(&queue, addAllNumsCB, numc, nums),"Failed to push CB with variable params")
 
     /*  Static params passing, sum: 10 */
     ASRT(CBQ_PushStatic(&queue, addAllNumsCB, 2,
@@ -755,4 +755,31 @@ void CBQ_T_VerIdInfo(int APIVer)
     printf("VParam check status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_NVPARAMCHECK)? "false" : "true");
     printf("Register vars status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_REGCYCLEVARS)? "true" : "false");
     printf("Debug status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_DEBUG)? "true" : "false");
+}
+
+int CB_0_Args(int argc, UNUSED CBQArg_t* args)
+{
+    if (argc != 0)
+        printf("Error of 0 args");
+  //  ASRT(argc != 0, "args is not null")
+    return 0;
+}
+
+int CB_2_Args_Sum(int argc, CBQArg_t* args)
+{
+    if (argc == 2)
+        printf("CB: sum result is %d\n", args[0].iVar + args[1].iVar);
+
+    return 0;
+}
+
+void CBQ_T_ArgsTest(void)
+{
+    CBQueue_t queue;
+    CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_LIMIT, CBQ_SI_SMALL, 2);
+
+    ASRT(CBQ_PushVoid(&queue, CB_0_Args), "Push void args cb err")
+    //ASRT(CBQ_Push(&queue, )
+
+    CBQ_QueueFree(&queue);
 }

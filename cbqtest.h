@@ -29,6 +29,7 @@
     void CBQ_T_SetTimeout_AutoGame(void);
     void CBQ_T_SetTimeout(void);
     void CBQ_T_VerIdInfo(int);
+    void CBQ_T_ArgsTest(void);
 
 #endif // CBQTEST_H
 
