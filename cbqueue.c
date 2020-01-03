@@ -14,8 +14,8 @@ static int CBQ_getIncIterVector__(CBQueue_t* trustedQueue);
 static int CBQ_incSize__(CBQueue_t*, size_t, const int);
 static int CBQ_decSize__(CBQueue_t*, size_t, const int);
 /* Arguments */
-static int CBQ_coChangeArgsCapacity__(CBQContainer_t*, unsigned int, const int);
-static void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict, MAY_REG CBQArg_t *restrict, MAY_REG unsigned int);
+static int CBQ_changeArgsCapacity__(CBQContainer_t*, unsigned int, const int);
+static void CBQ_copyArgs__(MAY_REG const CBQArg_t *restrict, MAY_REG CBQArg_t *restrict, MAY_REG unsigned int);
 /* Callbacks */
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 
@@ -42,7 +42,7 @@ static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 #ifdef CBQD_OUTPUTLOG
 
     #define CBQ_MSGPRINT(STR) \
-        printf("Notice: %s\n", STR)
+        printf("Notice: %s\n", STR), fflush(stdout)
 
 #else
 
@@ -244,8 +244,6 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSiz
 
 int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity, const int tryEqualizeByIt)
 {
-    int errSt;
-
     BASE_ERR_CHECK(queue);
 
     if (customInitCapacity < MIN_CAP_ARGS || customInitCapacity > MAX_CAP_ARGS)
@@ -257,7 +255,7 @@ int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapac
     queue->initArgCap = customInitCapacity;
 
     if (tryEqualizeByIt) {
-        errSt = CBQ_EqualizeArgsCapByCustom(queue, customInitCapacity, 1);
+        int errSt = CBQ_EqualizeArgsCapByCustom(queue, customInitCapacity, 1);
         if (errSt)
             return errSt;
     }
@@ -284,9 +282,9 @@ int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, c
 
     CBQ_MSGPRINT("Queue call args cap is equalize");
 
-    for (ptr = queue->rId; ptr != queue->sId; ptr++) {
+    for (ptr = queue->rId; ptr != queue->sId; ptr = (ptr + 1) % queue->size) { // % helps to loop ptr into size frames
 
-        container = queue->coArr + (ptr % queue->size);  // % helps to loop ptr into size frames
+        container = queue->coArr + ptr;
 
         if (customCapacity < container->argc) {
             if (passNonModifiableArgs)
@@ -296,20 +294,20 @@ int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, c
         } else if (customCapacity == container->argc)
             continue;
         else {
-            errSt = CBQ_coChangeArgsCapacity__(container, customCapacity, 1);
+            errSt = CBQ_changeArgsCapacity__(container, customCapacity, 1);
             if (errSt)
                 return errSt;
         }
     }
 
-    for (ptr = queue->sId; ptr != queue->rId; ptr++) {
+    for (ptr = queue->sId; ptr != queue->rId; ptr = (ptr + 1) % queue->size) {
 
-        container = queue->coArr + (ptr % queue->size);
+        container = queue->coArr + ptr;
 
         if (customCapacity == container->argc)
             continue;
         else {
-            errSt = CBQ_coChangeArgsCapacity__(container, customCapacity, 0);
+            errSt = CBQ_changeArgsCapacity__(container, customCapacity, 0);
             if (errSt)
                 return errSt;
         }
@@ -740,7 +738,7 @@ void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict srcp, MAY_REG C
 }
 
 /* ---------------- Args Methods ---------------- */
-int CBQ_coChangeArgsCapacity__(CBQContainer_t* container, unsigned int newCapacity, const int copyArgsData)
+int CBQ_changeArgsCapacity__(CBQContainer_t* container, unsigned int newCapacity, const int copyArgsData)
 {
     void* reallocp;
 
@@ -762,7 +760,7 @@ int CBQ_coChangeArgsCapacity__(CBQContainer_t* container, unsigned int newCapaci
     return 0;
 }
 
-void CBQ_coCopyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *restrict dest, MAY_REG unsigned int len)
+void CBQ_copyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *restrict dest, MAY_REG unsigned int len)
 {
     do {
         *dest++ = *src++;
@@ -806,17 +804,20 @@ int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t*
         argcAll = stParamc;
 
     if (argcAll > container->capacity) {
-        errSt = CBQ_coChangeArgsCapacity__(container, argcAll, 0);
+
+        CBQ_MSGPRINT("Auto inc arg capacity...");
+
+        errSt = CBQ_changeArgsCapacity__(container, argcAll, 0);
         if (errSt)
             return errSt;
     }
 
     if (stParamc)
-        CBQ_coCopyArgs__(&stParams, container->args, stParamc);
+        CBQ_copyArgs__(&stParams, container->args, stParamc);
 
     /* in CB after static params are variable params*/
     if (varParams)
-        CBQ_coCopyArgs__(varParams, container->args + stParamc, varParamc);
+        CBQ_copyArgs__(varParams, container->args + stParamc, varParamc);
 
     container->argc = argcAll;
     container->func = func;
@@ -876,12 +877,15 @@ int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQ
     if (varParams) {
 
         if (varParamc > container->capacity) {
-            errSt = CBQ_coChangeArgsCapacity__(container, varParamc, 0);
+
+            CBQ_MSGPRINT("Auto inc arg capacity...");
+
+            errSt = CBQ_changeArgsCapacity__(container, varParamc, 0);
             if (errSt)
                 return errSt;
         }
 
-        CBQ_coCopyArgs__(varParams, container->args, varParamc);
+        CBQ_copyArgs__(varParams, container->args, varParamc);
     }
 
     container->argc = varParamc;
@@ -1315,9 +1319,4 @@ int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
             (CBQArg_t) {.liVar = args[ST_DELAY].liVar},
             (CBQArg_t) {.qVar = args[ST_TRG_QUEUE].qVar},
             (CBQArg_t) {.fVar = args[ST_FUNC].fVar});
-}
-
-int CBQ_RunOptSizeFinder(void)
-{
-    return 0;
 }

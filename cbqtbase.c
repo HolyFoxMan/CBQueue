@@ -760,8 +760,9 @@ void CBQ_T_VerIdInfo(int APIVer)
 int CB_0_Args(int argc, UNUSED CBQArg_t* args)
 {
     if (argc != 0)
-        printf("Error of 0 args");
-  //  ASRT(argc != 0, "args is not null")
+        printf("CB: Error of 0 args\n");
+    else
+        printf("CB: Void func runs\n");
     return 0;
 }
 
@@ -769,6 +770,22 @@ int CB_2_Args_Sum(int argc, CBQArg_t* args)
 {
     if (argc == 2)
         printf("CB: sum result is %d\n", args[0].iVar + args[1].iVar);
+    else
+        printf("CB: err, is not 2 args");
+
+    return 0;
+}
+
+int CB_5_Args_PrintNums(int argc, CBQArg_t* args)
+{
+    if (argc != 5) {
+        printf("CB: err, is not 5 args");
+        return -1;
+    }
+    printf("Cb: ");
+    for (int i = 0; i < 5; i++)
+        printf("%d ", args[i].iVar);
+    printf("\n");
 
     return 0;
 }
@@ -776,10 +793,20 @@ int CB_2_Args_Sum(int argc, CBQArg_t* args)
 void CBQ_T_ArgsTest(void)
 {
     CBQueue_t queue;
-    CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_LIMIT, CBQ_SI_SMALL, 2);
+    printf("Test: Init with 2 args\n");
+    CBQ_QueueInit(&queue, 3, CBQ_SM_LIMIT, CBQ_SI_SMALL, 2);
 
     ASRT(CBQ_PushVoid(&queue, CB_0_Args), "Push void args cb err")
-    //ASRT(CBQ_Push(&queue, )
+    ASRT(CBQ_PushStatic(&queue, CB_2_Args_Sum, 2, (CBQArg_t){.iVar = 4}, (CBQArg_t){.iVar = 6}), "Cant push")
+
+    ASRT(CBQ_EqualizeArgsCapByCustom(&queue, 5, 1), "Cant equalize args");
+    ASRT(CBQ_ChangeInitArgsCapByCustom(&queue, 5, 0), "Failed to init cap")     // change init args from 2 to 5
+
+    ASRT(CBQ_PushN(&queue, CB_5_Args_PrintNums, {1}, {2}, {3}, {4}, {5}), "")   // queue size is auto inc in that part
+    ASRT(CBQ_PushN(&queue, CB_5_Args_PrintNums, {5}, {4}, {3}, {2}, {1}), "")
+
+    for (int i = 0; i < 4; i++)
+        CBQ_Exec(&queue, NULL);
 
     CBQ_QueueFree(&queue);
 }

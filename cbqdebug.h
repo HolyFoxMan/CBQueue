@@ -25,7 +25,7 @@
         /* allow scheme of current queue state which is drawn in console
          * after push, exec and changing size methods.
          */
-        #define CBQD_SCHEME
+    //    #define CBQD_SCHEME
 
         /* Log which is printed after success execution of methods:
          *
@@ -91,7 +91,7 @@
     #else
 
         #define CBQ_DRAWSCHEME(P_QUEUE) \
-            ((void)0)
+            (0)
 
     #endif // CBQD_SCHEME
 
