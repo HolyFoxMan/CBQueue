@@ -800,7 +800,7 @@ void CBQ_T_ArgsTest(void)
     ASRT(CBQ_PushStatic(&queue, CB_2_Args_Sum, 2, (CBQArg_t){.iVar = 4}, (CBQArg_t){.iVar = 6}), "Cant push")
 
     ASRT(CBQ_EqualizeArgsCapByCustom(&queue, 5, 1), "Cant equalize args");
-    ASRT(CBQ_ChangeInitArgsCapByCustom(&queue, 5, 0), "Failed to init cap")     // change init args from 2 to 5
+    ASRT(CBQ_ChangeInitArgsCapByCustom(&queue, 5), "Failed to init cap")     // change init args from 2 to 5
 
     ASRT(CBQ_PushN(&queue, CB_5_Args_PrintNums, {1}, {2}, {3}, {4}, {5}), "")   // queue size is auto inc in that part
     ASRT(CBQ_PushN(&queue, CB_5_Args_PrintNums, {5}, {4}, {3}, {2}, {1}), "")

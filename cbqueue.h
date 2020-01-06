@@ -307,7 +307,7 @@ int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSi
 int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, const int tryToAdaptSize, const int adaptSizeMaxLimit);
 int CBQ_Clear(CBQueue_t* queue);
 int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, const int passNonModifiableArgs);
-int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity, const int tryEqualizeByIt);
+int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity);
 char* CBQ_strIntoHeap(const char* str);
 
 /* Not used

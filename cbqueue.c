@@ -242,7 +242,7 @@ int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newMaxSiz
     return 0;
 }
 
-int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity, const int tryEqualizeByIt)
+int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity)
 {
     BASE_ERR_CHECK(queue);
 
@@ -253,12 +253,6 @@ int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapac
         return CBQ_ERR_INITCAP_IS_IDENTICAL;
 
     queue->initArgCap = customInitCapacity;
-
-    if (tryEqualizeByIt) {
-        int errSt = CBQ_EqualizeArgsCapByCustom(queue, customInitCapacity, 1);
-        if (errSt)
-            return errSt;
-    }
 
     CBQ_MSGPRINT("Queue init args cap is changed");
     return 0;
@@ -280,7 +274,7 @@ int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, c
     if (customCapacity < MIN_CAP_ARGS || customCapacity > MAX_CAP_ARGS)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
-    CBQ_MSGPRINT("Queue call args cap is equalize");
+    CBQ_MSGPRINT("Queue call args cap is equalize...");
 
     for (ptr = queue->rId; ptr != queue->sId; ptr = (ptr + 1) % queue->size) { // % helps to loop ptr into size frames
 
