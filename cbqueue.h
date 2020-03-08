@@ -2,7 +2,10 @@
 #define CBQUEUE_H
 
     #ifdef __cplusplus
-    extern "C" {
+        extern "C" {
+        #define C_ATTR
+    #else
+        #define C_ATTR restrict
     #endif // __cplusplus
 
     /* At c99 */
@@ -343,8 +346,8 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t capacity);
 
 int CBQ_GetSize(CBQueue_t* queue, size_t* size);
 int CBQ_GetCapacityInBytes(CBQueue_t* queue, size_t* byteCapacity);
-int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getCapacity, size_t *restrict getSize,
-    int *restrict getIncCapacityMode, size_t *restrict getMaxCapacityLimit, size_t *restrict getCapacityInBytes);
+int CBQ_GetFullInfo(CBQueue_t* queue, int *C_ATTR getStatus, size_t *C_ATTR getCapacity, size_t *C_ATTR getSize,
+    int *restrict getIncCapacityMode, size_t *C_ATTR getMaxCapacityLimit, size_t *C_ATTR getCapacityInBytes);
 
 /* VerId Information
  * You can just call CBQ_T_EXPLORE_VERSION() from cbqtest.h to get readable information of used lib
@@ -378,7 +381,7 @@ int CBQ_IsCustomisedVersion(void);
 ////////////////////////////////////////////////////////////////////////////////
 
     #ifdef __cplusplus
-    }
+        }
     #endif // __cplusplus
 
 #endif // CBQUEUE_H
