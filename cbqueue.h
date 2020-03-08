@@ -347,7 +347,7 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t capacity);
 int CBQ_GetSize(CBQueue_t* queue, size_t* size);
 int CBQ_GetCapacityInBytes(CBQueue_t* queue, size_t* byteCapacity);
 int CBQ_GetFullInfo(CBQueue_t* queue, int *C_ATTR getStatus, size_t *C_ATTR getCapacity, size_t *C_ATTR getSize,
-    int *restrict getIncCapacityMode, size_t *C_ATTR getMaxCapacityLimit, size_t *C_ATTR getCapacityInBytes);
+    int *C_ATTR getIncCapacityMode, size_t *C_ATTR getMaxCapacityLimit, size_t *C_ATTR getCapacityInBytes);
 
 /* VerId Information
  * You can just call CBQ_T_EXPLORE_VERSION() from cbqtest.h to get readable information of used lib
