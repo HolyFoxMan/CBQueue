@@ -9,13 +9,13 @@
 
 // Limits and inits values:
 
-    #define CBQ_QUEUE_MAX_SIZE  (SIZE_MAX >> 1)
-    /* init sizes written in cbqueue.h */
-    #define CBQ_QUEUE_MIN_SIZE  1
+    #define CBQ_QUEUE_MAX_CAPACITY  (SIZE_MAX >> 1)
+    /* init capacites written in cbqueue.h */
+    #define CBQ_QUEUE_MIN_CAPACITY  1
 
-    #define MIN_INC_SIZE        1
-    #define INIT_INC_SIZE       8
-    #define MAX_INC_SIZE        16384
+    #define MIN_INC_CAPACITY        1
+    #define INIT_INC_CAPACITY       8
+    #define MAX_INC_CAPACITY        16384
 
     #define MIN_CAP_ARGS        2
     #define INIT_CAP_ARGS       5
@@ -57,10 +57,10 @@
     #define CBQ_ALLOC_METHODS 1
     #if CBQ_ALLOC_METHODS == 1     // POSIX
 
-        #define CBQ_MALLOC(size) \
-            malloc(size)
-        #define CBQ_REALLOC(pointer, size) \
-            realloc(pointer, size)
+        #define CBQ_MALLOC(capacity) \
+            malloc(capacity)
+        #define CBQ_REALLOC(pointer, capacity) \
+            realloc(pointer, capacity)
         #define CBQ_MEMFREE(pointer) \
             free(pointer)
 
@@ -118,7 +118,7 @@
         #define REST_MEM 0
     #endif
 
-    #define BYTE_SIZE 8
+    #define BYTE_CAPACITY 8
     #define BYTE_OFFSET 7
     #define BYTE_MASK 0xFF
 

@@ -26,7 +26,7 @@
      */
     #define CBQ_CUR_VERSION 1
 
-    /* Maximum (unstable) size of queue is 65536 */
+    /* Maximum (unstable) capacity of queue is 65536 */
 
 
     /* ---------------- UNSAFETY MACROS (not for lib version) ---------------- */
@@ -34,7 +34,7 @@
     /* Turn on that define if dont want base queue check on following methods:
      * push
      * exec
-     * change size
+     * change capacity
      * set timeout
      */
     // #define NO_BASE_CHECK
@@ -66,12 +66,12 @@
     /* Union type has argument base element which contain
      * used variables for function calls in queue.
      * What to consider:
-     * The C99 standard defines types with platform independent fixed size.
+     * The C99 standard defines types with platform independent fixed capacity.
      * long is not more stably fixed, but it is also defined here.
      * It should also be remembered that unsigned floating point numbers
      * do not exist in C/C++, because because there are no analogues
      * of CPU commands.
-     * A fixed size of 64 bit integers on a 32 bit machine will work,
+     * A fixed capacity of 64 bit integers on a 32 bit machine will work,
      * but not in one machine instruction (which makes arithmetic slow).
      */
      #ifndef NO_FIX_ARGTYPES
@@ -164,11 +164,11 @@
         #endif // NO_EXCEPTIONS_OF_BUSY
 
         /* containers */
-        size_t  size;
+        size_t  capacity;
         struct  CBQContainer_t* coArr;
-        int     incSizeMode;
-        size_t  maxSizeLimit;
-        size_t  incSize;
+        int     incCapacityMode;
+        size_t  maxCapacityLimit;
+        size_t  incCapacity;
         unsigned int initArgCap;
 
         /* pointers */
@@ -183,13 +183,13 @@
 
     };
 
-    /* Size mode have some states which selected by numbers:
-     * CBQ_SM_STATIC - Queue size does not change. If we try to add a new call
+    /* Capacity mode have some states which selected by numbers:
+     * CBQ_SM_STATIC - Queue capacity does not change. If we try to add a new call
      * to the filled queue, you will receive an appropriate signal (error).
-     * CBQ_SM_LIMIT - size can be auto incremented, but after out of size limit
-     * push method return error too. Limit of size can be defined by argument maxSizeLimit.
-     * (Maximum limit is defined in CBQ_QUEUE_MAX_SIZE const macro);
-     * CBQ_SM_MAX - The maximum limit is sets by CBQ_QUEUE_MAX_SIZE, this macro is hidden.
+     * CBQ_SM_LIMIT - capacity can be auto incremented, but after out of capacity limit
+     * push method return error too. Limit of capacity can be defined by argument maxCapacityLimit.
+     * (Maximum limit is defined in CBQ_QUEUE_MAX_CAPACITY const macro);
+     * CBQ_SM_MAX - The maximum limit is sets by CBQ_QUEUE_MAX_CAPACITY, this macro is hidden.
      */
     enum {
         CBQ_SM_STATIC,
@@ -197,9 +197,9 @@
         CBQ_SM_MAX
     };
 
-    /* Its can be chosed in maxSizeLimit, but you can set custom limit.
-     * By choosing custom you may get error part if started queue size
-     * will be bigger than CBQ_QUEUE_MAX_SIZE value.
+    /* Its can be chosed in maxCapacityLimit, but you can set custom limit.
+     * By choosing custom you may get error part if started queue capacity
+     * will be bigger than CBQ_QUEUE_MAX_CAPACITY value.
      */
     enum {
         CBQ_SI_TINY =           8,
@@ -223,12 +223,12 @@
         CBQ_ERR_ARG_OUT_OF_RANGE,
         CBQ_ERR_MEM_ALLOC_FAILED,
         CBQ_ERR_MEM_BUT_RESTORED,
-        CBQ_ERR_STATIC_SIZE_OVERFLOW,
-        CBQ_ERR_LIMIT_SIZE_OVERFLOW,
-        CBQ_ERR_MAX_SIZE_OVERFLOW,
-        CBQ_ERR_CUR_CH_SIZE_NOT_AFFECT,
-        CBQ_ERR_ENGCELLS_NOT_FIT_IN_NEWSIZE,
-        CBQ_ERR_SIZE_NOT_FIT_IN_LIMIT,
+        CBQ_ERR_STATIC_CAPACITY_OVERFLOW,
+        CBQ_ERR_LIMIT_CAPACITY_OVERFLOW,
+        CBQ_ERR_MAX_CAPACITY_OVERFLOW,
+        CBQ_ERR_CUR_CH_CAPACITY_NOT_AFFECT,
+        CBQ_ERR_ENGCELLS_NOT_FIT_IN_NEWCAPACITY,
+        CBQ_ERR_CAPACITY_NOT_FIT_IN_LIMIT,
         CBQ_ERR_QUEUE_IS_EMPTY,
         CBQ_ERR_IS_BUSY,
         CBQ_ERR_VPARAM_VARIANCE,
@@ -238,19 +238,19 @@
         CBQ_ERR_VI_NOT_GENERATED = SHRT_MAX
     };
 
-    /* These enums choose in "changeTowards" param from ChangeSize method
-     * CBQ_INC_SIZE - increments your size;
-     * CBQ_DEC_SIZE - decrements your size;
-     * CBQ_CUSTOM_SIZE - custom size which sets into "customNewSize" param.
+    /* These enums choose in "changeTowards" param from ChangeCapacity method
+     * CBQ_INC_CAPACITY - increments your capacity;
+     * CBQ_DEC_CAPACITY - decrements your capacity;
+     * CBQ_CUSTOM_CAPACITY - custom capacity which sets into "customNewCapacity" param.
      */
     enum {
-        CBQ_CUSTOM_SIZE,
-        CBQ_INC_SIZE,
-        CBQ_DEC_SIZE
+        CBQ_CUSTOM_CAPACITY,
+        CBQ_INC_CAPACITY,
+        CBQ_DEC_CAPACITY
     };
 
 /* ---------------- Base methods ---------------- */
-int CBQ_QueueInit(CBQueue_t* queue, size_t size, int incSizeMode, size_t maxSizeLimit, unsigned int customInitArgsCapacity);
+int CBQ_QueueInit(CBQueue_t* queue, size_t capacity, int incCapacityMode, size_t maxCapacityLimit, unsigned int customInitArgsCapacity);
 int CBQ_QueueFree(CBQueue_t* queue);
 
 /* -------- push macroses -------- */
@@ -303,30 +303,30 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams);
 
 /* ---------------- Additional methods ---------------- */
-int CBQ_ChangeSize(CBQueue_t* queue, const int changeTowards, size_t customNewSize, const int);
-int CBQ_ChangeIncSizeMode(CBQueue_t* queue, int newIncSizeMode, size_t newSizeMaxLimit, const int tryToAdaptSize, const int adaptSizeMaxLimit);
+int CBQ_ChangeCapacity(CBQueue_t* queue, const int changeTowards, size_t customNewCapacity, const int);
+int CBQ_ChangeIncCapacityMode(CBQueue_t* queue, int newIncCapacityMode, size_t newCapacityMaxLimit, const int tryToAdaptCapacity, const int adaptCapacityMaxLimit);
 int CBQ_Clear(CBQueue_t* queue);
 int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, const int passNonModifiableArgs);
 int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity);
 char* CBQ_strIntoHeap(const char* str);
 
 /* Not used
-int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedSize);
-int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
+int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedCapacity);
+int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t capacity);
 */
 
 /* ---------------- Info Methods ---------------- */
 #define CBQ_HAVECALL_P(TRUSTED_QUEUE_POINTER) \
     (!!(TRUSTED_QUEUE_POINTER)->status)
 
-#define CBQ_GETSIZE_P(TRUSTED_QUEUE_POINTER) \
-    (TRUSTED_QUEUE_POINTER)->size
+#define CBQ_GETCAPACITY_P(TRUSTED_QUEUE_POINTER) \
+    (TRUSTED_QUEUE_POINTER)->capacity
 
 #define CBQ_HAVECALL(TRUSTED_QUEUE) \
     (!!(TRUSTED_QUEUE).status)
 
-#define CBQ_GETSIZE(TRUSTED_QUEUE) \
-    (TRUSTED_QUEUE).size
+#define CBQ_GETCAPACITY(TRUSTED_QUEUE) \
+    (TRUSTED_QUEUE).capacity
 
 #define CBQ_ISFULL_P(TRUSTED_QUEUE_POINTER) \
     ((TRUSTED_QUEUE_POINTER)->status == 2)
@@ -341,10 +341,10 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t size);
     (!(TRUSTED_QUEUE_POINTER).status)
 
 
-int CBQ_GetCallAmount(CBQueue_t* queue, size_t* engSize);
-int CBQ_GetSizeInBytes(CBQueue_t* queue, size_t* byteSize);
-int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getSize, size_t *restrict getEngagedSize,
-    int *restrict getIncSizeMode, size_t *restrict getMaxSizeLimit, size_t *restrict getSizeInBytes);
+int CBQ_GetSize(CBQueue_t* queue, size_t* size);
+int CBQ_GetCapacityInBytes(CBQueue_t* queue, size_t* byteCapacity);
+int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getCapacity, size_t *restrict getSize,
+    int *restrict getIncCapacityMode, size_t *restrict getMaxCapacityLimit, size_t *restrict getCapacityInBytes);
 
 /* VerId Information
  * You can just call CBQ_T_EXPLORE_VERSION() from cbqtest.h to get readable information of used lib

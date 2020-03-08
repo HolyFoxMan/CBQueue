@@ -31,7 +31,7 @@ int add(int argc, CBQArg_t* argv)
 void CBQ_T_HelloWorld(void)
 {
     CBQueue_t queue;
-    size_t size;
+    size_t capacity;
     const char username [] = "User";
     int age = 20;
 
@@ -51,8 +51,8 @@ void CBQ_T_HelloWorld(void)
     ASRT(CBQ_Push(&queue, add, 0, NULL, 3, (CBQArg_t) {.iVar = 1}, (CBQArg_t) {.iVar = 2}, (CBQArg_t) {.iVar = 4}), "")
 
     if (CBQ_HAVECALL(queue)) {
-        ASRT(CBQ_GetCallAmount(&queue, &size),"")
-        printf("main: calls num in queue: %llu\n", size);
+        ASRT(CBQ_GetSize(&queue, &capacity),"")
+        printf("main: calls num in queue: %llu\n", capacity);
     }
 
     /* Execute first pushed function */
@@ -93,15 +93,15 @@ int counterPusherCB(UNUSED int argc, CBQArg_t* argv)
     return 0;
 }
 
-#define ALPH_SIZE 26
+#define ALPH_CAPACITY 26
 
 /*
 void CBQ_drawArgpAsChars__(CBQueue_t* trustedQueue)
 {
     struct CBQContainer_t* co_r;
-    for (size_t i = 0; i < trustedQueue->size; i++) {
+    for (size_t i = 0; i < trustedQueue->capacity; i++) {
         co_r = *trustedQueue->coArr[i];
-        printf("%c", co_r->args % ALPH_SIZE + 'a');
+        printf("%c", co_r->args % ALPH_CAPACITY + 'a');
     }
     printf("\n");
 } */
@@ -123,20 +123,20 @@ void CBQ_T_ControlTest(void)
         inCB = 0,
         qStatus,
         errSt = 0;
-    size_t customSize,
-        qSize,
+    size_t customCapacity,
+        qCapacity,
         qEngagedSize,
-        qSizeBytes;
+        qCapacityBytes;
     static int counter = 0;
 
-//      resultByteSize;
+//      resultByteCapacity;
 //  unsigned char* saveStateBuffer = NULL;
     CBQueue_t queue;
 
     CBQ_OUTDEBUGSTATUS();
     ASRT(CBQ_QueueInit(&queue, 16, CBQ_SM_MAX, 0, 0), "Failed to init")
     quit = 0;
-    printf("p - push, e - pop, c - change size, i - increment size, d - decrement size, q - exit.\n");
+    printf("p - push, e - pop, c - change capacity, i - increment capacity, d - decrement capacity, q - exit.\n");
     do {
 
         if (kbhit()) {
@@ -189,22 +189,22 @@ void CBQ_T_ControlTest(void)
 
             case 'C':
             case 'c': {
-                printf("Type new size\n");
-                scanf(SZ_PRTF, &customSize);
+                printf("Type new capacity\n");
+                scanf(SZ_PRTF, &customCapacity);
                 fflush(stdin);
-                ASRT(CBQ_ChangeSize(&queue, 0, customSize, 0), "Failed to change size")
+                ASRT(CBQ_ChangeCapacity(&queue, 0, customCapacity, 0), "Failed to change capacity")
                 break;
             }
 
             case 'I':
             case 'i': {
-                ASRT(CBQ_ChangeSize(&queue, CBQ_INC_SIZE, 0, 1), "Failed to increment size")
+                ASRT(CBQ_ChangeCapacity(&queue, CBQ_INC_CAPACITY, 0, 1), "Failed to increment capacity")
                 break;
             }
 
             case 'D':
             case 'd': {
-                ASRT(CBQ_ChangeSize(&queue, CBQ_DEC_SIZE, 0, 1), "Failed to decrement size")
+                ASRT(CBQ_ChangeCapacity(&queue, CBQ_DEC_CAPACITY, 0, 1), "Failed to decrement capacity")
                 break;
             }
 
@@ -223,10 +223,10 @@ void CBQ_T_ControlTest(void)
 
             case 'M':
             case 'm': {
-                int nISM, tryToAdaptSize = 0, adaptSML = 0;
+                int nISM, tryToAdaptCapacity = 0, adaptSML = 0;
                 size_t nSML;
 
-                printf("Select new size Mode:\n%d - static\n%d - limit\n%d - max size\n9 - cancel\n",
+                printf("Select new capacity Mode:\n%d - static\n%d - limit\n%d - max capacity\n9 - cancel\n",
                        CBQ_SM_STATIC, CBQ_SM_LIMIT, CBQ_SM_MAX);
                 do {
                     scanf("%d", &nISM);
@@ -241,46 +241,46 @@ void CBQ_T_ControlTest(void)
                     break;
 
                 if (nISM == CBQ_SM_LIMIT) {
-                    printf("Type new limit size:\n");
+                    printf("Type new limit capacity:\n");
                     scanf(SZ_PRTF, &nSML);
                     fflush(stdin);
 
-                    printf("Change the size of the queue, if it does not fit? (1/0)");
+                    printf("Change the capacity of the queue, if it does not fit? (1/0)");
                     scanf("%d", &key);
                     fflush(stdin);
                     if (key == 1)
-                        tryToAdaptSize = 1;
+                        tryToAdaptCapacity = 1;
 
-                    printf("Align max size limit, if it affects busy cells? (1/0)");
+                    printf("Align max capacity limit, if it affects busy cells? (1/0)");
                     scanf("%d", &key);
                     fflush(stdin);
                     if (key == 1)
                         adaptSML = 1;
                 }
 
-                ASRT(CBQ_ChangeIncSizeMode(&queue, nISM, nSML, tryToAdaptSize, adaptSML), "")
+                ASRT(CBQ_ChangeIncCapacityMode(&queue, nISM, nSML, tryToAdaptCapacity, adaptSML), "")
                 break;
             }
 /*
             case 'S':
             case 's': {
-                ASRT(CBQ_SaveState(&queue, saveStateBuffer, &resultByteSize), "Saving data error")
-                printf("Received size (in bytes): %llu\n", resultByteSize);
+                ASRT(CBQ_SaveState(&queue, saveStateBuffer, &resultByteCapacity), "Saving data error")
+                printf("Received capacity (in bytes): %llu\n", resultByteCapacity);
                 break;
             }
 
             case 'L':
             case 'l': {
-                ASRT(CBQ_RestoreState(&queue, saveStateBuffer, resultByteSize), "Loading data error")
+                ASRT(CBQ_RestoreState(&queue, saveStateBuffer, resultByteCapacity), "Loading data error")
                 break;
             }
             */
         }
 
-        ASRT(CBQ_GetFullInfo(&queue, &qStatus, &qSize, &qEngagedSize, NULL, NULL, &qSizeBytes), "")
+        ASRT(CBQ_GetFullInfo(&queue, &qStatus, &qCapacity, &qEngagedSize, NULL, NULL, &qCapacityBytes), "")
 
-        printf("Status: %d, size: " SZ_PRTF ", engaged size: "
-        SZ_PRTF " in bytes: " SZ_PRTF " run in CB: %s\n", qStatus, qSize, qEngagedSize, qSizeBytes, inCB? "true" : "false");
+        printf("Status: %d, capacity: " SZ_PRTF ", engaged capacity: "
+        SZ_PRTF " in bytes: " SZ_PRTF " run in CB: %s\n", qStatus, qCapacity, qEngagedSize, qCapacityBytes, inCB? "true" : "false");
         // drawArgpAsChars(&queue);
 
     } while(!quit);
@@ -294,17 +294,17 @@ void CBQ_T_ControlTest(void)
 }
 #endif
 
-/* ---------------- SizeModes Test ---------------- */
+/* ---------------- CapacityModes Test ---------------- */
 
 int occupyAllCells(CBQueue_t* queue)
 {
-    size_t size, engSize, i;
+    size_t capacity, engSize, i;
     int errSt = 0;
 
-    CBQ_GetFullInfo(queue, NULL, &size, &engSize, NULL, NULL, NULL);
-    size -= engSize;    // last empty cells
+    CBQ_GetFullInfo(queue, NULL, &capacity, &engSize, NULL, NULL, NULL);
+    capacity -= engSize;    // last empty cells
 
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < capacity; i++) {
         errSt = CBQ_Push(queue, counterCB, 0, NULL, 0, CBQ_NO_STPARAMS);
         if (errSt)
             break;
@@ -401,7 +401,7 @@ int toState_4(CBQueue_t* queue)
     return 0;
 }
 
-void CBQ_T_SizemodeTest(void)
+void CBQ_T_CapacitymodeTest(void)
 {
     /* STATIC test */
     CBQueue_t queue;
@@ -436,9 +436,9 @@ int selfExecCB(UNUSED int argc, CBQArg_t* argv)
     return 0;
 }
 
-int changeSizeCB(UNUSED int argc, CBQArg_t* argv)
+int changeCapacityCB(UNUSED int argc, CBQArg_t* argv)
 {
-    return CBQ_ChangeSize(argv[0].qVar, argv[1].iVar, argv[2].szVar, 1);
+    return CBQ_ChangeCapacity(argv[0].qVar, argv[1].iVar, argv[2].szVar, 1);
 }
 
 
@@ -460,19 +460,19 @@ void CBQ_T_BusyTest(void)
     if (errSt == CBQ_ERR_IS_BUSY)
         printf("Error of intermdeiary CB exec was successful handled\n");
 
-    ASRT(CBQ_PushStatic(&queue, changeSizeCB, 3,
+    ASRT(CBQ_PushStatic(&queue, changeCapacityCB, 3,
         (CBQArg_t) {.qVar = &queue},
-        (CBQArg_t) {.iVar = CBQ_DEC_SIZE},
+        (CBQArg_t) {.iVar = CBQ_DEC_CAPACITY},
         (CBQArg_t) {.szVar = 0}
-    ),"Failed to push CB for custom changing size")
+    ),"Failed to push CB for custom changing capacity")
 
     CBQ_Exec(&queue, &errSt);
     if (errSt == CBQ_ERR_IS_BUSY)
-        printf("Error of changing size through an intermdeiary was successful handled\n");
+        printf("Error of changing capacity through an intermdeiary was successful handled\n");
 
     ASRT(CBQ_PushStatic(&queue, freeQueueCB, 1,
         (CBQArg_t) {.qVar = &queue}
-    ),"Failed to push CB for custom changing size")
+    ),"Failed to push CB for custom changing capacity")
 
     CBQ_Exec(&queue, &errSt);
     if (errSt == CBQ_ERR_IS_BUSY)
@@ -802,7 +802,7 @@ void CBQ_T_ArgsTest(void)
     ASRT(CBQ_EqualizeArgsCapByCustom(&queue, 5, 1), "Cant equalize args");
     ASRT(CBQ_ChangeInitArgsCapByCustom(&queue, 5), "Failed to init cap")     // change init args from 2 to 5
 
-    ASRT(CBQ_PushN(&queue, CB_5_Args_PrintNums, {1}, {2}, {3}, {4}, {5}), "")   // queue size is auto inc in that part
+    ASRT(CBQ_PushN(&queue, CB_5_Args_PrintNums, {1}, {2}, {3}, {4}, {5}), "")   // queue capacity is auto inc in that part
     ASRT(CBQ_PushN(&queue, CB_5_Args_PrintNums, {5}, {4}, {3}, {2}, {1}), "")
 
     for (int i = 0; i < 4; i++)
