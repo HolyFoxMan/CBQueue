@@ -10,11 +10,16 @@
 
     /* At c99 */
     #if !defined(__cplusplus) && __STDC_VERSION__ < 199901L
-        #error Needs "c99" standart version
+        #error Needs minimum "c99" standart C version or C++
     #endif
 
-    #include <stdlib.h>
-    #include <time.h>
+    #ifdef _cplusplus
+        #include <cstdlib>
+        #include <ctime>
+    #else
+        #include <stdlib.h>
+        #include <time.h>
+    #endif
 
     /* Turn off this macro if you need some useful functions for debugging the library itself.
      * This does not apply to performance analysis and other statistics.
@@ -42,6 +47,7 @@
      *  Added queue copy, concatenation methods;
      *  Added queue call methods from struct members (func pointers);
      *  Macro-option for struct method members.
+     *  Macro-option for classic function calls
      */
     #define CBQ_CUR_VERSION 2
 
@@ -79,6 +85,26 @@
      * Possibly unsafe, because it stores embedded information about the enabled flags.
      */
     #define GEN_VERID
+
+    /* Version 2 */
+
+    /* Disable classic C function declarations for calling */
+    // #define NO_CFUNCS_CALLS
+
+    /* Enable functions which calls through Queue struct */
+    #define WITHIN_STRUCT_CALLS
+
+    /* ---------------- Compile controllers ---------------- */
+    #if CBQ_CUR_VERSION >= 2
+        #define CBQ_ALLOW_V2_METHODS
+    #endif
+
+    /* Method call controller */
+    #if defined(NO_CFUNCS_CALLS) && !defined(WITHIN_STRUCT_CALLS)
+        #ifndef NO_CLASS_WRAPPER
+            #error no methods call specified
+        #endif
+    #endif
 
     /* ---------------- Argument structure ---------------- */
 
@@ -210,7 +236,7 @@
      * (Maximum limit is defined in CBQ_QUEUE_MAX_CAPACITY const macro);
      * CBQ_SM_MAX - The maximum limit is sets by CBQ_QUEUE_MAX_CAPACITY, this macro is hidden.
      */
-    enum {
+    enum CBQ_CapacityModes {
         CBQ_SM_STATIC,
         CBQ_SM_LIMIT,
         CBQ_SM_MAX
@@ -220,7 +246,7 @@
      * By choosing custom you may get error part if started queue capacity
      * will be bigger than CBQ_QUEUE_MAX_CAPACITY value.
      */
-    enum {
+    enum CBQ_Capacities {
         CBQ_SI_TINY =           8,
         CBQ_SI_SMALL =          32,
         CBQ_SI_MEDIUM =         128,
@@ -234,7 +260,7 @@
      * First CBQ_SUCCESSFUL is simple zero constant which is used
      * almost in all standart C libs.
      */
-    enum {
+    enum CBQ_errors {
         CBQ_SUCCESSFUL,
         CBQ_ERR_NOT_INITED,
         CBQ_ERR_ALREADY_INITED,
@@ -262,15 +288,17 @@
      * CBQ_DEC_CAPACITY - decrements your capacity;
      * CBQ_CUSTOM_CAPACITY - custom capacity which sets into "customNewCapacity" param.
      */
-    enum {
+    enum CBQ_ChangeCapacityFlags {
         CBQ_CUSTOM_CAPACITY,
         CBQ_INC_CAPACITY,
         CBQ_DEC_CAPACITY
     };
 
+#ifndef NO_CFUNCS_CALLS
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t capacity, int incCapacityMode, size_t maxCapacityLimit, unsigned int customInitArgsCapacity);
 int CBQ_QueueFree(CBQueue_t* queue);
+int CBQ_QueueCopy(CBQueue_t* dest, CBQueue_t* src);
 
 /* -------- push macroses -------- */
 
@@ -365,10 +393,12 @@ int CBQ_GetCapacityInBytes(CBQueue_t* queue, size_t* byteCapacity);
 int CBQ_GetFullInfo(CBQueue_t* queue, int *C_ATTR getStatus, size_t *C_ATTR getCapacity, size_t *C_ATTR getSize,
     int *C_ATTR getIncCapacityMode, size_t *C_ATTR getMaxCapacityLimit, size_t *C_ATTR getCapacityInBytes);
 
+#endif // NO_CFUNCS_CALLS
+
 /* VerId Information
  * You can just call CBQ_T_EXPLORE_VERSION() from cbqtest.h to get readable information of used lib
  */
-enum {  // flags for checking VerId by CBQ_CheckVerIndexByFlag function
+enum CBQ_VI {  // flags for checking VerId by CBQ_CheckVerIndexByFlag function
     CBQ_VI_VERSION,
     CBQ_VI_DEBUG,       // starts after first byte
     CBQ_VI_NBASECHECK,
@@ -382,6 +412,9 @@ enum {  // flags for checking VerId by CBQ_CheckVerIndexByFlag function
 /* Returns identification value with version and used flags of current lib build.
  * If macro GEN_VERID has not been set, returns zero.
  */
+
+#ifndef NO_CFUNCS_CALLS
+
 int CBQ_GetVerIndex(void);
 /* Return 1/0 or version by selected flag (CBQ_VI_...)*/
 int CBQ_CheckVerIndexByFlag(int fInfoType);
@@ -394,7 +427,11 @@ int CBQ_GetAvaliableFlagsRange(void);
 /* Returns 1 if version was configured (At 0, you can hope for complete safety) */
 int CBQ_IsCustomisedVersion(void);
 
+#endif // NO_CFUNCS_CALLS
+
 ////////////////////////////////////////////////////////////////////////////////
+
+#undef C_ATTR
 
     #ifdef __cplusplus
         }

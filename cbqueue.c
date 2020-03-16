@@ -122,7 +122,7 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t capacity, int incCapacityMode, size_t
 
 int CBQ_QueueFree(CBQueue_t* queue)
 {
-    BASE_ERR_CHECK(queue);
+    OPT_BASE_ERR_CHECK(queue);
 
     #ifndef NO_EXCEPTIONS_OF_BUSY
     if (queue->execSt == CBQ_EST_EXEC)
@@ -138,6 +138,51 @@ int CBQ_QueueFree(CBQueue_t* queue)
     queue->initSt = CBQ_IN_FREE;
 
     CBQ_MSGPRINT("Queue freed");
+    return 0;
+}
+
+int CBQ_QueueCopy(CBQueue_t* dest, CBQueue_t* src)
+{
+    /* base error checking */
+    OPT_BASE_ERR_CHECK(src);
+
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+    if (src->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
+
+    if (dest == NULL)
+        return CBQ_ERR_ARG_NULL_POINTER;
+
+    if (dest->initSt == CBQ_IN_INITED)
+        return CBQ_ERR_ALREADY_INITED;
+
+    CBQContainer_t* tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(src->capacity * sizeof(CBQContainer_t));
+    if (tmpCoArr == NULL)
+        return CBQ_ERR_MEM_ALLOC_FAILED;
+
+    CBQ_containersCopy__(src->coArr, tmpCoArr, src->capacity);
+
+    for (size_t i = 0; i < src->capacity; i++) {
+        tmpCoArr[i].args = (CBQArg_t*) CBQ_MALLOC(src->coArr[i].capacity * sizeof(CBQArg_t));
+
+        if (tmpCoArr == NULL) {
+        #ifdef REST_MEM
+            for (int j = i - 1; j >= 0; j--)
+                CBQ_MEMFREE(tmpCoArr[j].args);
+            CBQ_MEMFREE(tmpCoArr);
+            return CBQ_ERR_MEM_BUT_RESTORED;
+        #else // REST_MEM
+            return CBQ_ERR_MEM_ALLOC_FAILED;
+        #endif
+        }
+
+        CBQ_copyArgs__(src->coArr[i].args, tmpCoArr[i].args, src->coArr[i].capacity);
+    }
+
+    *dest = *src;
+    dest->coArr = tmpCoArr;
+
     return 0;
 }
 
@@ -196,7 +241,7 @@ int CBQ_ChangeIncCapacityMode(CBQueue_t* queue, int newIncCapacityMode, size_t n
 {
     int errSt;
 
-    BASE_ERR_CHECK(queue);
+    OPT_BASE_ERR_CHECK(queue);
 
     #ifndef NO_EXCEPTIONS_OF_BUSY
     if (queue->execSt == CBQ_EST_EXEC)
@@ -244,7 +289,7 @@ int CBQ_ChangeIncCapacityMode(CBQueue_t* queue, int newIncCapacityMode, size_t n
 
 int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity)
 {
-    BASE_ERR_CHECK(queue);
+    OPT_BASE_ERR_CHECK(queue);
 
     if (customInitCapacity < MIN_CAP_ARGS || customInitCapacity > MAX_CAP_ARGS)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
@@ -264,7 +309,7 @@ int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, c
     CBQContainer_t* container;
     int errSt;
 
-    BASE_ERR_CHECK(queue);
+    OPT_BASE_ERR_CHECK(queue);
 
     #ifndef NO_EXCEPTIONS_OF_BUSY
         if (queue->execSt == CBQ_EST_EXEC)
@@ -954,7 +999,7 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt)
 
 int CBQ_Clear(CBQueue_t* queue)
 {
-    BASE_ERR_CHECK(queue);
+    OPT_BASE_ERR_CHECK(queue);
 
     /* To clear a queue, you can simply shift the pointers
      * to a common index and set the status of an empty queue.
@@ -1005,7 +1050,7 @@ int CBQ_GetCapacityInBytes(CBQueue_t* queue, size_t* byteCapacity)
 int CBQ_GetFullInfo(CBQueue_t* queue, int *restrict getStatus, size_t *restrict getCapacity, size_t *restrict getSize,
     int *restrict getIncCapacityMode, size_t *restrict getMaxCapacityLimit, size_t *restrict getCapacityInBytes)
     {
-        BASE_ERR_CHECK(queue);
+        OPT_BASE_ERR_CHECK(queue);
 
         if (getStatus)
             *getStatus = queue->status;

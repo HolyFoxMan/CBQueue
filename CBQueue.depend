@@ -7,7 +7,9 @@
 	<conio.h>
 	"cbqueue.h"
 
-1584340649 e:\coding\cbqueue\cbqueue.h
+1584378429 e:\coding\cbqueue\cbqueue.h
+	<cstdlib>
+	<ctime>
 	<stdlib.h>
 	<time.h>
 	"cbqdebug.h"
@@ -16,10 +18,10 @@
 1584342848 e:\coding\cbqueue\cbqdebug.h
 	<stdio.h>
 
-1583680666 source:e:\coding\cbqueue\cbqueue.c
+1584378360 source:e:\coding\cbqueue\cbqueue.c
 	"cbqlocal.h"
 
-1583680033 e:\coding\cbqueue\cbqlocal.h
+1584356997 e:\coding\cbqueue\cbqlocal.h
 	"cbqueue.h"
 
 1584339025 source:e:\coding\cbqueue\main.c
