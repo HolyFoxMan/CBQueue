@@ -810,3 +810,25 @@ void CBQ_T_ArgsTest(void)
 
     CBQ_QueueFree(&queue);
 }
+
+void CBQ_T_CopyTest(void)
+{
+    CBQueue_t q1, q2;
+    ASRT(CBQ_QueueInit(&q1, CBQ_SI_TINY, CBQ_SM_MAX, 0, 0), "queue create failed")
+
+    for (int i = 0; i < CBQ_SI_TINY; i++) {
+        ASRT(CBQ_PushN(&q1, mulAllNumsCB, {1}, {2}, {3}), "push failed")
+    }
+
+    ASRT(CBQ_QueueCopy(&q2, &q1), "queue copy failed")
+
+    for (int i = 0; i < CBQ_SI_TINY; i++) {
+        printf("Queue 1: ");
+        ASRT(CBQ_Exec(&q1, NULL), "push failed")
+        printf("Queue 2: ");
+        ASRT(CBQ_Exec(&q2, NULL), "push failed")
+    }
+
+    CBQ_QueueFree(&q1);
+    CBQ_QueueFree(&q2);
+}

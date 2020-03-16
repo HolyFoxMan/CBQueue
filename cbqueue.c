@@ -166,7 +166,7 @@ int CBQ_QueueCopy(CBQueue_t* dest, CBQueue_t* src)
     for (size_t i = 0; i < src->capacity; i++) {
         tmpCoArr[i].args = (CBQArg_t*) CBQ_MALLOC(src->coArr[i].capacity * sizeof(CBQArg_t));
 
-        if (tmpCoArr == NULL) {
+        if (tmpCoArr[i].args == NULL) {
         #ifdef REST_MEM
             for (int j = i - 1; j >= 0; j--)
                 CBQ_MEMFREE(tmpCoArr[j].args);
@@ -182,6 +182,12 @@ int CBQ_QueueCopy(CBQueue_t* dest, CBQueue_t* src)
 
     *dest = *src;
     dest->coArr = tmpCoArr;
+
+    return 0;
+}
+
+int CBQ_QueueConcat(CBQueue_t* dest, CBQueue_t* src)
+{
 
     return 0;
 }

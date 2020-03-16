@@ -11,6 +11,6 @@ int main(void)
     // CBQ_T_SetTimeout();
     // CBQ_T_SetTimeout_AutoGame();
     // CBQ_T_EXPLORE_VERSION();
-    CBQ_T_ArgsTest();
+    CBQ_T_CopyTest();
     return 0;
 }
