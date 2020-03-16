@@ -207,14 +207,14 @@ void CBQ_T_ControlTest(void)
                 ASRT(CBQ_ChangeCapacity(&queue, CBQ_DEC_CAPACITY, 0, 1), "Failed to decrement capacity")
                 break;
             }
-
+#ifdef CBQD_SCHEME
             case 'F':
             case 'f': {
                 inCB = !inCB;
                 ASRT(CBQ_DRAWSCHEME(&queue),"")
                 break;
             }
-
+#endif
             case 'N':
             case 'n': {
                 ASRT(CBQ_PushN(&queue, fillQueueCB, {.qVar = &queue}), "")

@@ -51,7 +51,7 @@
     #ifdef CBQD_ASRT
         #define ASRT(EXP, STR) \
         {   \
-            int st = (EXP); \
+            int st = (int)(EXP); \
             if (!!(st)) { \
                 if ((STR)[0]) \
                     printf("----------------\nError\nMessage \"%s\"\nReturned val: %d\nBy expression\t%s\nIn file\t%s\nOn line %d\n\n", \

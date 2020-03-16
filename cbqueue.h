@@ -27,7 +27,23 @@
      * Useful tip: use CBQ_T_EXPLORE_VERSION() from the cbqtest.h
      * to check the version of the library used.
      */
-    #define CBQ_CUR_VERSION 1
+    /* Version 1 (initial):
+     *  +++
+     *  Queue struct;
+     *  Argument union;
+     *  Queue methods:
+     *   Init, Clear, Free;
+     *   Push (Static, variable params), PushOnlyVP (variable), PushVoid (No params);
+     *   Exec, SetTimeout (JS-like);
+     *   ChangeCapacity, ChangeIncCapacityMode,
+     *
+     */
+    /* Version 2:
+     *  Added queue copy, concatenation methods;
+     *  Added queue call methods from struct members (func pointers);
+     *  Macro-option for struct method members.
+     */
+    #define CBQ_CUR_VERSION 2
 
     /* Maximum (unstable) capacity of queue is 65536 */
 
