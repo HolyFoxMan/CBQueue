@@ -832,3 +832,23 @@ void CBQ_T_CopyTest(void)
     CBQ_QueueFree(&q1);
     CBQ_QueueFree(&q2);
 }
+
+void CBQ_T_ConcatTest(void)
+{
+    CBQueue_t q1, q2;
+    CBQ_QueueInit(&q1, CBQ_SI_TINY, CBQ_SM_LIMIT, 16, 0);
+    CBQ_QueueInit(&q2, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0);
+
+    for (int i = 0; i < CBQ_SI_TINY; i++) {
+        CBQ_PushN(&q1, mulAllNumsCB, {i}, {i + 1});
+        CBQ_PushN(&q2, mulAllNumsCB, {i}, {i + 1});
+    }
+
+    ASRT(CBQ_QueueConcat(&q1, &q2), "Failed to concat")
+
+    for (int i = 0; i < 16; i++)
+        ASRT(CBQ_Exec(&q1, NULL), "failed to exec")
+
+    CBQ_QueueFree(&q1);
+    CBQ_QueueFree(&q2);
+}

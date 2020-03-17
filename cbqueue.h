@@ -298,7 +298,10 @@
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t capacity, int incCapacityMode, size_t maxCapacityLimit, unsigned int customInitArgsCapacity);
 int CBQ_QueueFree(CBQueue_t* queue);
-int CBQ_QueueCopy(CBQueue_t* dest, CBQueue_t* src);
+#if CBQ_CUR_VERSION >= 2
+int CBQ_QueueCopy(CBQueue_t* dest, const CBQueue_t* src);
+int CBQ_QueueConcat(CBQueue_t* dest, const CBQueue_t* src);
+#endif // CBQ_CUR_VERSION
 
 /* -------- push macroses -------- */
 
@@ -388,9 +391,9 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t capacity);
     (!(TRUSTED_QUEUE_POINTER).status)
 
 
-int CBQ_GetSize(CBQueue_t* queue, size_t* size);
-int CBQ_GetCapacityInBytes(CBQueue_t* queue, size_t* byteCapacity);
-int CBQ_GetFullInfo(CBQueue_t* queue, int *C_ATTR getStatus, size_t *C_ATTR getCapacity, size_t *C_ATTR getSize,
+int CBQ_GetSize(const CBQueue_t* queue, size_t* size);
+int CBQ_GetCapacityInBytes(const CBQueue_t* queue, size_t* byteCapacity);
+int CBQ_GetFullInfo(const CBQueue_t* queue, int *C_ATTR getStatus, size_t *C_ATTR getCapacity, size_t *C_ATTR getSize,
     int *C_ATTR getIncCapacityMode, size_t *C_ATTR getMaxCapacityLimit, size_t *C_ATTR getCapacityInBytes);
 
 #endif // NO_CFUNCS_CALLS

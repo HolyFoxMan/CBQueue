@@ -31,6 +31,7 @@
     void CBQ_T_VerIdInfo(int);
     void CBQ_T_ArgsTest(void);
     void CBQ_T_CopyTest(void);
+    void CBQ_T_ConcatTest(void);
 
 #endif // CBQTEST_H
 
