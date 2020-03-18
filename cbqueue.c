@@ -141,6 +141,8 @@ int CBQ_QueueFree(CBQueue_t* queue)
     return 0;
 }
 
+#if CBQ_CUR_VERSION >= 2
+
 int CBQ_QueueCopy(CBQueue_t* dest, const CBQueue_t* src)
 {
     /* base error checking */
@@ -219,17 +221,66 @@ int CBQ_QueueConcat(CBQueue_t* dest, const CBQueue_t* src)
     return 0;
 }
 
-int CBQ_QueueTransfer(CBQueue_t* dest, CBQueue_t* src)
+int CBQ_QueueTransfer(CBQueue_t* dest, CBQueue_t* src, size_t count, const int cutByDestLimit, const int cutBySrcSize)
 {
+    int errSt = 0;
+
+    OPT_BASE_ERR_CHECK(dest);
+    BASE_ERR_CHECK(src);
+
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+    if (dest->execSt == CBQ_EST_EXEC || src->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
+
+    if (!count)
+        return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+    size_t commonSize, destSize, srcSize;
+    CBQ_GetSize(dest, &destSize), CBQ_GetSize(src, &srcSize);
+
+    if (!srcSize)
+        return CBQ_ERR_QUEUE_IS_EMPTY;
+
+    if (srcSize < count) {
+        if (!cutBySrcSize)
+            return CBQ_ERR_COUNT_NOT_FIT_IN_SIZE;
+        count = srcSize;
+    }
+
+    commonSize = destSize + count;
+    if (commonSize > dest->capacity) {
+        errSt = CBQ_incCapacity__(dest, commonSize - dest->capacity, cutByDestLimit);
+        if (errSt)
+            return errSt;
+
+        count = dest->capacity;
+    }
+
+    for (CBQContainer_t* container; count; count--) {
+        container = src->coArr + src->rId;
+        errSt = CBQ_PushOnlyVP(dest, container->func, container->argc, container->args);
+        if (errSt)
+            return errSt;
+
+        src->rId++;
+        if (src->rId == src->capacity)
+            src->rId = 0;
+    }
+
+    if (src->rId == src->sId)
+        src->status = CBQ_ST_EMPTY;
 
     return 0;
 }
+
+#endif // Version 2
 
 int CBQ_ChangeCapacity(CBQueue_t* queue, const int changeTowards, size_t customNewCapacity, const int adaptByLimits)
 {
     size_t errSt;
 
-    BASE_ERR_CHECK(queue);
+    OPT_BASE_ERR_CHECK(queue);
 
     #ifndef NO_EXCEPTIONS_OF_BUSY
     if (queue->execSt == CBQ_EST_EXEC)

@@ -281,6 +281,10 @@
         CBQ_ERR_INITCAP_IS_IDENTICAL,
         /* VerId exception */
         CBQ_ERR_VI_NOT_GENERATED = SHRT_MAX
+        #if CBQ_CUR_VERSION >= 2
+        ,
+        CBQ_ERR_COUNT_NOT_FIT_IN_SIZE
+        #endif
     };
 
     /* These enums choose in "changeTowards" param from ChangeCapacity method
@@ -297,10 +301,12 @@
 #ifndef NO_CFUNCS_CALLS
 /* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t capacity, int incCapacityMode, size_t maxCapacityLimit, unsigned int customInitArgsCapacity);
+int CBQ_Clear(CBQueue_t* queue);
 int CBQ_QueueFree(CBQueue_t* queue);
 #if CBQ_CUR_VERSION >= 2
 int CBQ_QueueCopy(CBQueue_t* dest, const CBQueue_t* src);
 int CBQ_QueueConcat(CBQueue_t* dest, const CBQueue_t* src);
+int CBQ_QueueTransfer(CBQueue_t* dest, CBQueue_t* src, size_t count, const int cutByDestLimit, const int cutBySrcSize);
 #endif // CBQ_CUR_VERSION
 
 /* -------- push macroses -------- */
@@ -355,7 +361,6 @@ int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* 
 /* ---------------- Additional methods ---------------- */
 int CBQ_ChangeCapacity(CBQueue_t* queue, const int changeTowards, size_t customNewCapacity, const int);
 int CBQ_ChangeIncCapacityMode(CBQueue_t* queue, int newIncCapacityMode, size_t newCapacityMaxLimit, const int tryToAdaptCapacity, const int adaptCapacityMaxLimit);
-int CBQ_Clear(CBQueue_t* queue);
 int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, const int passNonModifiableArgs);
 int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity);
 char* CBQ_strIntoHeap(const char* str);
