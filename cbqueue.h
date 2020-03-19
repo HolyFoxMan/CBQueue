@@ -388,13 +388,21 @@ int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t capacity);
     ((TRUSTED_QUEUE_POINTER)->status == 2)
 
 #define CBQ_ISFULL(TRUSTED_QUEUE) \
+<<<<<<< HEAD
     ((TRUSTED_QUEUE).status == 2)
+=======
+    ((TRUSTED_QUEUE_POINTER).status == 2)
+>>>>>>> 8547e4ab75057540449c289dfaa90023615ec9a8
 
 #define CBQ_ISEMPTY_P(TRUSTED_QUEUE_POINTER) \
     (!(TRUSTED_QUEUE_POINTER)->status)
 
 #define CBQ_ISEMPTY(TRUSTED_QUEUE) \
+<<<<<<< HEAD
     (!(TRUSTED_QUEUE).status)
+=======
+    (!(TRUSTED_QUEUE_POINTER).status)
+>>>>>>> 8547e4ab75057540449c289dfaa90023615ec9a8
 
 
 int CBQ_GetSize(const CBQueue_t* queue, size_t* size);

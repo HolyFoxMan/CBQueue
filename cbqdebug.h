@@ -91,7 +91,11 @@
     #else
 
         #define CBQ_DRAWSCHEME(P_QUEUE) \
+<<<<<<< HEAD
             ((void)0)
+=======
+            (0)
+>>>>>>> 8547e4ab75057540449c289dfaa90023615ec9a8
 
     #endif // CBQD_SCHEME
 

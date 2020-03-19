@@ -892,7 +892,6 @@ int CB_PrintNum(int argc, CBQArg_t* argv)
         printf("CB: %d\n", argv[0].iVar);
 
     return 0;
-}
 
 void CBQ_T_SkipTest(void)
 {
