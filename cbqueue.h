@@ -307,6 +307,7 @@ int CBQ_QueueFree(CBQueue_t* queue);
 int CBQ_QueueCopy(CBQueue_t* dest, const CBQueue_t* src);
 int CBQ_QueueConcat(CBQueue_t* dest, const CBQueue_t* src);
 int CBQ_QueueTransfer(CBQueue_t* dest, CBQueue_t* src, size_t count, const int cutByDestLimit, const int cutBySrcSize);
+int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reverseOrder);
 #endif // CBQ_CUR_VERSION
 
 /* -------- push macroses -------- */

@@ -811,6 +811,8 @@ void CBQ_T_ArgsTest(void)
     CBQ_QueueFree(&queue);
 }
 
+#if CBQ_CUR_VERSION >= 2
+
 void CBQ_T_CopyTest(void)
 {
     CBQueue_t q1, q2;
@@ -852,3 +854,15 @@ void CBQ_T_ConcatTest(void)
     CBQ_QueueFree(&q1);
     CBQ_QueueFree(&q2);
 }
+
+void CBQ_T_TransferTest(void)
+{
+
+}
+
+void CBQ_T_SkipTest(void)
+{
+
+}
+
+#endif

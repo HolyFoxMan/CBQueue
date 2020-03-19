@@ -30,8 +30,13 @@
     void CBQ_T_SetTimeout(void);
     void CBQ_T_VerIdInfo(int);
     void CBQ_T_ArgsTest(void);
+
+    #if CBQ_CUR_VERSION >= 2
     void CBQ_T_CopyTest(void);
     void CBQ_T_ConcatTest(void);
+    void CBQ_T_TransferTest(void);
+    void CBQ_T_SkipTest(void);
+    #endif
 
 #endif // CBQTEST_H
 
