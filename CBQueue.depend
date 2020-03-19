@@ -1,0 +1,35 @@
+# depslib dependency file v1.0
+1584628601 source:e:\coding\cbqueue\cbqueue.c
+	"cbqlocal.h"
+
+1584356997 e:\coding\cbqueue\cbqlocal.h
+	"cbqueue.h"
+
+1584650973 e:\coding\cbqueue\cbqueue.h
+	<cstdlib>
+	<ctime>
+	<stdlib.h>
+	<time.h>
+	"cbqdebug.h"
+	<stdint.h>
+
+1584651245 e:\coding\cbqueue\cbqdebug.h
+	<stdio.h>
+
+1583671107 source:e:\coding\cbqueue\cbqt_gamefly.c
+	"cbqt_gamefly.h"
+
+1583671107 e:\coding\cbqueue\cbqt_gamefly.h
+	"cbqtest.h"
+
+1584628760 e:\coding\cbqueue\cbqtest.h
+	<stdio.h>
+	<conio.h>
+	"cbqueue.h"
+
+1584650767 source:e:\coding\cbqueue\main.c
+	"cbqtest.h"
+
+1584651220 source:e:\coding\cbqueue\cbqtbase.c
+	"cbqtest.h"
+
