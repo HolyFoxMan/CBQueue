@@ -86,14 +86,6 @@
      */
     #define GEN_VERID
 
-    /* Version 2 */
-
-    /* Disable classic C function declarations for calling */
-    // #define NO_CFUNCS_CALLS
-
-    /* Enable functions which calls through Queue struct */
-    #define WITHIN_STRUCT_CALLS
-
     /* ---------------- Compile controllers ---------------- */
     #if CBQ_CUR_VERSION >= 2
         #define CBQ_ALLOW_V2_METHODS

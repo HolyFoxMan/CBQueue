@@ -2,6 +2,7 @@
 
 /* ---------------- local methods declaration ---------------- */
 /* Container Methods */
+static size_t CBQ_getSizeByIndexes__(const CBQueue_t*);    // ret size
 static int CBQ_reallocCapacity__(CBQueue_t*, size_t);
 static int CBQ_orderingDividedSegs__(CBQueue_t*, size_t*);
 static int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t*);
@@ -10,7 +11,7 @@ static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG
 static int CBQ_containersRangeInit__(CBQContainer_t*, unsigned int, size_t, const int);
 static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
 static void CBQ_incIterCapacityChange__(CBQueue_t*, const int);
-static int CBQ_getIncIterVector__(CBQueue_t* trustedQueue);
+static int CBQ_getIncIterVector__(const CBQueue_t*);     // ret vector
 static int CBQ_incCapacity__(CBQueue_t*, size_t, const int);
 static int CBQ_decCapacity__(CBQueue_t*, size_t, const int);
 /* Arguments */
@@ -190,7 +191,7 @@ int CBQ_QueueCopy(CBQueue_t* dest, const CBQueue_t* src)
 int CBQ_QueueConcat(CBQueue_t* dest, const CBQueue_t* src)
 {
     int errSt;
-    size_t commonSize, destSize, srcSize;
+    size_t commonSize, srcSize;
     CBQContainer_t* container;
 
     OPT_BASE_ERR_CHECK(dest);
@@ -201,9 +202,8 @@ int CBQ_QueueConcat(CBQueue_t* dest, const CBQueue_t* src)
         return CBQ_ERR_IS_BUSY;
     #endif // NO_EXCEPTIONS_OF_BUSY
 
-    // TODO: make ptrs
-    CBQ_GetSize(dest, &destSize), CBQ_GetSize(src, &srcSize);
-    commonSize = destSize + srcSize;
+
+    commonSize = CBQ_getSizeByIndexes__(dest) + (srcSize = CBQ_getSizeByIndexes__(src));
 
     if (dest->capacity < commonSize) {
         errSt = CBQ_incCapacity__(dest, commonSize - dest->capacity, 0);
@@ -237,7 +237,7 @@ int CBQ_QueueTransfer(CBQueue_t* dest, CBQueue_t* src, size_t count, const int c
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
     size_t commonSize, destSize, srcSize;
-    CBQ_GetSize(dest, &destSize), CBQ_GetSize(src, &srcSize);
+    commonSize = (destSize = CBQ_getSizeByIndexes__(dest)) + (srcSize = CBQ_getSizeByIndexes__(src));
 
     if (!srcSize)
         return CBQ_ERR_QUEUE_IS_EMPTY;
@@ -279,7 +279,7 @@ int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reve
     OPT_BASE_ERR_CHECK(queue);
 
     size_t size;
-    CBQ_GetSize(queue, &size);
+    size = CBQ_getSizeByIndexes__(queue);
 
     if (!count)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
@@ -439,7 +439,7 @@ int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, c
 
     CBQ_MSGPRINT("Queue call args cap is equalize...");
 
-    CBQ_GetSize(queue, &size);
+    size = CBQ_getSizeByIndexes__(queue);
 
     for (i = 0, offset = queue->rId; i < size; i++, offset = (offset + 1) % queue->capacity) { // % helps to loop ptr into capacity frames
 
@@ -628,7 +628,7 @@ void CBQ_incIterCapacityChange__(CBQueue_t* trustedQueue, const int direction)
 }
 
 /* For CBQ_SM_LIMIT and CBQ_QUEUE_MAX_CAPACITY mods */
-int CBQ_getIncIterVector__(CBQueue_t* trustedQueue)
+int CBQ_getIncIterVector__(const CBQueue_t* trustedQueue)
 {
     if (trustedQueue->incCapacityMode == CBQ_SM_LIMIT) {
         if (trustedQueue->maxCapacityLimit - trustedQueue->capacity > trustedQueue->capacity)
@@ -650,7 +650,7 @@ int CBQ_decCapacity__(CBQueue_t* trustedQueue, size_t delta, const int alignToUs
     ssize_t remainder;
 
     /* Check and align delta */
-    CBQ_GetSize(trustedQueue, &size);
+    size = CBQ_getSizeByIndexes__(trustedQueue);
 
     if (!delta)
         delta = trustedQueue->capacity - size;
@@ -761,7 +761,7 @@ int CBQ_orderingDividedSegs__(CBQueue_t* trustedQueue, size_t* sizeP)
     CBQContainer_t* tmpCoArr;
     size_t size;
 
-    CBQ_GetSize(trustedQueue, &size); // as new sId pos
+    size = CBQ_getSizeByIndexes__(trustedQueue); // as new sId pos
 
     tmpCoArr = (CBQContainer_t*) CBQ_MALLOC(sizeof(CBQContainer_t) * size);
     if (tmpCoArr == NULL)
@@ -1134,19 +1134,22 @@ int CBQ_Clear(CBQueue_t* queue)
 }
 
 /* ---------------- Info Methods ---------------- */
+size_t CBQ_getSizeByIndexes__(const CBQueue_t* trustedQueue)
+{
+    if (trustedQueue->rId < trustedQueue->sId)
+        return trustedQueue->sId - trustedQueue->rId;
+    else if (trustedQueue->status == CBQ_ST_FULL || trustedQueue->rId > trustedQueue->sId)
+        return trustedQueue->capacity - trustedQueue->rId + trustedQueue->sId;
+    else
+        return 0;   // empty trustedQueue
+}
+
 int CBQ_GetSize(const CBQueue_t* queue, size_t* size)
 {
     OPT_BASE_ERR_CHECK(queue);
     if (size == NULL)
         return CBQ_ERR_ARG_NULL_POINTER;
-
-    if (queue->rId < queue->sId)
-        *size =  queue->sId - queue->rId;
-    else if (queue->status == CBQ_ST_FULL || queue->rId > queue->sId)
-        *size = queue->capacity - queue->rId + queue->sId;
-    else
-        *size = 0;   // for empty queue
-
+    *size = CBQ_getSizeByIndexes__(queue);
     return 0;
 }
 

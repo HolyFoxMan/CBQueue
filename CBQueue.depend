@@ -54,3 +54,37 @@
 
 1584651220 "
 
+1585048633 source:h:\coding\cbqueue\cbqt_gamefly.c
+	"cbqt_gamefly.h"
+
+1585048633 h:\coding\cbqueue\cbqt_gamefly.h
+	"cbqtest.h"
+
+1585048633 h:\coding\cbqueue\cbqtest.h
+	<stdio.h>
+	<conio.h>
+	"cbqueue.h"
+
+1585215968 h:\coding\cbqueue\cbqueue.h
+	<cstdlib>
+	<ctime>
+	<stdlib.h>
+	<time.h>
+	"cbqdebug.h"
+	<stdint.h>
+
+1585048633 h:\coding\cbqueue\cbqdebug.h
+	<stdio.h>
+
+1585048633 source:h:\coding\cbqueue\cbqtbase.c
+	"cbqtest.h"
+
+1585215908 source:h:\coding\cbqueue\cbqueue.c
+	"cbqlocal.h"
+
+1585215606 h:\coding\cbqueue\cbqlocal.h
+	"cbqueue.h"
+
+1585048633 source:h:\coding\cbqueue\main.c
+	"cbqtest.h"
+
