@@ -86,6 +86,14 @@
      */
     #define GEN_VERID
 
+    #if CBQ_CUR_VERSION >= 2
+        /* Windows version of convections
+         * Allow clear param stack in CB funcs, what
+         * will reduce code.
+         */
+        #define CB_STDCALL_CONVECTION
+    #endif
+
     /* ---------------- Compile controllers ---------------- */
     #if CBQ_CUR_VERSION >= 2
         #define CBQ_ALLOW_V2_METHODS
@@ -178,9 +186,13 @@
     /* Macro for callback without scalable parameters, same as null macros */
     #define CBQ_NO_VPARAMS NULL
 
-    typedef int (*QCallback) (int argc, CBQArg_t* args);
+    #if CBQ_CUR_VERSION >= 2 && (defined(_WIN32) || defined(_WIN64))
+        #define CBQCALLBACK __stdcall
+    #else
+        #define CBQCALLBACK __cdecl
+    #endif
 
-
+    typedef CBQCALLBACK int (*QCallback) (int argc, CBQArg_t* args);
     /* ---------------- Queue (main) structure ---------------- */
 
     /* Main structure of callback queue instance
@@ -345,7 +357,10 @@ int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reve
     CBQ_SetTimeout(queue, delay, isSec, queue, func, 0, CBQ_NO_VPARAMS)
 
 /* Method pushes callbacks by static and variable passing of parameters (in run-time) */
-int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...);
+/* __cdecl relevant for functions with variable arguments (Like CBQ_Push)
+ *
+ */
+__cdecl int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...);
 int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams);
 int CBQ_PushVoid(CBQueue_t* queue, QCallback func);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);

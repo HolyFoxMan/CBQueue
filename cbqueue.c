@@ -876,7 +876,7 @@ void CBQ_copyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *rest
 }
 
 /* ---------------- Call Methods ---------------- */
-int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...)
+__cdecl int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...)
 {
     int errSt;
     unsigned int argcAll;

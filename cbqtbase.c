@@ -911,4 +911,11 @@ void CBQ_T_SkipTest(void)
     CBQ_QueueFree(&queue);
 }
 
+
+
+void CBQ_T_CallingConvection(void)
+{
+
+}
+
 #endif
