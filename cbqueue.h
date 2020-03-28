@@ -186,10 +186,14 @@
     /* Macro for callback without scalable parameters, same as null macros */
     #define CBQ_NO_VPARAMS NULL
 
-    #if CBQ_CUR_VERSION >= 2 && (defined(_WIN32) || defined(_WIN64))
-        #define CBQCALLBACK __stdcall
+    #if CBQ_CUR_VERSION >= 2
+        #if defined(CB_STDCALL_CONVECTION) && (defined(_WIN32) || defined(_WIN64))
+            #define CBQCALLBACK __stdcall
+        #else
+            #define CBQCALLBACK __cdecl
+        #endif
     #else
-        #define CBQCALLBACK __cdecl
+        #define CBQCALLBACK
     #endif
 
     typedef CBQCALLBACK int (*QCallback) (int argc, CBQArg_t* args);
@@ -422,6 +426,9 @@ enum CBQ_VI {  // flags for checking VerId by CBQ_CheckVerIndexByFlag function
     CBQ_VI_REGCYCLEVARS,
     CBQ_VI_NRESTMEMFAIL,
     CBQ_VI_NFIXARGTYPES,
+    #if CBQ_CUR_VERSION >= 2
+    CBQ_VI_CBSTDCALL,
+    #endif
     CBQ_VI_LAST_FLAG    // use it only when comparing with the return value from the CBQ_GetAvaliableFlagsRange function
 };
 /* Returns identification value with version and used flags of current lib build.

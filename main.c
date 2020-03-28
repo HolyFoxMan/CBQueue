@@ -14,7 +14,7 @@ int main(void)
     // CBQ_T_CopyTest();
     // CBQ_T_ConcatTest();
     // CBQ_T_TransferTest();
-    CBQ_T_SkipTest();
-
+    // CBQ_T_SkipTest();
+    CBQ_T_VerIdInfo(2);
     return 0;
 }

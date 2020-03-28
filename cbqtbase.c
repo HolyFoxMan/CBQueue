@@ -755,6 +755,7 @@ void CBQ_T_VerIdInfo(int APIVer)
     printf("VParam check status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_NVPARAMCHECK)? "false" : "true");
     printf("Register vars status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_REGCYCLEVARS)? "true" : "false");
     printf("Debug status: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_DEBUG)? "true" : "false");
+    printf("Callback STDCALL convection: %s\n", CBQ_CheckVerIndexByFlag(CBQ_VI_CBSTDCALL)? "true" : "false");
 }
 
 int CB_0_Args(int argc, UNUSED CBQArg_t* args)

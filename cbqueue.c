@@ -1221,6 +1221,9 @@ int CBQ_GetVerIndex(void)
         #ifdef NO_FIX_ARGTYPES
         | 1 << (CBQ_VI_NFIXARGTYPES + BYTE_OFFSET)
         #endif // NO_FIX_ARGTYPES
+        #if CBQ_CUR_VERSION >= 2
+        | 1 << (CBQ_VI_CBSTDCALL + BYTE_OFFSET)
+        #endif
     #else // GEN_VERID
         (int) 0
     #endif
