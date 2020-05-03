@@ -144,7 +144,7 @@ int CBQ_QueueFree(CBQueue_t* queue)
 
 #if CBQ_CUR_VERSION >= 2
 
-int CBQ_QueueCopy(CBQueue_t* dest, const CBQueue_t* src)
+int CBQ_QueueCopy(CBQueue_t* restrict dest, const CBQueue_t* restrict src)
 {
     /* base error checking */
     OPT_BASE_ERR_CHECK(src);
@@ -188,7 +188,7 @@ int CBQ_QueueCopy(CBQueue_t* dest, const CBQueue_t* src)
     return 0;
 }
 
-int CBQ_QueueConcat(CBQueue_t* dest, const CBQueue_t* src)
+int CBQ_QueueConcat(CBQueue_t* restrict dest, const  CBQueue_t* restrict src)
 {
     int errSt;
     size_t commonSize, srcSize;
@@ -221,7 +221,7 @@ int CBQ_QueueConcat(CBQueue_t* dest, const CBQueue_t* src)
     return 0;
 }
 
-int CBQ_QueueTransfer(CBQueue_t* dest, CBQueue_t* src, size_t count, const int cutByDestLimit, const int cutBySrcSize)
+int CBQ_QueueTransfer(CBQueue_t* restrict dest, CBQueue_t* restrict src, size_t count, const int cutByDestLimit, const int cutBySrcSize)
 {
     int errSt = 0;
 
