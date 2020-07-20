@@ -44,9 +44,9 @@
     struct CBQContainer_t {
 
         QCallback       func;
+        CBQArg_t*       args;
         unsigned int    capacity;
         unsigned int    argc;
-        CBQArg_t*       args;
 
         #ifdef CBQD_SCHEME
         int label;

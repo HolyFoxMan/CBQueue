@@ -10,7 +10,7 @@
 
     /* At c99 */
     #if !defined(__cplusplus) && __STDC_VERSION__ < 199901L
-        #error Needs minimum "c99" standart C version or C++
+        #error Needs minimum "c99" standart C version or C++11
     #endif
 
     #ifdef _cplusplus
@@ -211,17 +211,17 @@
         /* init status */
         int     initSt;
 
-        /* exec status (only for excpetion catching) */
+        /* exec status (only for exception catching) */
         #ifndef NO_EXCEPTIONS_OF_BUSY
         int     execSt;
         #endif // NO_EXCEPTIONS_OF_BUSY
 
         /* containers */
-        size_t  capacity;
         struct  CBQContainer_t* coArr;
-        int     incCapacityMode;
+        size_t  capacity;
         size_t  maxCapacityLimit;
         size_t  incCapacity;
+        int     incCapacityMode;
         unsigned int initArgCap;
 
         /* pointers */

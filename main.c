@@ -1,8 +1,5 @@
-#include "cbqtest.h"
-
-int main(void)
-{
-
+#include <stdio.h>
+ #include "cbqtest.h"
     // CBQ_T_HelloWorld();
     // CBQ_T_ControlTest();
     // CBQ_T_GAMEFLY();
@@ -15,6 +12,10 @@ int main(void)
     // CBQ_T_ConcatTest();
     // CBQ_T_TransferTest();
     // CBQ_T_SkipTest();
-    //CBQ_T_VerIdInfo(2);
-    return 0;
-}
+    // CBQ_T_VerIdInfo(2);
+
+    int main(void)
+    {
+        CBQ_T_SkipTest();
+        return 0;
+    }
