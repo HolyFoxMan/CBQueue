@@ -5,7 +5,7 @@
 		<Option title="CBQueue" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
-		<Option virtualFolders="EP\;Tests\;" />
+		<Option virtualFolders="EP\;" />
 		<Build>
 			<Target title="Debug">
 				<Option output="bin/Debug/CBQueue" prefix_auto="1" extension_auto="1" />
@@ -13,22 +13,12 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-Wfatal-errors" />
+					<Add option="-Wextra" />
+					<Add option="-Og" />
 					<Add option="-g" />
+					<Add option="-DCBQ_DEBUG" />
 				</Compiler>
-			</Target>
-			<Target title="Release">
-				<Option output="bin/Release/CBQueue" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Release/" />
-				<Option type="1" />
-				<Option compiler="gcc" />
-				<Option use_console_runner="0" />
-				<Compiler>
-					<Add option="-O2" />
-					<Add option="-DCBQ_NO_DEBUG" />
-				</Compiler>
-				<Linker>
-					<Add option="-s" />
-				</Linker>
 			</Target>
 			<Target title="Lib">
 				<Option output="CBQueue" prefix_auto="1" extension_auto="1" />
@@ -37,14 +27,11 @@
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
 				<Compiler>
-					<Add option="-Wextra" />
-					<Add option="-Wall" />
-					<Add option="-std=c99" />
-					<Add option="-DCBQ_NO_DEBUG" />
+					<Add option="-O2" />
 				</Compiler>
 			</Target>
 			<Target title="LibDebug">
-				<Option output="DEBlibCBQueue" prefix_auto="1" extension_auto="1" />
+				<Option output="CBQueueDebug" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option type="2" />
 				<Option compiler="gcc" />
@@ -52,25 +39,9 @@
 				<Compiler>
 					<Add option="-Wfatal-errors" />
 					<Add option="-Wextra" />
-					<Add option="-Wall" />
-					<Add option="-std=c99" />
 					<Add option="-Og" />
 					<Add option="-g" />
-				</Compiler>
-			</Target>
-			<Target title="CPP">
-				<Option output="CBQueueCPP" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="" />
-				<Option type="1" />
-				<Option compiler="gcc" />
-				<Option use_console_runner="0" />
-				<Option projectCompilerOptionsRelation="1" />
-				<Compiler>
-					<Add option="-Weffc++" />
-					<Add option="-pedantic" />
-					<Add option="-Wextra" />
-					<Add option="-Wall" />
-					<Add option="-std=c++11" />
+					<Add option="-DCBQ_DEBUG" />
 				</Compiler>
 			</Target>
 		</Build>
@@ -80,34 +51,40 @@
 		</Compiler>
 		<Unit filename="cbqadapter.cpp">
 			<Option compiler="gcc" use="1" buildCommand="$compiler $options -std=c++2a $includes -c $file -o $object" />
-			<Option target="CPP" />
+			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="cbqadapter.hpp">
 			<Option link="1" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="cbqdebug.h">
-			<Option target="Lib" />
-			<Option target="LibDebug" />
-		</Unit>
-		<Unit filename="cbqlocal.h">
-			<Option target="Debug" />
-			<Option target="Lib" />
-			<Option target="LibDebug" />
-		</Unit>
-		<Unit filename="cbqt_gamefly.c">
+		<Unit filename="cbqbuildconf.h" />
+		<Unit filename="cbqcallbacks.c">
 			<Option compilerVar="CC" />
-			<Option target="Debug" />
 		</Unit>
-		<Unit filename="cbqt_gamefly.h">
+		<Unit filename="cbqcallbacks.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="cbqtbase.c">
+		<Unit filename="cbqcontainer.c">
 			<Option compilerVar="CC" />
-			<Option virtualFolder="Tests/" />
+		</Unit>
+		<Unit filename="cbqcontainer.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="cbqdebug.c">
+			<Option compilerVar="CC" />
 			<Option target="Debug" />
 			<Option target="LibDebug" />
-			<Option target="CPP" />
+		</Unit>
+		<Unit filename="cbqdebug.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="cbqlocal.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="cbqtest.c">
+			<Option compilerVar="CC" />
+			<Option target="Debug" />
+			<Option target="LibDebug" />
 		</Unit>
 		<Unit filename="cbqtest.h">
 			<Option target="&lt;{~None~}&gt;" />
@@ -116,15 +93,12 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="cbqueue.h">
-			<Option target="Lib" />
-			<Option target="LibDebug" />
+			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 			<Option virtualFolder="EP/" />
 			<Option target="Debug" />
-			<Option target="Release" />
-			<Option target="CPP" />
 		</Unit>
 		<Extensions>
 			<code_completion />

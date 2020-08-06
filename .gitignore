@@ -1,3 +1,13 @@
 bin/
 obj/
 c4droid_build/
+
+CBQueue.cbp
+CBQueue.depend
+CBQyeye.layout
+
+.objs/
+*.list
+
+libCBQueue.a
+libCBQueueDebug.a

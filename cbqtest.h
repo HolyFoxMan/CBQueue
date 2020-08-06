@@ -16,7 +16,10 @@
 
     #include <stdio.h>
     #include <conio.h>
+    #include "cbqbuildconf.h"
+    #include "cbqdebug.h"
     #include "cbqueue.h"
+    #include "cbqcallbacks.h"
 
     #define CBQ_T_EXPLORE_VERSION() \
         CBQ_T_VerIdInfo(CBQ_CUR_VERSION)

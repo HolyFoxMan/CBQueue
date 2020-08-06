@@ -1,8 +1,6 @@
 #ifndef CBQLOCAL_H
 #define CBQLOCAL_H
 
-    #include "cbqueue.h"
-
     #ifndef CBQ_CUR_VERSION
         #error No lib version specified
     #endif
@@ -38,20 +36,6 @@
     enum {
         CBQ_EST_NO_EXEC,
         CBQ_EST_EXEC
-    };
-
-    typedef struct CBQContainer_t CBQContainer_t;
-    struct CBQContainer_t {
-
-        QCallback       func;
-        CBQArg_t*       args;
-        unsigned int    capacity;
-        unsigned int    argc;
-
-        #ifdef CBQD_SCHEME
-        int label;
-        #endif
-
     };
 
     #define CBQ_ALLOC_METHODS 1

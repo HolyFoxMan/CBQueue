@@ -94,32 +94,37 @@
 1588492699 d:\coding\cbqueue\cbqt_gamefly.h
 	"cbqtest.h"
 
-1588492699 d:\coding\cbqueue\cbqtest.h
+1596731749 d:\coding\cbqueue\cbqtest.h
 	<stdio.h>
 	<conio.h>
+	"cbqbuildconf.h"
+	"cbqdebug.h"
 	"cbqueue.h"
+	"cbqcallbacks.h"
 
-1595272062 d:\coding\cbqueue\cbqueue.h
+1596728890 d:\coding\cbqueue\cbqueue.h
 	<cstdlib>
 	<ctime>
 	<stdlib.h>
 	<time.h>
-	"cbqdebug.h"
 	<stdint.h>
 
-1588492699 d:\coding\cbqueue\cbqdebug.h
+1596729824 d:\coding\cbqueue\cbqdebug.h
 	<stdio.h>
 
-1588492699 source:d:\coding\cbqueue\cbqtbase.c
+1596696634 source:d:\coding\cbqueue\cbqtbase.c
 	"cbqtest.h"
 
-1588493897 source:d:\coding\cbqueue\cbqueue.c
-	"cbqlocal.h"
-
-1595271639 d:\coding\cbqueue\cbqlocal.h
+1596731461 source:d:\coding\cbqueue\cbqueue.c
+	"cbqbuildconf.h"
+	"cbqdebug.h"
 	"cbqueue.h"
+	"cbqlocal.h"
+	"cbqcontainer.h"
 
-1595272234 source:d:\coding\cbqueue\main.c
+1596634525 d:\coding\cbqueue\cbqlocal.h
+
+1596726366 source:d:\coding\cbqueue\main.c
 	<stdio.h>
 	"cbqtest.h"
 
@@ -128,4 +133,29 @@
 
 1590422375 d:\coding\cbqueue\cbqadapter.hpp
 	"cbqueue.h"
+
+1596728069 source:d:\coding\cbqueue\cbqcontainer.c
+	"cbqcontainer.h"
+
+1596730354 d:\coding\cbqueue\cbqcontainer.h
+	"cbqbuildconf.h"
+	"cbqdebug.h"
+	"cbqueue.h"
+	"cbqlocal.h"
+
+1596728069 source:d:\coding\cbqueue\cbqcallbacks.c
+	"cbqcallbacks.h"
+
+1596731618 d:\coding\cbqueue\cbqcallbacks.h
+	"cbqbuildconf.h"
+	"cbqueue.h"
+	"cbqlocal.h"
+
+1596731859 source:d:\coding\cbqueue\cbqdebug.c
+	"cbqdebug.h"
+
+1596731541 source:d:\coding\cbqueue\cbqtest.c
+	"cbqtest.h"
+
+1596731690 d:\coding\cbqueue\cbqbuildconf.h
 

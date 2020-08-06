@@ -1,3 +1,4 @@
+#include "cbqbuildconf.h"
 #include "cbqueue.h"
 
 class CBQueue {

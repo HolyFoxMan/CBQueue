@@ -1,61 +1,19 @@
+#include "cbqbuildconf.h"
+#include "cbqdebug.h"
+#include "cbqueue.h"
 #include "cbqlocal.h"
+#include "cbqcontainer.h"
 
 /* ---------------- local methods declaration ---------------- */
-/* Container Methods */
 static size_t CBQ_getSizeByIndexes__(const CBQueue_t*);    // ret size
 static int CBQ_reallocCapacity__(CBQueue_t*, size_t);
 static int CBQ_orderingDividedSegs__(CBQueue_t*, size_t*);
 static int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t*);
-static void CBQ_containersSwapping__(MAY_REG CBQContainer_t*, MAY_REG CBQContainer_t*, MAY_REG size_t, const int);
-static void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict, MAY_REG CBQContainer_t *restrict, MAY_REG size_t);
-static int CBQ_containersRangeInit__(CBQContainer_t*, unsigned int, size_t, const int);
-static void CBQ_containersRangeFree__(MAY_REG CBQContainer_t*, MAY_REG size_t);
 static void CBQ_incIterCapacityChange__(CBQueue_t*, const int);
 static int CBQ_getIncIterVector__(const CBQueue_t*);     // ret vector
 static int CBQ_incCapacity__(CBQueue_t*, size_t, const int);
 static int CBQ_decCapacity__(CBQueue_t*, size_t, const int);
-/* Arguments */
-static int CBQ_changeArgsCapacity__(CBQContainer_t*, unsigned int, const int);
-static void CBQ_copyArgs__(MAY_REG const CBQArg_t *restrict, MAY_REG CBQArg_t *restrict, MAY_REG unsigned int);
-/* Callbacks */
-static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 
-//  DEBUG MACRO-FUNCS                                                         //
-////////////////////////////////////////////////////////////////////////////////
-/* inline methods by macros */
-#ifdef CBQD_SCHEME
-
-    /* void* type because thats declared in debug header,
-     * which was included before CBQueue_t* type definition
-     */
-    int CBQ_drawScheme_chk__(void*);
-    static void CBQ_drawScheme__(CBQueue_t*);
-    #define CBQ_DRAWSCHEME_IN(P_TRUSTED_QUEUE) \
-        CBQ_drawScheme__(P_TRUSTED_QUEUE)
-
-#else
-
-    #define CBQ_DRAWSCHEME_IN(P_TRUSTED_QUEUE) \
-        ((void)0)
-
-#endif // CBQD_SCHEME
-
-#ifdef CBQD_OUTPUTLOG
-
-    #define CBQ_MSGPRINT(STR) \
-        printf("Notice: %s\n", STR), fflush(stdout)
-
-#else
-
-    #define CBQ_MSGPRINT(STR) \
-        ((void)0)
-
-#endif // CBQD_OUTPUTLOG
-
-////////////////////////////////////////////////////////////////////////////////
-//                                                                            //
-
-/* ---------------- Base methods ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t capacity, int incCapacityMode, size_t maxCapacityLimit, unsigned int customInitArgsCapacity)
 {
     int errSt;
@@ -476,53 +434,6 @@ int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, c
     return 0;
 }
 
-/* ---------------- Container methods ---------------- */
-int CBQ_containersRangeInit__(CBQContainer_t* coFirst, unsigned int iniArgCap, size_t len, const int restore_pos_fail)
-{
-    MAY_REG CBQContainer_t* container = coFirst;
-    MAY_REG size_t remLen = len;
-    int errSt = 0;
-
-    do {
-        /* Container init */
-        *container = (CBQContainer_t) {
-            .func = NULL,
-            .capacity = iniArgCap,
-            .argc = 0
-
-            #ifdef CBQD_SCHEME
-            , .label = '-'
-            #endif // CBQD_SCHEME
-        };
-        container->args = (CBQArg_t*) CBQ_MALLOC(sizeof(CBQArg_t) * iniArgCap);
-        if (container->args == NULL) {
-            errSt = CBQ_ERR_MEM_ALLOC_FAILED;
-            break;
-        }
-
-        container++;
-    } while (--remLen);
-
-    if (errSt) {
-        if (!restore_pos_fail)
-            return CBQ_ERR_MEM_ALLOC_FAILED;
-
-        CBQ_containersRangeFree__(coFirst, len - remLen);
-
-        return CBQ_ERR_MEM_BUT_RESTORED;
-    }
-
-    return 0;
-}
-
-void CBQ_containersRangeFree__(MAY_REG CBQContainer_t* container, MAY_REG size_t len)
-{
-    do {
-        CBQ_MEMFREE(container->args);
-        container++;
-    } while (--len);
-}
-
 int CBQ_incCapacity__(CBQueue_t* trustedQueue, size_t delta, const int alignToMaxCapacityLimit)
 {
     int errSt;
@@ -548,7 +459,7 @@ int CBQ_incCapacity__(CBQueue_t* trustedQueue, size_t delta, const int alignToMa
 
     if (remainder < delta) {
         /* if limit has been reached or the delta cannot be aligned */
-        if (!remainder || !alignToMaxCapacityLimit) {
+        if (!(remainder && alignToMaxCapacityLimit)) {
             if (trustedQueue->incCapacityMode == CBQ_SM_LIMIT)
                 return CBQ_ERR_LIMIT_CAPACITY_OVERFLOW;
             else
@@ -813,66 +724,6 @@ int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t* trustedQueue)
     CBQ_MEMFREE(tmpCoArr);
 
     return 0;
-}
-
-/* Accelerated cycle
- * srcp, destp - pointers of areas in queue
- * srcp - point of source cells
- * destp - where are they moving
- * tmpCo - for swaping memory info (not pointer)
- */
-/* POT_REG - potential register var, same as register, if 64 compile */
-void CBQ_containersSwapping__(MAY_REG CBQContainer_t* srcp, MAY_REG CBQContainer_t* destp, MAY_REG size_t len, const int reverse_iter)
-{
-    CBQContainer_t tmpCo;
-
-    if (reverse_iter)
-        do {    // data swap (memory information)
-            SWAP_BY_TEMP(*srcp, *destp, tmpCo);
-            --srcp, --destp;
-        } while (--len);
-    else
-        do {    // data swap (memory information)
-            SWAP_BY_TEMP(*srcp, *destp, tmpCo);
-            ++srcp, ++destp;
-        } while (--len);
-}
-
-void CBQ_containersCopy__(MAY_REG const CBQContainer_t *restrict srcp, MAY_REG CBQContainer_t *restrict destp, MAY_REG size_t len)
-{
-    do {
-        *destp++ = *srcp++;
-    } while (--len);
-}
-
-/* ---------------- Args Methods ---------------- */
-int CBQ_changeArgsCapacity__(CBQContainer_t* container, unsigned int newCapacity, const int copyArgsData)
-{
-    void* reallocp;
-
-    if (newCapacity > MAX_CAP_ARGS)
-        return CBQ_ERR_ARG_OUT_OF_RANGE;
-
-    if (copyArgsData)
-        reallocp = CBQ_REALLOC(container->args, sizeof(CBQArg_t) * (size_t) newCapacity);
-    else {
-        CBQ_MEMFREE(container->args);   // free old mem alloc
-        reallocp = CBQ_MALLOC(sizeof(CBQArg_t) * (size_t) newCapacity);
-    }
-    if (reallocp == NULL)
-        return CBQ_ERR_MEM_ALLOC_FAILED;
-
-    container->args = (CBQArg_t*) reallocp;
-    container->capacity = newCapacity;
-
-    return 0;
-}
-
-void CBQ_copyArgs__(MAY_REG const CBQArg_t *restrict src, MAY_REG CBQArg_t *restrict dest, MAY_REG unsigned int len)
-{
-    do {
-        *dest++ = *src++;
-    } while (--len);
 }
 
 /* ---------------- Call Methods ---------------- */
@@ -1304,132 +1155,3 @@ char* CBQ_strIntoHeap(const char* str)
 }
 
 /* Debug */
-
-#ifdef CBQD_STATUS
-    void CBQ_outDebugSysStatus__(void)
-    {
-        printf("Debug System status:\n"
-
-        #ifdef CBQD_ASRT
-            "* Assert-like macros is active\n"
-        #endif
-
-        #ifdef CBQD_SCHEME
-            "* Drawing queue scheme is active\n"
-        #endif
-
-        #ifdef CBQD_OUTPUTLOG
-            "* Output base log is active\n"
-        #endif
-
-        "\n");
-    }
-
-#endif // CBQD_STATUS
-
-#ifdef CBQD_SCHEME
-
-void CBQ_drawScheme__(CBQueue_t* trustedQueue)
-{
-    CBQContainer_t* cbqc;
-
-    printf("Queue scheme:\n");
-    for (size_t i = 0; i < trustedQueue->capacity; i++) {
-
-        #ifdef __unix__
-            if (i == trustedQueue->rId && i == trustedQueue->sId)
-                printf("\033[35m");
-            else if (i == trustedQueue->rId)
-                printf("\033[31m");
-            else if (i == trustedQueue->sId)
-                printf("\033[34m");
-        #endif
-
-        cbqc = &trustedQueue->coArr[i];
-
-        if (cbqc->label >= 'A' && cbqc->label <= 'Z')
-            printf("%c", (char) cbqc->label);
-        else
-            printf("-");
-
-        #ifdef __unix__
-            printf("\033[0m");
-        #endif
-    }
-
-    printf("\n");
-
-    #ifndef __unix__
-        for (size_t i = 0; i < trustedQueue->capacity; i++) {
-            if (i == trustedQueue->rId && i == trustedQueue->sId)
-                printf("b");
-            else if (i == trustedQueue->rId)
-                printf("r");
-            else if (i == trustedQueue->sId)
-                printf("s");
-            else
-                printf(".");
-        }
-
-        printf("\n\n");
-    #endif
-
-    fflush(stdout);
-}
-
-int CBQ_drawScheme_chk__(const void* queue)
-{
-    CBQueue_t* cqueue = (CBQueue_t*) queue;
-
-    BASE_ERR_CHECK(cqueue);
-
-    CBQ_drawScheme__(cqueue);
-
-    return 0;
-}
-
-#endif // CBQD_SCHEME
-
-/* ---------------- Callback Methods ---------------- */
-
-/* push CB after delay, like JS func. Needs time.h lib */
-int CBQ_SetTimeout(CBQueue_t* queue, long delay, const int isSec,
-    CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams)
-{
-    CBQTicks_t targetTime;
-
-    BASE_ERR_CHECK(queue);
-    if (targetQueue != queue) {
-        BASE_ERR_CHECK(targetQueue);
-    }
-
-    if (isSec)
-        targetTime = CBQ_CURTICKS() + (CBQTicks_t)(delay * CBQ_TIC_P_SEC);
-    else
-        targetTime = CBQ_CURTICKS() + (CBQTicks_t)delay;
-
-    return CBQ_Push(queue, CBQ_setTimeoutFrame__, vParamc, vParams, ST_ARG_C,
-        (CBQArg_t) {.qVar = queue},
-        (CBQArg_t) {.liVar = targetTime},
-        (CBQArg_t) {.qVar = targetQueue},
-        (CBQArg_t) {.fVar = func});
-}
-
-int CBQ_setTimeoutFrame__(int argc, CBQArg_t* args)
-{
-    if (CBQ_CURTICKS() >= (CBQTicks_t) args[ST_DELAY].liVar) {
-
-        if (args[ST_QUEUE].qVar == args[ST_TRG_QUEUE].qVar)
-            return args[ST_FUNC].fVar(argc - ST_ARG_C, args + ST_ARG_C);
-        else
-            return CBQ_Push(args[ST_TRG_QUEUE].qVar, args[ST_FUNC].fVar,
-                        argc - ST_ARG_C, args + ST_ARG_C, 0, CBQ_NO_STPARAMS);
-
-    } else
-        return CBQ_Push(args[ST_QUEUE].qVar, CBQ_setTimeoutFrame__,
-            argc - ST_ARG_C, (argc - ST_ARG_C)? args + ST_ARG_C : NULL, ST_ARG_C,
-            (CBQArg_t) {.qVar = args[ST_QUEUE].qVar},
-            (CBQArg_t) {.liVar = args[ST_DELAY].liVar},
-            (CBQArg_t) {.qVar = args[ST_TRG_QUEUE].qVar},
-            (CBQArg_t) {.fVar = args[ST_FUNC].fVar});
-}
