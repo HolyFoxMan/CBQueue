@@ -81,7 +81,7 @@ int CBQ_QueueInit(CBQueue_t* queue, size_t capacity, int incCapacityMode, size_t
 
 int CBQ_QueueFree(CBQueue_t* queue)
 {
-    OPT_BASE_ERR_CHECK(queue);
+    BASE_ERR_CHECK(queue);
 
     #ifndef NO_EXCEPTIONS_OF_BUSY
     if (queue->execSt == CBQ_EST_EXEC)
