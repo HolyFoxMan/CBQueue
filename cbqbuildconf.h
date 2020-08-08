@@ -1,3 +1,6 @@
+#ifndef CBQBUILDCONF_H
+#define CBQBUILDCONF_H
+
 /* Build configuration file
  * Sets compile lib and debug features
  */
@@ -81,3 +84,5 @@
  * debug subsystems
  */
     #define CBQD_STATUS
+
+#endif // CBQBUILDCONF_H

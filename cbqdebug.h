@@ -16,7 +16,7 @@
         #endif
 
         #ifdef CBQD_OUTPUTLOG
-            #define CBQD_OUTPUTLOG
+            #undef CBQD_OUTPUTLOG
         #endif
 
         #ifdef CBQD_STATUS
