@@ -21,6 +21,12 @@
         #include <time.h>
     #endif
 
+    #define MAX_VERISON 2
+
+    #ifndef CBQ_CUR_VERSION
+        #define CBQ_CUR_VERSION MAX_VERSION
+    #endif
+
     #if CBQ_CUR_VERSION >= 2
         /* Windows version of convections
          * Allow clear param stack in CB funcs, what

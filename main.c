@@ -1,3 +1,5 @@
+/* C Debug Test Entry point */
+
 #include <stdio.h>
 #include "cbqtest.h"
 
@@ -15,8 +17,11 @@
     // CBQ_T_SkipTest();
     // CBQ_T_VerIdInfo(2);
 
+
+
     int main(void)
     {
-        CBQ_T_SkipTest();
+        //CBQ_T_SkipTest();
+
         return 0;
     }
