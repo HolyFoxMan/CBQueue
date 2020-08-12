@@ -1,12 +1,11 @@
 /* C++ Debug Test Entry point */
 
 #include <iostream>
-//#include "cbqueue.h"
 #include "cbqwrapper.hpp"
 
 int CBTest(int, CBQArg_t* argv)
 {
-    std::cout << argv[0].sVar;
+    std::cout << argv[0].iVar;
     return 0;
 }
 
@@ -14,11 +13,16 @@ int CBTest(int, CBQArg_t* argv)
 
 int main(void)
 {
-    const char x[] = "Hello, World!";
+    uint8_t x = 34;
 
-    CBQPP::Queue queue;
-    queue.Push(CBTest, x);
+    CBQPP::Queue
+        queue,
+        queue_2;
+
+    queue.SetTimeout(queue_2, CBTest, 0, x);
+
     queue.Execute();
+    queue_2.Execute();
 
     return 0;
 }

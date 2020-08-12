@@ -2,7 +2,10 @@
 #define CBQBUILDCONF_H
 
 /* Build configuration file
- * Sets compile lib and debug features
+ * Sets compile lib and debug features.
+ * You may set these macros here or in compiler options for predefined macros.
+ * !If you are using ready-made library, do not change flags in that file!
+ * It is possible to view the set flags through special (version) functions.
  */
 
  /* ---------------- Lib features ---------------- */

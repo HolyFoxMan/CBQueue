@@ -7,6 +7,7 @@ extern "C++" {
 
 #include "cbqbuildconf.h"
 #include "cbqueue.h"
+#include "cbqcallbacks.h"
 
 namespace CBQPP {
 
@@ -17,7 +18,7 @@ namespace CBQPP {
     #endif // CBQ_CUR_VERSION
 
     #ifndef NO_BASE_CHECK
-    #pragma message "it is recommended to set macro NO_BASE_CHECK, when CPP wrapper is used"
+    #pragma message "it is recommended to set macro NO_BASE_CHECK, when CPP wrapper is used and CBQ is not in lib format"
     #endif // NO_BASE_CHECK
 
 /* Special exception for Queue constructors and assign operators */
@@ -104,12 +105,29 @@ public:
     Queue(Queue&&) noexcept;
     Queue& operator=(const Queue&);
     Queue& operator=(Queue&&);
-    ~Queue();
+    ~Queue() noexcept;
 
     template <typename... Args>
     int Push(QCallback func, Args... arguments) noexcept;
     int Push(QCallback func) noexcept;
+
     int Execute(int* cb_status = NULL) noexcept;
+
+    template <typename... Args>
+    int SetTimeout(QCallback func, clock_t delay, Args... arguments) noexcept;
+    int SetTimeout(QCallback func, clock_t delay) noexcept;
+    template <typename... Args>
+    int SetTimeout(Queue& target, QCallback func, clock_t delay, Args... arguments) noexcept;
+    int SetTimeout(Queue& target, QCallback func, clock_t delay) noexcept;
+
+    template <typename... Args>
+    int SetTimeoutForSec(QCallback func, clock_t delay, Args... arguments) noexcept;
+    int SetTimeoutForSec(QCallback func, clock_t delay) noexcept;
+    template <typename... Args>
+    int SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec, Args... arguments) noexcept;
+    int SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec) noexcept;
+
+    size_t Size(void) const noexcept;
 
 private:
     template <typename T> CBQArg_t CBQ_argConvert__(T val) noexcept;
@@ -167,51 +185,53 @@ inline Queue& Queue::operator=(Queue&& other)
     other.cbq.initSt = CBQ_IN_FREE;
 }
 
-inline Queue::~Queue()
+inline Queue::~Queue() noexcept
 {
     CBQ_QueueFree(&this->cbq);
 }
 
+/* Type filters and union setters */
 template <typename T> inline CBQArg_t Queue::CBQ_argConvert__(T) noexcept {
     static_assert( static_cast<signed int>(sizeof(T)) < -1, "Unknown CB argument, check CBQArg_t declaration");
     return {0};
 }
+
 #ifdef NO_FIX_ARGTYPES
 // unsigned
-template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned char>(unsigned char val)           noexcept {CBQArg_t arg; arg.utiVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned short>(unsigned short val)         noexcept {CBQArg_t arg; arg.usiVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned int>(unsigned int val)             noexcept {CBQArg_t arg; arg.uiVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned long long>(unsigned long long val) noexcept {CBQArg_t arg; arg.ulliVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned char>(unsigned char val) noexcept                  {CBQArg_t arg; arg.utiVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned short>(unsigned short val) noexcept                {CBQArg_t arg; arg.usiVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned int>(unsigned int val) noexcept                    {CBQArg_t arg; arg.uiVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned long long>(unsigned long long val) noexcept        {CBQArg_t arg; arg.ulliVar = val; return arg;}
 // signed
-template <> inline CBQArg_t Queue::CBQ_argConvert__<signed char>(signed char val)               noexcept {CBQArg_t arg; arg.tiVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<signed short>(signed short val)             noexcept {CBQArg_t arg; arg.siVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<signed int>(signed int val)                 noexcept {CBQArg_t arg; arg.iVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<signed long long>(signed long long val)     noexcept {CBQArg_t arg; arg.lliVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<signed char>(signed char val) noexcept                      {CBQArg_t arg; arg.tiVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<signed short>(signed short val) noexcept                    {CBQArg_t arg; arg.siVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<signed int>(signed int val) noexcept                        {CBQArg_t arg; arg.iVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<signed long long>(signed long long val) noexcept            {CBQArg_t arg; arg.lliVar = val; return arg;}
 #else
 // unsigned
-template <> inline CBQArg_t Queue::CBQ_argConvert__<uint8_t>(uint8_t val)           noexcept {CBQArg_t arg; arg.utiVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<uint16_t>(uint16_t val)         noexcept {CBQArg_t arg; arg.usiVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<uint32_t>(uint32_t val)         noexcept {CBQArg_t arg; arg.uiVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<uint64_t>(uint64_t val)         noexcept {CBQArg_t arg; arg.ulliVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<uint8_t>(uint8_t val) noexcept                              {CBQArg_t arg; arg.utiVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<uint16_t>(uint16_t val) noexcept                            {CBQArg_t arg; arg.usiVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<uint32_t>(uint32_t val) noexcept                            {CBQArg_t arg; arg.uiVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<uint64_t>(uint64_t val) noexcept                            {CBQArg_t arg; arg.ulliVar = val; return arg;}
 // signed
-template <> inline CBQArg_t Queue::CBQ_argConvert__<int8_t>(int8_t val)             noexcept {CBQArg_t arg; arg.tiVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<int16_t>(int16_t val)           noexcept {CBQArg_t arg; arg.siVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<int32_t>(int32_t val)           noexcept {CBQArg_t arg; arg.iVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<int64_t>(int64_t val)           noexcept {CBQArg_t arg; arg.lliVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<int8_t>(int8_t val) noexcept                                {CBQArg_t arg; arg.tiVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<int16_t>(int16_t val) noexcept                              {CBQArg_t arg; arg.siVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<int32_t>(int32_t val) noexcept                              {CBQArg_t arg; arg.iVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<int64_t>(int64_t val) noexcept                              {CBQArg_t arg; arg.lliVar = val; return arg;}
 #endif // NO_FIX_ARGTYPES
-template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned long>(unsigned long val)       noexcept {CBQArg_t arg; arg.uliVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<signed long>(signed long val)           noexcept {CBQArg_t arg; arg.liVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<unsigned long>(unsigned long val) noexcept                  {CBQArg_t arg; arg.uliVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<signed long>(signed long val) noexcept                      {CBQArg_t arg; arg.liVar = val; return arg;}
 // float
-template <> inline CBQArg_t Queue::CBQ_argConvert__<float>(float val)                       noexcept {CBQArg_t arg; arg.flVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<double>(double val)                     noexcept {CBQArg_t arg; arg.dVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<float>(float val) noexcept                                  {CBQArg_t arg; arg.flVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<double>(double val) noexcept                                {CBQArg_t arg; arg.dVar = val; return arg;}
 // symbols
-template <> inline CBQArg_t Queue::CBQ_argConvert__<char>(char val)                         noexcept {CBQArg_t arg; arg.cVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<const char*>(const char* val)           noexcept {CBQArg_t arg; arg.sVar = const_cast<char*>(val); return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<char*>(char* val)                       noexcept {CBQArg_t arg; arg.sVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<char>(char val) noexcept                                    {CBQArg_t arg; arg.cVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<const char*>(const char* val) noexcept                      {CBQArg_t arg; arg.sVar = const_cast<char*>(val); return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<char*>(char* val) noexcept                                  {CBQArg_t arg; arg.sVar = val; return arg;}
 // pointers
-template <> inline CBQArg_t Queue::CBQ_argConvert__<void*>(void* val)                       noexcept {CBQArg_t arg; arg.pVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<CBQueue_t*>(CBQueue_t* val)             noexcept {CBQArg_t arg; arg.qVar = val; return arg;}
-template <> inline CBQArg_t Queue::CBQ_argConvert__<QCallback>(QCallback val)               noexcept {CBQArg_t arg; arg.fVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<void*>(void* val) noexcept                                  {CBQArg_t arg; arg.pVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<CBQueue_t*>(CBQueue_t* val) noexcept                        {CBQArg_t arg; arg.qVar = val; return arg;}
+template <> inline CBQArg_t Queue::CBQ_argConvert__<QCallback>(QCallback val) noexcept                          {CBQArg_t arg; arg.fVar = val; return arg;}
 
 // ...you didn't see it, okay?
 
@@ -231,6 +251,62 @@ inline int Queue::Execute(int* cb_status) noexcept
     return CBQ_Exec(&this->cbq, cb_status);
 }
 
+
+template <typename... Args>
+inline int Queue::SetTimeout(QCallback func, clock_t delay, Args... arguments) noexcept
+{
+    CBQArg_t params[] = {CBQ_argConvert__<Args>(arguments)...};
+    return CBQ_SetTimeout(&this->cbq, delay, 0, &this->cbq, func, sizeof...(arguments), params);
+}
+
+inline int Queue::SetTimeout(QCallback func, clock_t delay) noexcept
+{
+    return CBQ_SetTimeout(&this->cbq, delay, 0, &this->cbq, func, 0,  CBQ_NO_VPARAMS);
+}
+
+template <typename... Args>
+inline int Queue::SetTimeout(Queue& target, QCallback func, clock_t delay, Args... arguments) noexcept
+{
+    CBQArg_t params[] = {CBQ_argConvert__<Args>(arguments)...};
+    return CBQ_SetTimeout(&this->cbq, delay, 0, &target.cbq, func, sizeof...(arguments), params);
+}
+
+inline int Queue::SetTimeout(Queue& target, QCallback func, clock_t delay) noexcept
+{
+    return CBQ_SetTimeout(&this->cbq, delay, 0, &target.cbq, func, 0,  CBQ_NO_VPARAMS);
+}
+
+template <typename... Args>
+inline int Queue::SetTimeoutForSec(QCallback func, clock_t delayInSec, Args... arguments) noexcept
+{
+    CBQArg_t params[] = {CBQ_argConvert__<Args>(arguments)...};
+    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &this->cbq, func, sizeof...(arguments), params);
+}
+
+inline int Queue::SetTimeoutForSec(QCallback func, clock_t delayInSec) noexcept
+{
+    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &this->cbq, func, 0, CBQ_NO_VPARAMS);
+}
+
+template <typename... Args>
+inline int Queue::SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec, Args... arguments) noexcept
+{
+    CBQArg_t params[] = {CBQ_argConvert__<Args>(arguments)...};
+    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &target.cbq, func, sizeof...(arguments), params);
+}
+
+inline int Queue::SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec) noexcept
+{
+    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &target.cbq, func, 0,  CBQ_NO_VPARAMS);
+}
+
+
+inline size_t Queue::Size(void) const noexcept
+{
+    size_t size;
+    CBQ_GetSize(&this->cbq, &size);
+    return size;
+}
 
 }   // CBQPP namespace
 
