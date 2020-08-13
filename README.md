@@ -4,8 +4,8 @@ It is simple module (or small lib) written on C. Work with the queue by using th
 * Push
 * Execute
 * ChangeSize
-* GetFullInfo
 * GetSize
+* GetFullInfo
 * SetTimeout (Like in JS)
 and etc.
 
@@ -14,6 +14,6 @@ Because the queue can be automatically increased, it is possible to configure th
 The lib also have CPP wrapper, in fact, this is a more convenient use case, whan C variant calls.
 
 Also the lib have some macro-flags to configure build for yourself. And the structure itself is split into versions
-(so far there are two). There are corresponding information lib methods for comparing all this.
+(so far there are two), it also changes by macro-flags. There are corresponding information lib methods for comparing all this.
 
 The second version added a wrapper for C++. And this is a better view than calling C methods directly.
