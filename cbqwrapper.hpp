@@ -134,8 +134,17 @@ public:
 
     size_t Size(void) const noexcept;
     size_t Capacity(void) const noexcept;
+    size_t CapacityInBytes(void) const noexcept;
     bool IsEmpty(void) const noexcept;
     bool IsFull(void) const noexcept;
+    void DetailInfo
+    (int* status = NULL, size_t* size = NULL, size_t* capacity = NULL, int* incCapMode =  NULL, size_t* maxCapLimit = NULL, size_t* sizeInBytes = NULL)
+    const noexcept;
+
+    int IncreaseCapacity(void) noexcept;
+    int DecreaseCapacity(void) noexcept;
+    int ChangeCapacity(size_t newSize, bool considerLimits = true) noexcept;
+    int ChangeCapacity(bool increase) noexcept;
 
 private:
     template <typename T> CBQArg_t CBQ_argConvert__(T val) noexcept;
@@ -340,6 +349,13 @@ inline size_t Queue::Capacity(void) const noexcept
     return CBQ_GETCAPACITY(this->cbq);
 }
 
+inline size_t Queue::CapacityInBytes(void) const noexcept
+{
+    size_t cap;
+    CBQ_GetCapacityInBytes(&this->cbq, &cap);
+    return cap;
+}
+
 inline bool Queue::IsEmpty(void) const noexcept
 {
     return static_cast<bool>(CBQ_ISEMPTY(this->cbq));
@@ -348,6 +364,32 @@ inline bool Queue::IsEmpty(void) const noexcept
 inline bool Queue::IsFull(void) const noexcept
 {
     return static_cast<bool>(CBQ_ISFULL(this->cbq));
+}
+
+inline void Queue::DetailInfo
+(int* status, size_t* size, size_t* capacity, int* incCapMode, size_t* maxCapLimit, size_t* sizeInBytes) const noexcept
+{
+    CBQ_GetFullInfo(&this->cbq, status, capacity, size, incCapMode, maxCapLimit, sizeInBytes);
+}
+
+inline int Queue::IncreaseCapacity(void) noexcept
+{
+    return CBQ_ChangeCapacity(&this->cbq, CBQ_INC_CAPACITY, 0, 1);
+}
+
+inline int Queue::DecreaseCapacity(void) noexcept
+{
+    return CBQ_ChangeCapacity(&this->cbq, CBQ_DEC_CAPACITY, 0, 1);
+}
+
+inline int Queue::ChangeCapacity(bool increase) noexcept
+{
+    return CBQ_ChangeCapacity(&this->cbq, increase? CBQ_INC_CAPACITY : CBQ_DEC_CAPACITY, 0, 1);
+}
+
+inline int Queue::ChangeCapacity(size_t newSize, bool considerLimits) noexcept
+{
+    return CBQ_ChangeCapacity(&this->cbq, CBQ_CUSTOM_CAPACITY, newSize, static_cast<int>(considerLimits));
 }
 
 }   // CBQPP namespace
