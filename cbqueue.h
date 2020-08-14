@@ -312,16 +312,11 @@ int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams);
 
 /* ---------------- Additional methods ---------------- */
-int CBQ_ChangeCapacity(CBQueue_t* queue, const int changeTowards, size_t customNewCapacity, const int);
+int CBQ_ChangeCapacity(CBQueue_t* queue, const int changeTowards, size_t customNewCapacity, const int adaptByLimits);
 int CBQ_ChangeIncCapacityMode(CBQueue_t* queue, int newIncCapacityMode, size_t newCapacityMaxLimit, const int tryToAdaptCapacity, const int adaptCapacityMaxLimit);
 int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, const int passNonModifiableArgs);
 int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity);
 char* CBQ_strIntoHeap(const char* str);
-
-/* Not used
-int CBQ_SaveState(CBQueue_t* queue, unsigned char* data, size_t* receivedCapacity);
-int CBQ_RestoreState(CBQueue_t* queue, unsigned char* data, size_t capacity);
-*/
 
 /* ---------------- Info Methods ---------------- */
 #define CBQ_HAVECALL_P(TRUSTED_QUEUE_POINTER) \

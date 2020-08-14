@@ -21,7 +21,7 @@
 
     int main(void)
     {
-        //CBQ_T_SkipTest();
+        CBQ_T_SkipTest();
 
         return 0;
     }

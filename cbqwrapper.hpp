@@ -100,12 +100,17 @@ private:
     };
 
 public:
-    explicit Queue(size_t capacity = CBQ_SI_SMALL, int capacityMode = CBQ_SM_LIMIT, size_t maxCapacityLimit = CBQ_SI_MEDIUM, unsigned int initArgsCapacity = 0);
+    explicit Queue(size_t capacity = CBQ_SI_SMALL, int capacityMode = CBQ_SM_LIMIT, size_t maxCapacityLimit = CBQ_SI_BIG, unsigned int initArgsCapacity = 0);
     Queue(const Queue&);
     Queue(Queue&&) noexcept;
     Queue& operator=(const Queue&);
     Queue& operator=(Queue&&);
     ~Queue() noexcept;
+
+    int Clear(void) noexcept;
+    int Concat(const Queue& source) noexcept;
+    int Transfer(Queue& other, size_t count, bool considerCapacity = false, bool considerSourceSize = true) noexcept;
+    int Skip(size_t count, bool atBack = false, bool considerSize = true) noexcept;
 
     template <typename... Args>
     int Push(QCallback func, Args... arguments) noexcept;
@@ -128,6 +133,9 @@ public:
     int SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec) noexcept;
 
     size_t Size(void) const noexcept;
+    size_t Capacity(void) const noexcept;
+    bool IsEmpty(void) const noexcept;
+    bool IsFull(void) const noexcept;
 
 private:
     template <typename T> CBQArg_t CBQ_argConvert__(T val) noexcept;
@@ -188,6 +196,26 @@ inline Queue& Queue::operator=(Queue&& other)
 inline Queue::~Queue() noexcept
 {
     CBQ_QueueFree(&this->cbq);
+}
+
+inline int Queue::Clear(void) noexcept
+{
+    return CBQ_Clear(&this->cbq);
+}
+
+inline int Queue::Concat(const Queue& source) noexcept
+{
+    return CBQ_QueueConcat(&this->cbq, &source.cbq);
+}
+
+inline int Queue::Transfer(Queue& source, size_t count, bool considerCapacity, bool considerSourceSize) noexcept
+{
+    return CBQ_QueueTransfer(&this->cbq, &source.cbq, count, static_cast<int>(considerSourceSize), static_cast<int>(considerCapacity));
+}
+
+inline int Queue::Skip(size_t count, bool atBack, bool considerSize) noexcept
+{
+    return CBQ_Skip(&this->cbq, count, static_cast<int>(considerSize), static_cast<int>(atBack));
 }
 
 /* Type filters and union setters */
@@ -300,12 +328,26 @@ inline int Queue::SetTimeoutForSec(Queue& target, QCallback func, clock_t delayI
     return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &target.cbq, func, 0,  CBQ_NO_VPARAMS);
 }
 
-
 inline size_t Queue::Size(void) const noexcept
 {
     size_t size;
     CBQ_GetSize(&this->cbq, &size);
     return size;
+}
+
+inline size_t Queue::Capacity(void) const noexcept
+{
+    return CBQ_GETCAPACITY(this->cbq);
+}
+
+inline bool Queue::IsEmpty(void) const noexcept
+{
+    return static_cast<bool>(CBQ_ISEMPTY(this->cbq));
+}
+
+inline bool Queue::IsFull(void) const noexcept
+{
+    return static_cast<bool>(CBQ_ISFULL(this->cbq));
 }
 
 }   // CBQPP namespace

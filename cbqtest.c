@@ -904,9 +904,12 @@ void CBQ_T_SkipTest(void)
         CBQ_PushN(&queue, CB_PrintNum, {i});
 
     CBQ_DRAWSCHEME(&queue);
+    printf("clear part from start (just move indexes):\n");
     CBQ_Skip(&queue, CBQ_SI_TINY, 1, 0);    // from start
+    CBQ_DRAWSCHEME(&queue);
+    printf("and from end:\n");
     CBQ_Skip(&queue, CBQ_SI_TINY, 1, 1);    // from end
-
+    CBQ_DRAWSCHEME(&queue);
     ASRT(CBQ_ISFULL(queue), "Is not empty")
 
     CBQ_QueueFree(&queue);

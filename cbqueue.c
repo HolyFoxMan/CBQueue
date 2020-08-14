@@ -219,6 +219,8 @@ int CBQ_QueueTransfer(CBQueue_t* restrict dest, CBQueue_t* restrict src, size_t 
 
     if (src->rId == src->sId)
         src->status = CBQ_ST_EMPTY;
+    else if (src->status == CBQ_ST_FULL) // still some leftover
+        src->status = CBQ_ST_STABLE;
 
     return 0;
 }
@@ -234,19 +236,26 @@ int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reve
         return CBQ_ERR_ARG_OUT_OF_RANGE;
 
     if (count > size) {
-        if (!cutBySize || !size) {
+        if (!(cutBySize && size)) {
             return CBQ_ERR_COUNT_NOT_FIT_IN_SIZE;
         }
         count = size;
     }
 
     if (!reverseOrder)
-        queue->rId = (queue->rId + count) % queue->capacity;
-    else
-        queue->sId = (queue->sId - count) % queue->capacity;
+        queue->rId = (queue->rId + count) % queue->capacity;    // at front
+    else {                                                      // at back
+        if (queue->sId < count) {   // or sId < rId
+            count -= queue->sId;
+            queue->sId = queue->capacity;
+        }
+        queue->sId -= count;
+    }
 
     if (queue->rId == queue->sId)
         queue->status = CBQ_ST_EMPTY;
+    else if (queue->status == CBQ_ST_FULL) // still some leftover
+        queue->status = CBQ_ST_STABLE;
 
     return 0;
 }
