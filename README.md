@@ -5,7 +5,7 @@ It is simple module (or small lib) written on C. Work with the queue by using th
 * Execute
 * ChangeSize
 * GetSize
-* GetFullInfo
+* GetDetailedInfo
 * SetTimeout (Like in JS)
 and etc.
 
