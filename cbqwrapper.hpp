@@ -1,21 +1,16 @@
-#ifndef CBQWRAPPER_H
-#define CBQWRAPPER_H
+#pragma once
 
 /* C++ wrapper, which is more comfortable for using CBQ library */
-
-#ifdef __cplusplus
-extern "C++" {
-#endif // __cplusplus
 
 #include "cbqbuildconf.h"
 #include "cbqueue.h"
 #include "cbqcallbacks.h"
+#include <exception>
+#include <string>
 
 namespace CBQPP {
 
-#include <exception>
-
-    #if __cplusplus < 201103L
+    #if !defined(__cplusplus) || __cplusplus < 201103L
     #error "Needs c++11 standart version"
     #endif
 
@@ -451,9 +446,3 @@ inline bool Queue::IsCustomisedVersion(void)
 }
 
 }   // CBQPP namespace
-
-#ifdef __cplusplus
-}   // C++ extern
-#endif // __cplusplus
-
-#endif
