@@ -8,6 +8,7 @@ It is simple module (or small lib) written on C. Work with the queue by using th
 * *ChangeSize*
 * *GetDetailedInfo*
 * *SetTimeout* (Like in JS)
+
 and more else.
 
 Since the library was made with a bias towards safe use, there is a restriction
@@ -18,6 +19,7 @@ inside direct calls of callbacks of the same queue:
  * skipping, transfering, copying into queue
  * executing callbacks.
 There is no restriction on adding callbacks during call in same queue.
+
 The restriction can be removed at your own risk through a macro *NO_EXCEPTIONS_OF_BUSY*
 
 Because the queue can be automatically increased, it is possible to configure the change mode 
