@@ -121,7 +121,6 @@ void CBQ_T_ControlTest(void)
     int quit = 0,
         key,
         inCB = 0,
-        qStatus,
         errSt = 0;
     size_t customCapacity,
         qCapacity,
@@ -277,10 +276,10 @@ void CBQ_T_ControlTest(void)
             */
         }
 
-        ASRT(CBQ_GetFullInfo(&queue, &qStatus, &qCapacity, &qEngagedSize, NULL, NULL, &qCapacityBytes), "")
+        ASRT(CBQ_GetDetailedInfo(&queue, &qCapacity, &qEngagedSize, NULL, NULL, &qCapacityBytes), "")
 
-        printf("Status: %d, capacity: " SZ_PRTF ", engaged capacity: "
-        SZ_PRTF " in bytes: " SZ_PRTF " run in CB: %s\n", qStatus, qCapacity, qEngagedSize, qCapacityBytes, inCB? "true" : "false");
+        printf("capacity: " SZ_PRTF ", engaged capacity: "
+        SZ_PRTF " in bytes: " SZ_PRTF " run in CB: %s\n", qCapacity, qEngagedSize, qCapacityBytes, inCB? "true" : "false");
         // drawArgpAsChars(&queue);
 
     } while(!quit);
@@ -301,7 +300,7 @@ int occupyAllCells(CBQueue_t* queue)
     size_t capacity, engSize, i;
     int errSt = 0;
 
-    CBQ_GetFullInfo(queue, NULL, &capacity, &engSize, NULL, NULL, NULL);
+    CBQ_GetDetailedInfo(queue, &capacity, &engSize, NULL, NULL, NULL);
     capacity -= engSize;    // last empty cells
 
     for (i = 0; i < capacity; i++) {

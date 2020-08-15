@@ -719,13 +719,10 @@ int CBQ_GetCapacityInBytes(const CBQueue_t* queue, size_t* byteCapacity)
     return 0;
 }
 
-int CBQ_GetFullInfo(const CBQueue_t* queue, int *restrict getStatus, size_t *restrict getCapacity, size_t *restrict getSize,
+int CBQ_GetDetailedInfo(const CBQueue_t* queue, size_t *restrict getCapacity, size_t *restrict getSize,
     int *restrict getIncCapacityMode, size_t *restrict getMaxCapacityLimit, size_t *restrict getCapacityInBytes)
     {
         OPT_BASE_ERR_CHECK(queue);
-
-        if (getStatus)
-            *getStatus = queue->status;
 
         if (getCapacity)
             *getCapacity = queue->capacity;

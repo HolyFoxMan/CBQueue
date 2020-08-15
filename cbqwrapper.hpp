@@ -1,6 +1,8 @@
 #ifndef CBQWRAPPER_H
 #define CBQWRAPPER_H
 
+/* C++ wrapper, which is more comfortable for using CBQ library */
+
 #ifdef __cplusplus
 extern "C++" {
 #endif // __cplusplus
@@ -13,8 +15,12 @@ namespace CBQPP {
 
 #include <exception>
 
+    #if __cplusplus < 201103L
+    #error "Needs c++11 standart version"
+    #endif
+
     #if CBQ_CUR_VERSION < 2
-    #pragma error "Needs CBQueue version 2"
+    #error "Needs CBQueue version 2"
     #endif // CBQ_CUR_VERSION
 
     #ifndef NO_BASE_CHECK
@@ -100,7 +106,7 @@ private:
     };
 
 public:
-    explicit Queue(size_t capacity = CBQ_SI_SMALL, int capacityMode = CBQ_SM_LIMIT, size_t maxCapacityLimit = CBQ_SI_BIG, unsigned int initArgsCapacity = 0);
+    explicit Queue(size_t capacity = CBQ_SI_SMALL, CBQ_CapacityModes capacityMode = CBQ_SM_LIMIT, size_t maxCapacityLimit = CBQ_SI_BIG, unsigned int initArgsCapacity = 0);
     Queue(const Queue&);
     Queue(Queue&&) noexcept;
     Queue& operator=(const Queue&);
@@ -138,7 +144,7 @@ public:
     bool IsEmpty(void) const noexcept;
     bool IsFull(void) const noexcept;
     void DetailInfo
-    (int* status = NULL, size_t* size = NULL, size_t* capacity = NULL, int* incCapMode =  NULL, size_t* maxCapLimit = NULL, size_t* sizeInBytes = NULL)
+    (size_t* size = NULL, size_t* capacity = NULL, int* incCapMode =  NULL, size_t* maxCapLimit = NULL, size_t* sizeInBytes = NULL)
     const noexcept;
 
     int IncreaseCapacity(void) noexcept;
@@ -146,12 +152,22 @@ public:
     int ChangeCapacity(size_t newSize, bool considerLimits = true) noexcept;
     int ChangeCapacity(bool increase) noexcept;
 
+    int ChangeIncreaseCapacityMode(CBQ_CapacityModes newMode, size_t newLimit = CBQ_SI_MEDIUM, bool adaptLimit = true, bool tryToAdaptCapacity = true) noexcept;
+    int EqualizeArgumentsCapacity(unsigned int requiredCapacity, bool skipNoneModifiable = true) noexcept;
+    int ChangeInitArgumentsCapacity(unsigned int newCapacity) noexcept;
+
+    static int GetVerIndex(void);
+    static bool CheckVerIndexByFlag(CBQ_VI fInfoType);
+    static int GetDifferencesVerIndexMask(int comparedVerId);
+    static int GetAvaliableFlagsRange(void);
+    static bool IsCustomisedVersion(void);
+
 private:
     template <typename T> CBQArg_t CBQ_argConvert__(T val) noexcept;
 
 };
 
-inline Queue::Queue(size_t capacity, int capacityMode, size_t maxCapacityLimit, unsigned int initArgsCapacity)
+inline Queue::Queue(size_t capacity, CBQ_CapacityModes capacityMode, size_t maxCapacityLimit, unsigned int initArgsCapacity)
 {
     int err = CBQ_QueueInit(&cbq, capacity, capacityMode, maxCapacityLimit, initArgsCapacity);
     if (err)
@@ -367,10 +383,11 @@ inline bool Queue::IsFull(void) const noexcept
 }
 
 inline void Queue::DetailInfo
-(int* status, size_t* size, size_t* capacity, int* incCapMode, size_t* maxCapLimit, size_t* sizeInBytes) const noexcept
+(size_t* size, size_t* capacity, int* incCapMode, size_t* maxCapLimit, size_t* sizeInBytes) const noexcept
 {
-    CBQ_GetFullInfo(&this->cbq, status, capacity, size, incCapMode, maxCapLimit, sizeInBytes);
+    CBQ_GetDetailedInfo(&this->cbq, capacity, size, incCapMode, maxCapLimit, sizeInBytes);
 }
+
 
 inline int Queue::IncreaseCapacity(void) noexcept
 {
@@ -390,6 +407,47 @@ inline int Queue::ChangeCapacity(bool increase) noexcept
 inline int Queue::ChangeCapacity(size_t newSize, bool considerLimits) noexcept
 {
     return CBQ_ChangeCapacity(&this->cbq, CBQ_CUSTOM_CAPACITY, newSize, static_cast<int>(considerLimits));
+}
+
+inline int Queue::ChangeIncreaseCapacityMode(CBQ_CapacityModes newMode, size_t newLimit, bool adaptLimit, bool tryToAdaptCapacity) noexcept
+{
+    return CBQ_ChangeIncCapacityMode(&this->cbq, newMode, newLimit, static_cast<int>(tryToAdaptCapacity), static_cast<int>(adaptLimit));
+}
+
+inline int Queue::EqualizeArgumentsCapacity(unsigned int requiredCapacity, bool skipNoneModifiable) noexcept
+{
+    return CBQ_EqualizeArgsCapByCustom(&this->cbq, requiredCapacity, static_cast<int>(skipNoneModifiable));
+}
+
+inline int Queue::ChangeInitArgumentsCapacity(unsigned int newCapacity) noexcept
+{
+    return CBQ_ChangeInitArgsCapByCustom(&this->cbq, newCapacity);
+}
+
+
+inline int Queue::GetVerIndex(void)
+{
+    return CBQ_GetVerIndex();
+}
+
+inline bool Queue::CheckVerIndexByFlag(CBQ_VI fInfoType)
+{
+    return static_cast<bool>(CBQ_CheckVerIndexByFlag(fInfoType));
+}
+
+inline int Queue::GetDifferencesVerIndexMask(int comparedVerId)
+{
+    return CBQ_GetDifferencesVerIdMask(comparedVerId);
+}
+
+inline int Queue::GetAvaliableFlagsRange(void)
+{
+    return CBQ_GetAvaliableFlagsRange();
+}
+
+inline bool Queue::IsCustomisedVersion(void)
+{
+    return CBQ_IsCustomisedVersion();
 }
 
 }   // CBQPP namespace

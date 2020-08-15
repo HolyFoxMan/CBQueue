@@ -345,7 +345,7 @@ char* CBQ_strIntoHeap(const char* str);
 
 int CBQ_GetSize(const CBQueue_t* queue, size_t* size);
 int CBQ_GetCapacityInBytes(const CBQueue_t* queue, size_t* byteCapacity);
-int CBQ_GetFullInfo(const CBQueue_t* queue, int *C_ATTR getStatus, size_t *C_ATTR getCapacity, size_t *C_ATTR getSize,
+int CBQ_GetDetailedInfo(const CBQueue_t* queue, size_t *C_ATTR getCapacity, size_t *C_ATTR getSize,
     int *C_ATTR getIncCapacityMode, size_t *C_ATTR getMaxCapacityLimit, size_t *C_ATTR getCapacityInBytes);
 
 #endif // NO_CFUNCS_CALLS
