@@ -162,6 +162,9 @@ private:
 
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++" // no need for members init list
+
 inline Queue::Queue(size_t capacity, CBQ_CapacityModes capacityMode, size_t maxCapacityLimit, unsigned int initArgsCapacity)
 {
     int err = CBQ_QueueInit(&cbq, capacity, capacityMode, maxCapacityLimit, initArgsCapacity);
@@ -182,6 +185,8 @@ inline Queue::Queue(Queue&& other) noexcept
     other.cbq.coArr = NULL;   // C-like const
     other.cbq.initSt = CBQ_IN_FREE; // for QueueFree
 }
+
+#pragma GCC diagnostic pop
 
 inline Queue& Queue::operator=(const Queue& other)
 {
