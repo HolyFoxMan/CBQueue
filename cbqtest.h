@@ -19,6 +19,7 @@
     #include "cbqbuildconf.h"
     #include "cbqdebug.h"
     #include "cbqueue.h"
+    #include "cbqversion.h"
     #include "cbqcallbacks.h"
 
     #define CBQ_T_EXPLORE_VERSION() \
@@ -34,7 +35,7 @@
     void CBQ_T_VerIdInfo(int);
     void CBQ_T_ArgsTest(void);
 
-    #if CBQ_CUR_VERSION >= 2
+    #ifdef CBQ_ALLOW_V2_METHODS
     void CBQ_T_CopyTest(void);
     void CBQ_T_ConcatTest(void);
     void CBQ_T_TransferTest(void);

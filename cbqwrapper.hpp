@@ -5,6 +5,7 @@
 #include "cbqbuildconf.h"
 #include "cbqueue.h"
 #include "cbqcallbacks.h"
+#include "cbqversion.h"
 #include <exception>
 #include <string>
 

@@ -91,7 +91,7 @@ int CBQ_QueueFree(CBQueue_t* queue)
     return 0;
 }
 
-#if CBQ_CUR_VERSION >= 2
+#ifdef CBQ_ALLOW_V2_METHODS
 
 int CBQ_QueueCopy(CBQueue_t* restrict dest, const CBQueue_t* restrict src)
 {
@@ -261,107 +261,6 @@ int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reve
 }
 
 #endif // Version 2
-
-int CBQ_ChangeCapacity(CBQueue_t* queue, const int changeTowards, size_t customNewCapacity, const int adaptByLimits)
-{
-    size_t errSt;
-
-    OPT_BASE_ERR_CHECK(queue);
-
-    #ifndef NO_EXCEPTIONS_OF_BUSY
-    if (queue->execSt == CBQ_EST_EXEC)
-        return CBQ_ERR_IS_BUSY;
-    #endif // NO_EXCEPTIONS_OF_BUSY
-
-    CBQ_MSGPRINT("Queue capacity changing...");
-
-    /* by selected mode with auto-dec/inc params */
-    if (changeTowards == CBQ_INC_CAPACITY) {
-        errSt = CBQ_incCapacity__(queue, 0, 1);
-        if (errSt)
-            return errSt;
-
-    } else if (changeTowards == CBQ_DEC_CAPACITY) {
-        errSt = CBQ_decCapacity__(queue, 0, 1);
-        if (errSt)
-            return errSt;
-
-    /* by new custom capacity */
-    } else {
-        if (customNewCapacity <= 0 || customNewCapacity > CBQ_QUEUE_MAX_CAPACITY)
-            return CBQ_ERR_ARG_OUT_OF_RANGE;
-
-        ssize_t delta = (ssize_t) (customNewCapacity - queue->capacity);
-
-        if (!delta)
-            return CBQ_ERR_CUR_CH_CAPACITY_NOT_AFFECT;
-        /* inc */
-        else if (delta > 0) {
-            errSt = CBQ_incCapacity__(queue, delta, adaptByLimits);
-            if (errSt)
-                return errSt;
-        /* dec */
-        } else {
-            errSt = CBQ_decCapacity__(queue, -delta, adaptByLimits);
-            if (errSt)
-                return errSt;
-        }
-    }
-
-    CBQ_MSGPRINT("Queue capacity is changed");
-    return 0;
-}
-
-
-int CBQ_ChangeIncCapacityMode(CBQueue_t* queue, int newIncCapacityMode, size_t newMaxCapacityLimit, const int tryToAdaptCapacity, const int adaptMaxCapacityLimit)
-{
-    int errSt;
-
-    OPT_BASE_ERR_CHECK(queue);
-
-    #ifndef NO_EXCEPTIONS_OF_BUSY
-    if (queue->execSt == CBQ_EST_EXEC)
-        return CBQ_ERR_IS_BUSY;
-    #endif // NO_EXCEPTIONS_OF_BUSY
-
-    CBQ_MSGPRINT("Queue capacity mode changing...");
-
-    if (newIncCapacityMode != CBQ_SM_LIMIT) {
-        queue->maxCapacityLimit = 0;
-        queue->incCapacityMode = newIncCapacityMode;
-        return 0;
-    } else {
-        if (newMaxCapacityLimit < CBQ_QUEUE_MIN_CAPACITY || newMaxCapacityLimit > CBQ_QUEUE_MAX_CAPACITY)
-            return CBQ_ERR_ARG_OUT_OF_RANGE;
-
-        /* capacity does not fit into new limits */
-        if (newMaxCapacityLimit < queue->capacity) {
-
-            if (tryToAdaptCapacity) {
-                CBQ_MSGPRINT("Queue capacity is adapt...");
-                errSt = CBQ_decCapacity__(queue, queue->capacity - newMaxCapacityLimit, adaptMaxCapacityLimit);
-                /* without capacity max limit adaptation flag the function may just give an error and close */
-                if (errSt)
-                    return errSt;
-
-                /* if it was not possible to equalize even after capacity decrementing */
-                if (newMaxCapacityLimit != queue->capacity)
-                    newMaxCapacityLimit = queue->capacity;
-            }
-            else if (adaptMaxCapacityLimit)
-                newMaxCapacityLimit = queue->capacity;
-            else
-                return CBQ_ERR_CAPACITY_NOT_FIT_IN_LIMIT;
-        }
-
-        queue->incCapacityMode = CBQ_SM_LIMIT;
-        queue->maxCapacityLimit = newMaxCapacityLimit;
-        queue->incCapacity = INIT_INC_CAPACITY;
-    }
-
-    CBQ_MSGPRINT("Queue capacity mode is changed");
-    return 0;
-}
 
 int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity)
 {
@@ -728,7 +627,7 @@ int CBQ_GetDetailedInfo(const CBQueue_t* queue, size_t *restrict getCapacity, si
             *getCapacity = queue->capacity;
 
         if (getSize)
-            CBQ_GetSize(queue, getSize);
+            *getSize = CBQ_getSizeByIndexes__(queue);
 
         if (getIncCapacityMode)
             *getIncCapacityMode = queue->incCapacityMode;
@@ -741,97 +640,6 @@ int CBQ_GetDetailedInfo(const CBQueue_t* queue, size_t *restrict getCapacity, si
 
         return 0;
     }
-
-int CBQ_GetVerIndex(void)
-{
-    const int verId =
-    #ifdef GEN_VERID
-        ((CBQ_CUR_VERSION & BYTE_MASK)? CBQ_CUR_VERSION & BYTE_MASK : 1)  // first byte
-        #if !defined(CBQ_NO_DEBUG) && defined(CBQ_DEBUG)
-        | 1 << (CBQ_VI_DEBUG + BYTE_OFFSET)
-        #endif  // debug id
-        #ifdef NO_BASE_CHECK
-        | 1 << (CBQ_VI_NBASECHECK + BYTE_OFFSET)
-        #endif // NO_BASE_CHECK
-        #ifdef NO_EXCEPTIONS_OF_BUSY
-        | 1 << (CBQ_VI_NEXCOFBUSY + BYTE_OFFSET)
-        #endif // NO_EXCEPTIONS_OF_BUSY
-        #ifdef NO_VPARAM_CHECK
-        | 1 << (CBQ_VI_NVPARAMCHECK + BYTE_OFFSET)
-        #endif // NO_VPARAM_CHECK
-        #ifdef REG_CYCLE_VARS
-        | 1 << (CBQ_VI_REGCYCLEVARS + BYTE_OFFSET)
-        #endif // REG_CYCLE_VARS
-        #ifdef NO_REST_MEM_FAIL
-        | 1 << (CBQ_VI_NRESTMEMFAIL + BYTE_OFFSET)
-        #endif // NO_REST_MEM_FAIL
-        #ifdef NO_FIX_ARGTYPES
-        | 1 << (CBQ_VI_NFIXARGTYPES + BYTE_OFFSET)
-        #endif // NO_FIX_ARGTYPES
-        #if CBQ_CUR_VERSION >= 2
-        | 1 << (CBQ_VI_CBSTDCALL + BYTE_OFFSET)
-        #endif
-    #else // GEN_VERID
-        (int) 0
-    #endif
-        ;
-
-    return verId;
-}
-
-int CBQ_CheckVerIndexByFlag(int fInfoType)
-{
-    int verId;
-    verId = CBQ_GetVerIndex();
-
-    if (!verId)
-        return CBQ_ERR_VI_NOT_GENERATED;
-
-    if (fInfoType < 0 || fInfoType >= CBQ_VI_LAST_FLAG)
-        return CBQ_ERR_ARG_OUT_OF_RANGE;
-    else if (fInfoType == CBQ_VI_VERSION)
-        return verId & BYTE_MASK; // First Byte
-    else
-        return 1 & verId >> (fInfoType + BYTE_OFFSET);
-}
-
-int CBQ_GetDifferencesVerIdMask(int comparedVerId)
-{
-    int verId;
-
-    verId = CBQ_GetVerIndex();
-    if (!verId)
-        return CBQ_ERR_VI_NOT_GENERATED;
-
-    if (!comparedVerId)
-        return CBQ_ERR_ARG_OUT_OF_RANGE;
-
-    verId ^= comparedVerId;
-    if (verId & BYTE_MASK)  // have difference versions
-        verId = (verId & ~BYTE_MASK) | 1; // replace the value of the first byte with logic true (one)
-
-    return verId;
-}
-
-int CBQ_GetAvaliableFlagsRange(void)
-{
-    #ifdef GEN_VERID
-    return CBQ_VI_LAST_FLAG;
-    #else
-    return CBQ_ERR_VI_NOT_GENERATED;
-    #endif
-}
-
-int CBQ_IsCustomisedVersion(void)
-{
-    int verId;
-    verId = CBQ_GetVerIndex();
-
-    if (!verId)
-        return CBQ_ERR_VI_NOT_GENERATED;
-
-    return !!(verId >> BYTE_CAPACITY); // !! - convert to bool value
-}
 
 /* ---------------- Other Methods ---------------- */
 char* CBQ_strIntoHeap(const char* str)

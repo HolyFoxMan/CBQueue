@@ -54,6 +54,7 @@
 
     #define CBQ_TIMER_METHODS 1
     #if CBQ_TIMER_METHODS == 1    // POSIX
+        #include <time.h>
 
         #define CBQ_CURTICKS() \
             ((CBQTicks_t)clock())

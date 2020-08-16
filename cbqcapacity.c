@@ -304,3 +304,103 @@ int CBQ_orderingDividedSegsInFullQueue__(CBQueue_t* trustedQueue)
 
     return 0;
 }
+
+int CBQ_ChangeCapacity(CBQueue_t* queue, const int changeTowards, size_t customNewCapacity, const int adaptByLimits)
+{
+    size_t errSt;
+
+    OPT_BASE_ERR_CHECK(queue);
+
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+    if (queue->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
+
+    CBQ_MSGPRINT("Queue capacity changing...");
+
+    /* by selected mode with auto-dec/inc params */
+    if (changeTowards == CBQ_INC_CAPACITY) {
+        errSt = CBQ_incCapacity__(queue, 0, 1);
+        if (errSt)
+            return errSt;
+
+    } else if (changeTowards == CBQ_DEC_CAPACITY) {
+        errSt = CBQ_decCapacity__(queue, 0, 1);
+        if (errSt)
+            return errSt;
+
+    /* by new custom capacity */
+    } else {
+        if (customNewCapacity <= 0 || customNewCapacity > CBQ_QUEUE_MAX_CAPACITY)
+            return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+        ssize_t delta = (ssize_t) (customNewCapacity - queue->capacity);
+
+        if (!delta)
+            return CBQ_ERR_CUR_CH_CAPACITY_NOT_AFFECT;
+        /* inc */
+        else if (delta > 0) {
+            errSt = CBQ_incCapacity__(queue, delta, adaptByLimits);
+            if (errSt)
+                return errSt;
+        /* dec */
+        } else {
+            errSt = CBQ_decCapacity__(queue, -delta, adaptByLimits);
+            if (errSt)
+                return errSt;
+        }
+    }
+
+    CBQ_MSGPRINT("Queue capacity is changed");
+    return 0;
+}
+
+int CBQ_ChangeIncCapacityMode(CBQueue_t* queue, int newIncCapacityMode, size_t newMaxCapacityLimit, const int tryToAdaptCapacity, const int adaptMaxCapacityLimit)
+{
+    int errSt;
+
+    OPT_BASE_ERR_CHECK(queue);
+
+    #ifndef NO_EXCEPTIONS_OF_BUSY
+    if (queue->execSt == CBQ_EST_EXEC)
+        return CBQ_ERR_IS_BUSY;
+    #endif // NO_EXCEPTIONS_OF_BUSY
+
+    CBQ_MSGPRINT("Queue capacity mode changing...");
+
+    if (newIncCapacityMode != CBQ_SM_LIMIT) {
+        queue->maxCapacityLimit = 0;
+        queue->incCapacityMode = newIncCapacityMode;
+        return 0;
+    } else {
+        if (newMaxCapacityLimit < CBQ_QUEUE_MIN_CAPACITY || newMaxCapacityLimit > CBQ_QUEUE_MAX_CAPACITY)
+            return CBQ_ERR_ARG_OUT_OF_RANGE;
+
+        /* capacity does not fit into new limits */
+        if (newMaxCapacityLimit < queue->capacity) {
+
+            if (tryToAdaptCapacity) {
+                CBQ_MSGPRINT("Queue capacity is adapt...");
+                errSt = CBQ_decCapacity__(queue, queue->capacity - newMaxCapacityLimit, adaptMaxCapacityLimit);
+                /* without capacity max limit adaptation flag the function may just give an error and close */
+                if (errSt)
+                    return errSt;
+
+                /* if it was not possible to equalize even after capacity decrementing */
+                if (newMaxCapacityLimit != queue->capacity)
+                    newMaxCapacityLimit = queue->capacity;
+            }
+            else if (adaptMaxCapacityLimit)
+                newMaxCapacityLimit = queue->capacity;
+            else
+                return CBQ_ERR_CAPACITY_NOT_FIT_IN_LIMIT;
+        }
+
+        queue->incCapacityMode = CBQ_SM_LIMIT;
+        queue->maxCapacityLimit = newMaxCapacityLimit;
+        queue->incCapacity = INIT_INC_CAPACITY;
+    }
+
+    CBQ_MSGPRINT("Queue capacity mode is changed");
+    return 0;
+}

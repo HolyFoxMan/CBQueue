@@ -1,53 +1,44 @@
 #ifndef CBQUEUE_H
 #define CBQUEUE_H
 
+    /* ---------------- C/C++ support ---------------- */
     #ifdef __cplusplus
         extern "C" {
         #define C_ATTR
-    #else
-        #define C_ATTR restrict
-    #endif // __cplusplus
 
-    /* At c99 */
-    #if !defined(__cplusplus) && __STDC_VERSION__ < 199901L
-        #error Needs minimum "c99" standart C version or C++11
-    #endif
-
-    #ifdef _cplusplus
         #include <cstdlib>
         #include <ctime>
+
     #else
+        #define C_ATTR restrict
+
         #include <stdlib.h>
         #include <time.h>
-    #endif
 
-    #define MAX_VERISON 2
+        #if __STDC_VERSION__ < 199901L
+            #error Needs minimum "c99" standart C version
+        #endif
+
+    #endif // __cplusplus
+
+    /* ---------------- Build version control ---------------- */
+    #define CBQ_MIN_VERSION 1
+    #define CBQ_MAX_VERISON 2
 
     #ifndef CBQ_CUR_VERSION
         #define CBQ_CUR_VERSION MAX_VERSION
     #endif
 
-    #if CBQ_CUR_VERSION >= 2
-        /* Windows version of convections
-         * Allow clear param stack in CB funcs, what
-         * will reduce code.
-         */
-        #define CB_STDCALL_CONVECTION
+    #if CBQ_CUR_VERSION < CBQ_MIN_VERSION || CBQ_CUR_VERSION > CBQ_MAX_VERISON
+        #error CBQ_CUR_VERSION
     #endif
 
-    /* ---------------- Compile controllers ---------------- */
+
     #if CBQ_CUR_VERSION >= 2
         #define CBQ_ALLOW_V2_METHODS
     #endif
 
-    /* Method call controller */
-    #if defined(NO_CFUNCS_CALLS) && !defined(WITHIN_STRUCT_CALLS)
-        #ifndef NO_CLASS_WRAPPER
-            #error no methods call specified
-        #endif
-    #endif
-
-    /* ---------------- Argument structure ---------------- */
+    /* ---------------- Argument structure declaration ---------------- */
 
     /* Union type has argument base element which contain
      * used variables for function calls in queue.
@@ -100,7 +91,7 @@
     };
 
 
-    /* ---------------- Callback function ---------------- */
+    /* ---------------- Callback function declaration ---------------- */
 
     /* Type func pointer for functions which must be called
      * in the queue after earlier stored calls. Function poiner
@@ -127,18 +118,10 @@
     /* Macro for callback without scalable parameters, same as null macros */
     #define CBQ_NO_VPARAMS NULL
 
-    #if CBQ_CUR_VERSION >= 2
-        #if defined(CB_STDCALL_CONVECTION) && (defined(_WIN32) || defined(_WIN64))
-            #define CBQCALLBACK __stdcall
-        #else
-            #define CBQCALLBACK __cdecl
-        #endif
-    #else
-        #define CBQCALLBACK
-    #endif
+    typedef int (*QCallback) (int argc, CBQArg_t* args);
 
-    typedef CBQCALLBACK int (*QCallback) (int argc, CBQArg_t* args);
-    /* ---------------- Queue (main) structure ---------------- */
+
+    /* ---------------- Queue (main) structure declaration ---------------- */
 
     /* Main structure of callback queue instance
      * Used for async function calls support.
@@ -203,7 +186,8 @@
         CBQ_SI_HUGE =           8192
     };
 
-    /* ---------------- Queue functions ---------------- */
+
+    /* ---------------- Queue functions declaration ---------------- */
 
     /* List of possible return error statuses by callback queue methods.
      * First CBQ_SUCCESSFUL is simple zero constant which is used
@@ -228,11 +212,8 @@
         CBQ_ERR_VPARAM_VARIANCE,
         CBQ_ERR_HURTS_USED_ARGS,
         CBQ_ERR_INITCAP_IS_IDENTICAL,
-        /* VerId exception */
-        CBQ_ERR_VI_NOT_GENERATED = SHRT_MAX
-        #if CBQ_CUR_VERSION >= 2
-        ,
-        CBQ_ERR_COUNT_NOT_FIT_IN_SIZE
+        #ifdef CBQ_ALLOW_V2_METHODS
+        CBQ_ERR_COUNT_NOT_FIT_IN_SIZE,
         #endif
     };
 
@@ -247,19 +228,20 @@
         CBQ_DEC_CAPACITY
     };
 
-#ifndef NO_CFUNCS_CALLS
-/* ---------------- Base methods ---------------- */
+
+/* ---------------- Base method sdeclaration ---------------- */
 int CBQ_QueueInit(CBQueue_t* queue, size_t capacity, int incCapacityMode, size_t maxCapacityLimit, unsigned int customInitArgsCapacity);
 int CBQ_Clear(CBQueue_t* queue);
 int CBQ_QueueFree(CBQueue_t* queue);
-#if CBQ_CUR_VERSION >= 2
+#ifdef CBQ_ALLOW_V2_METHODS
 int CBQ_QueueCopy(CBQueue_t* C_ATTR dest, const CBQueue_t* C_ATTR src);
 int CBQ_QueueConcat(CBQueue_t* C_ATTR dest, const CBQueue_t* C_ATTR src);
 int CBQ_QueueTransfer(CBQueue_t* C_ATTR dest, CBQueue_t* C_ATTR src, size_t count, const int cutByDestLimit, const int cutBySrcSize);
 int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reverseOrder);
 #endif // CBQ_CUR_VERSION
 
-/* -------- push macroses -------- */
+
+/* -------- Push/Execute methods declaration -------- */
 
 /* macro function for pushing CB with static number (in runtime) of parameters
  * CBQ_PushStatic(&queue, callback, 3, (CBQArg_t) {.siVar = -10}, (CBQArg_t) {.uiVar = 20}, (CBQArg_t) {.cVar = '+'});
@@ -272,7 +254,7 @@ int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reve
 #define CBQ_PushStatic(queue, func, paramc, ...) \
     CBQ_Push(queue, func, 0, CBQ_NO_VPARAMS, paramc, __VA_ARGS__)
 
-/* Not for using */
+/*!Not for using */
 #define GET_ARG_COUNT(...) INTERNAL_GET_ARG_COUNT_PRIVATE(0, ## __VA_ARGS__, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 #define INTERNAL_GET_ARG_COUNT_PRIVATE(_0, _1_, _2_, _3_, _4_, _5_, _6_, _7_, _8_, _9_, _10_, _11_, _12_, _13_, _14_, _15_, _16_, _17_, _18_, _19_, _20_, count, ...) count
 
@@ -290,7 +272,7 @@ int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reve
     CBQ_Push(queue, func, paramc, pVarParamArray, 0, CBQ_NO_STPARAMS)
 
 
-/* -------- set timeout macroses -------- */
+/* Set timeout macros funcs */
 #define CBQ_SetTimeoutVoid(queue, delay, isSec, target_queue, func)  \
     CBQ_SetTimeout(queue, delay, isSec, target_queue, func, 0, CBQ_NO_VPARAMS)
 
@@ -302,23 +284,23 @@ int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reve
     CBQ_SetTimeout(queue, delay, isSec, queue, func, 0, CBQ_NO_VPARAMS)
 
 /* Method pushes callbacks by static and variable passing of parameters (in run-time) */
-/* __cdecl relevant for functions with variable arguments (Like CBQ_Push)
- *
- */
-__cdecl int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...);
+
+int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...);
 int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams);
 int CBQ_PushVoid(CBQueue_t* queue, QCallback func);
 int CBQ_Exec(CBQueue_t* queue, int* funcRetSt);
 int CBQ_SetTimeout(CBQueue_t* queue, clock_t delay, const int isSec, CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams);
 
-/* ---------------- Additional methods ---------------- */
+/* ---------------- Capacity changing methods declaration ---------------- */
 int CBQ_ChangeCapacity(CBQueue_t* queue, const int changeTowards, size_t customNewCapacity, const int adaptByLimits);
 int CBQ_ChangeIncCapacityMode(CBQueue_t* queue, int newIncCapacityMode, size_t newCapacityMaxLimit, const int tryToAdaptCapacity, const int adaptCapacityMaxLimit);
 int CBQ_EqualizeArgsCapByCustom(CBQueue_t* queue, unsigned int customCapacity, const int passNonModifiableArgs);
 int CBQ_ChangeInitArgsCapByCustom(CBQueue_t* queue, unsigned int customInitCapacity);
+
+/* ---------------- Additional methods declaration ---------------- */
 char* CBQ_strIntoHeap(const char* str);
 
-/* ---------------- Info Methods ---------------- */
+/* ---------------- Info Methods declaration ---------------- */
 #define CBQ_HAVECALL_P(TRUSTED_QUEUE_POINTER) \
     (!!(TRUSTED_QUEUE_POINTER)->status)
 
@@ -345,50 +327,16 @@ char* CBQ_strIntoHeap(const char* str);
 
 int CBQ_GetSize(const CBQueue_t* queue, size_t* size);
 int CBQ_GetCapacityInBytes(const CBQueue_t* queue, size_t* byteCapacity);
-int CBQ_GetDetailedInfo(const CBQueue_t* queue, size_t *C_ATTR getCapacity, size_t *C_ATTR getSize,
-    int *C_ATTR getIncCapacityMode, size_t *C_ATTR getMaxCapacityLimit, size_t *C_ATTR getCapacityInBytes);
 
-#endif // NO_CFUNCS_CALLS
+int CBQ_GetDetailedInfo( const CBQueue_t* queue,
+    size_t *C_ATTR      getCapacity,
+    size_t *C_ATTR      getSize,
+    int    *C_ATTR      getIncCapacityMode,
+    size_t *C_ATTR      getMaxCapacityLimit,
+    size_t *C_ATTR      getCapacityInBytes
+);
 
-/* VerId Information
- * You can just call CBQ_T_EXPLORE_VERSION() from cbqtest.h to get readable information of used lib
- */
-enum CBQ_VI {  // flags for checking VerId by CBQ_CheckVerIndexByFlag function
-    CBQ_VI_VERSION,
-    CBQ_VI_DEBUG,       // starts after first byte
-    CBQ_VI_NBASECHECK,
-    CBQ_VI_NEXCOFBUSY,
-    CBQ_VI_NVPARAMCHECK,
-    CBQ_VI_REGCYCLEVARS,
-    CBQ_VI_NRESTMEMFAIL,
-    CBQ_VI_NFIXARGTYPES,
-    #if CBQ_CUR_VERSION >= 2
-    CBQ_VI_CBSTDCALL,
-    #endif
-    CBQ_VI_LAST_FLAG    // use it only when comparing with the return value from the CBQ_GetAvaliableFlagsRange function
-};
-/* Returns identification value with version and used flags of current lib build.
- * If macro GEN_VERID has not been set, returns zero.
- */
-
-#ifndef NO_CFUNCS_CALLS
-
-int CBQ_GetVerIndex(void);
-/* Return 1/0 or version by selected flag (CBQ_VI_...)*/
-int CBQ_CheckVerIndexByFlag(int fInfoType);
-/* Return logic mask (version differences are indicated by a 1 in the first byte) */
-int CBQ_GetDifferencesVerIdMask(int comparedVerId);
-/* May compare with CBQ_VI_LAST_FLAG value to avoid error in CBQ_CheckVerIndexByFlag.
- * But can returns error (CBQ_ERR_VI_NOT_GENERATED) if GEN_VERID has not been sets in used lib build.
- */
-int CBQ_GetAvaliableFlagsRange(void);
-/* Returns 1 if version was configured (At 0, you can hope for complete safety) */
-int CBQ_IsCustomisedVersion(void);
-
-#endif // NO_CFUNCS_CALLS
-
-////////////////////////////////////////////////////////////////////////////////
-
+/* ---------------- End ---------------- */
 #undef C_ATTR
 
     #ifdef __cplusplus

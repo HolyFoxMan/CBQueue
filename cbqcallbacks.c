@@ -2,8 +2,7 @@
 
 static int CBQ_setTimeoutFrame__(int, CBQArg_t*);
 
-/* push CB after delay, like JS func. Needs time.h lib */
-int CBQ_SetTimeout(CBQueue_t* queue, long delay, const int isSec,
+int CBQ_SetTimeout(CBQueue_t* queue, CBQTicks_t delay, const int isSec,
     CBQueue_t* targetQueue, QCallback func, unsigned int vParamc, CBQArg_t* vParams)
 {
     CBQTicks_t targetTime;
