@@ -3,13 +3,16 @@
 
     /* ---------------- C/C++ support ---------------- */
     #ifdef __cplusplus
+
         extern "C" {
+
         #define C_ATTR
 
         #include <cstdlib>
         #include <ctime>
 
     #else
+
         #define C_ATTR restrict
 
         #include <stdlib.h>
@@ -141,7 +144,7 @@
         #endif // NO_EXCEPTIONS_OF_BUSY
 
         /* containers */
-        struct  CBQContainer_t* coArr;
+        struct  CBQContainer_t* C_ATTR coArr;
         size_t  capacity;
         size_t  maxCapacityLimit;
         size_t  incCapacity;
@@ -214,6 +217,7 @@
         CBQ_ERR_INITCAP_IS_IDENTICAL,
         #ifdef CBQ_ALLOW_V2_METHODS
         CBQ_ERR_COUNT_NOT_FIT_IN_SIZE,
+        CBQ_ERR_SAME_QUEUE,
         #endif
     };
 
@@ -235,6 +239,7 @@ int CBQ_Clear(CBQueue_t* queue);
 int CBQ_QueueFree(CBQueue_t* queue);
 #ifdef CBQ_ALLOW_V2_METHODS
 int CBQ_QueueCopy(CBQueue_t* C_ATTR dest, const CBQueue_t* C_ATTR src);
+int CBQ_QueueCorrectMove(CBQueue_t* C_ATTR dest, CBQueue_t* C_ATTR src);
 int CBQ_QueueConcat(CBQueue_t* C_ATTR dest, const CBQueue_t* C_ATTR src);
 int CBQ_QueueTransfer(CBQueue_t* C_ATTR dest, CBQueue_t* C_ATTR src, size_t count, const int cutByDestLimit, const int cutBySrcSize);
 int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reverseOrder);

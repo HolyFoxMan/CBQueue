@@ -137,7 +137,29 @@ int CBQ_QueueCopy(CBQueue_t* restrict dest, const CBQueue_t* restrict src)
     return 0;
 }
 
-int CBQ_QueueConcat(CBQueue_t* restrict dest, const  CBQueue_t* restrict src)
+/* for dest initialization or assigning with src */
+int CBQ_QueueCorrectMove(CBQueue_t* restrict dest, CBQueue_t* restrict src)
+{
+    if (dest == NULL)
+        return CBQ_ERR_ARG_NULL_POINTER;
+
+    BASE_ERR_CHECK(src);
+
+    if (dest == src)
+        return CBQ_ERR_SAME_QUEUE;
+
+    if (dest->initSt == CBQ_IN_INITED)
+        CBQ_QueueFree(dest);
+
+    *dest = *src;
+
+    src->coArr = NULL;
+    src->initSt = CBQ_IN_FREE;
+
+    return 0;
+}
+
+int CBQ_QueueConcat(CBQueue_t* restrict dest, const CBQueue_t* restrict src)
 {
     int errSt;
     size_t commonSize, srcSize;
@@ -145,6 +167,9 @@ int CBQ_QueueConcat(CBQueue_t* restrict dest, const  CBQueue_t* restrict src)
 
     OPT_BASE_ERR_CHECK(dest);
     BASE_ERR_CHECK(src);
+
+    if (dest == src)
+        return CBQ_ERR_SAME_QUEUE;
 
     #ifndef NO_EXCEPTIONS_OF_BUSY
     if (dest->execSt == CBQ_EST_EXEC || src->execSt == CBQ_EST_EXEC)
@@ -181,6 +206,9 @@ int CBQ_QueueTransfer(CBQueue_t* restrict dest, CBQueue_t* restrict src, size_t 
     if (dest->execSt == CBQ_EST_EXEC || src->execSt == CBQ_EST_EXEC)
         return CBQ_ERR_IS_BUSY;
     #endif // NO_EXCEPTIONS_OF_BUSY
+
+    if (dest == src)
+        return CBQ_ERR_SAME_QUEUE;
 
     if (!count)
         return CBQ_ERR_ARG_OUT_OF_RANGE;
@@ -657,5 +685,3 @@ char* CBQ_strIntoHeap(const char* str)
 
     return buff;
 }
-
-/* Debug */

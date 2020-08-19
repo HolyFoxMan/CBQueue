@@ -96,10 +96,6 @@ private:
 class Queue {
 private:
     CBQueue_t cbq;
-    enum : int {
-        CBQ_IN_INITED = 0x51494E49,
-        CBQ_IN_FREE = 0x51465245
-    };
 
 public:
     explicit Queue(size_t capacity = CBQ_SI_SMALL, CBQ_CapacityModes capacityMode = CBQ_SM_LIMIT, size_t maxCapacityLimit = CBQ_SI_BIG, unsigned int initArgsCapacity = 0);
@@ -182,9 +178,7 @@ inline Queue::Queue(const Queue& other)
 
 inline Queue::Queue(Queue&& other) noexcept
 {
-    this->cbq = other.cbq;
-    other.cbq.coArr = NULL;   // C-like const
-    other.cbq.initSt = CBQ_IN_FREE; // for QueueFree
+    CBQ_QueueCorrectMove(&this->cbq, &other.cbq);
 }
 
 #pragma GCC diagnostic pop
@@ -207,16 +201,8 @@ inline Queue& Queue::operator=(const Queue& other)
 
 inline Queue& Queue::operator=(Queue&& other)
 {
-    if (this == &other)
-        return *this;
-
-    int err = CBQ_QueueFree(&this->cbq);
-    if (err)
-        throw(cbqcstr_exception(err));
-
-    this->cbq = other.cbq;
-    other.cbq.coArr = NULL;
-    other.cbq.initSt = CBQ_IN_FREE;
+    CBQ_QueueCorrectMove(&this->cbq, &other.cbq);
+    return *this;
 }
 
 inline Queue::~Queue() noexcept
