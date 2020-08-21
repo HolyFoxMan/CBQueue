@@ -3,9 +3,21 @@
 #include <iostream>
 #include "cbqwrapper.hpp"
 
-int CBTest(int, CBQArg_t* argv)
+int CPPCBFunc(int a, char b, float c, double d)
 {
-    std::cout << argv[0].iVar;
+    std::cout << a << " " << b << " " << c << " " << d << std::endl;
+    return 0;
+}
+
+int CPPCBFunc2(void)
+{
+    std::cout << "Hello, world!" << std::endl;
+    return 0;
+}
+
+int CPPCBFunc3(char a, char b)
+{
+    std::cout << a << " " << b << std::endl;
     return 0;
 }
 
@@ -13,16 +25,9 @@ int CBTest(int, CBQArg_t* argv)
 
 int main(void)
 {
-    uint8_t x = 34;
-
-    CBQPP::Queue
-        queue,
-        queue_2;
-
-    queue.SetTimeout(queue_2, CBTest, 0, x);
-
+    CBQPP::Queue queue;
+    //queue.Push(CPPCBFunc, 3, 'a', 0.15, 56.64);
+    queue.Push(CPPCBFunc3, 'a', 'b');
     queue.Execute();
-    queue_2.Execute();
-
     return 0;
 }
