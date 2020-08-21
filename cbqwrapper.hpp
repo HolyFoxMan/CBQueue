@@ -333,10 +333,10 @@ inline int Queue::Push(FuncT func, Args... arguments) noexcept
                {
                     #pragma GCC diagnostic push
                     #pragma GCC diagnostic ignored "-Wsequence-point"   // skip undefined argNum operation
-                    return static_cast<int>(reinterpret_cast<FuncT>(argv[0].pVar)( CBQ_convertToVal__<Args>(argv[--argc])...));
+                    return static_cast<int>(reinterpret_cast<int (*)(Args...)>(argv[0].pVar)( CBQ_convertToVal__<Args>(argv[--argc])...));
                     #pragma GCC diagnostic pop
                })
-            , 0, CBQ_NO_VPARAMS, sizeof...(arguments) + 1, CBQ_convertToArg__<void*>(reinterpret_cast<void*>(func)), CBQ_convertToArg__<Args>(arguments)...);
+            , 0, CBQ_NO_VPARAMS, sizeof...(arguments) + 1, CBQ_convertToArg__<void*>(reinterpret_cast<void*>(reinterpret_cast<int (*)(Args...)>(+func))), CBQ_convertToArg__<Args>(arguments)...);
 }
 
 template <typename FuncT>
@@ -344,9 +344,9 @@ inline int Queue::Push(FuncT func) noexcept
 {
     return CBQ_Push(&this->cbq, static_cast<QCallback>( [](int, CBQArg_t* argv) -> int
                {
-                    return static_cast<int>(reinterpret_cast<FuncT>(argv[0].pVar)());
+                    return static_cast<int>(reinterpret_cast<int (*)(void)>(argv[0].pVar)());
                })
-        , 0, CBQ_NO_VPARAMS, 1, CBQ_convertToArg__<void*>(reinterpret_cast<void*>(func)));
+        , 0, CBQ_NO_VPARAMS, 1, CBQ_convertToArg__<void*>(reinterpret_cast<void*>(reinterpret_cast<int (*)(void)>(+func))));
 }
 
 inline int Queue::Execute(int* cb_status) noexcept
@@ -402,6 +402,29 @@ inline int Queue::SetTimeoutForSec(Queue& target, QCallback func, clock_t delayI
 {
     return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &target.cbq, func, 0,  CBQ_NO_VPARAMS);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 inline size_t Queue::Size(void) const noexcept
 {
