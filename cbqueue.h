@@ -114,7 +114,7 @@
         #define UNUSED
     #endif
 
-    /* Macro for callback without static parameters which set into 4 param in CBQ_Exec function */
+    /* Macro for callback without static parameters which set into 4 param in CBQ_Push function */
     #define CBQ_NO_STPARAMS \
         (CBQArg_t) {0}
 
@@ -288,7 +288,7 @@ int CBQ_Skip(CBQueue_t* queue, size_t count, const int cutBySize, const int reve
 #define CBQ_SetTimeoutVoidSP(queue, delay, isSec, func)  \
     CBQ_SetTimeout(queue, delay, isSec, queue, func, 0, CBQ_NO_VPARAMS)
 
-/* Method pushes callbacks by static and variable passing of parameters (in run-time) */
+/* Method pushes callbacks by static and variadic passing of parameters (in run-time) */
 
 int CBQ_Push(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams, unsigned int stParamc, CBQArg_t stParams, ...);
 int CBQ_PushOnlyVP(CBQueue_t* queue, QCallback func, unsigned int varParamc, CBQArg_t* varParams);
