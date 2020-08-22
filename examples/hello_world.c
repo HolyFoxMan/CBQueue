@@ -14,7 +14,10 @@ int main(void)
 {
     CBQueue_t queue;
 
-    /* initialize queue with tiny capacity (by define constant) and static mode, without capacity, limit standard argument capacity */
+    /* initialize queue with tiny capacity (by define constant)
+     * and static mode, without limit capacity
+     * also with limit standard argument capacity
+     */
     CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0);
 
     /* push callback into queue without arguments */
