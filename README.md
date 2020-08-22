@@ -2,14 +2,15 @@
 Queue which gets callback function with arguments and may execute them by order.
 It is simple module (or small lib) written on C. Work with the queue by using the following basic methods:
 * *Push*
-  * O(1),  Worst - O(n)  // only when not enough memory
+  * O(1),  Worst - O(n)   (only when not enough memory)
 * *Execute*
   * O(1),  Worst - O(1)
 * *ChangeSize*
 * *GetDetailedInfo*
 * *SetTimeout* (Like in JS)
+* and more else...
 
-and more else.
+Please, check examples of using in C/C++ (while there are many examples in cbqtest.c).
 
 Since the library was made with a bias towards safe use, there is a restriction
 inside direct calls of callbacks of the same queue:
