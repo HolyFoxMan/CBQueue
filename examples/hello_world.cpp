@@ -7,7 +7,7 @@ int main()
     CBQCPP::Queue queue;
 
     queue.Push(
-        []() {
+        []() -> int {
             std::cout << "Hello, World!" << std::endl;
             return 0;
         }
