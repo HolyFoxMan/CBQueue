@@ -72,7 +72,7 @@ int main(void)
     queue.Execute(); // Test 2 1 5
 
     queue.SetTimeout(Old_TestCB_2, 0, 4);
-    queue.SetTimeout([](int a){std::cout << "Test custom cb" << a << std::endl; return 0;}, 0, 5);
+    queue.SetTimeout([](int a, char b){std::cout << "Test custom cb" << a << b << std::endl; return 0;}, 0, 5, 'v');
     queue.Execute();
     queue.Execute();
 
