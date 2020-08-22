@@ -113,27 +113,28 @@ public:
     template <typename... Args>
     int Push(QCallback func, Args... arguments) noexcept;
     int Push(QCallback func) noexcept;
-
     template <typename FuncT, typename... Args>
     int Push(FuncT func, Args... arguments) noexcept;
-    template <typename FuncT>
-    int Push(FuncT func) noexcept;
-
-    int Execute(int* cb_status = NULL) noexcept;
 
     template <typename... Args>
     int SetTimeout(QCallback func, clock_t delay, Args... arguments) noexcept;
-    int SetTimeout(QCallback func, clock_t delay) noexcept;
+    template <typename FuncT, typename... Args>
+    int SetTimeout(FuncT func, clock_t delay, Args... arguments) noexcept;
     template <typename... Args>
     int SetTimeout(Queue& target, QCallback func, clock_t delay, Args... arguments) noexcept;
-    int SetTimeout(Queue& target, QCallback func, clock_t delay) noexcept;
+    template <typename FuncT, typename... Args>
+    int SetTimeout(Queue& target, FuncT func, clock_t delay, Args... arguments) noexcept;
 
     template <typename... Args>
     int SetTimeoutForSec(QCallback func, clock_t delay, Args... arguments) noexcept;
-    int SetTimeoutForSec(QCallback func, clock_t delay) noexcept;
+    template <typename FuncT, typename... Args>
+    int SetTimeoutForSec(FuncT func, clock_t delay, Args... arguments) noexcept;
     template <typename... Args>
     int SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec, Args... arguments) noexcept;
-    int SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec) noexcept;
+    template <typename FuncT, typename... Args>
+    int SetTimeoutForSec(Queue& target, FuncT func, clock_t delayInSec, Args... arguments) noexcept;
+
+    int Execute(int* cb_status = NULL) noexcept;
 
     size_t Size(void) const noexcept;
     size_t Capacity(void) const noexcept;
@@ -162,7 +163,8 @@ public:
 private:
     template <typename T> static CBQArg_t CBQ_convertToArg__(T val) noexcept;
     template <typename T> static T CBQ_convertToVal__(CBQArg_t arg) noexcept;
-
+    template <typename FuncT, typename... ArgsT> static CBQArg_t CBQ_packCustomCB__(FuncT customCB) noexcept;
+    template <typename... ArgsT> static int CBQ_invokeCustomCB__(int argc, CBQArg_t* argv) noexcept;
 };
 
 #pragma GCC diagnostic push
@@ -326,32 +328,28 @@ template <> inline void* Queue::CBQ_convertToVal__<void*>(CBQArg_t val) noexcept
 template <> inline CBQueue_t* Queue::CBQ_convertToVal__<CBQueue_t*>(CBQArg_t val) noexcept                  {return val.qVar;  }
 template <> inline QCallback Queue::CBQ_convertToVal__<QCallback>(CBQArg_t val) noexcept                    {return val.fVar;  }
 
-template <typename FuncT, typename... Args>
-inline int Queue::Push(FuncT func, Args... arguments) noexcept
+template<typename... ArgsT>
+inline int Queue::CBQ_invokeCustomCB__(int argc, CBQArg_t* argv) noexcept
 {
-    return CBQ_Push(&this->cbq, static_cast<QCallback>( [](int argc, CBQArg_t* argv) -> int
-               {
-                    #pragma GCC diagnostic push
-                    #pragma GCC diagnostic ignored "-Wsequence-point"   // skip undefined argNum operation
-                    return static_cast<int>(reinterpret_cast<int (*)(Args...)>(argv[0].pVar)( CBQ_convertToVal__<Args>(argv[--argc])...));
-                    #pragma GCC diagnostic pop
-               })
-            , 0, CBQ_NO_VPARAMS, sizeof...(arguments) + 1, CBQ_convertToArg__<void*>(reinterpret_cast<void*>(reinterpret_cast<int (*)(Args...)>(+func))), CBQ_convertToArg__<Args>(arguments)...);
+    constexpr unsigned int CUSTOM_CB_ID = 0;
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wsequence-point"
+    return static_cast<int>(reinterpret_cast<int (*)(ArgsT...)>(argv[CUSTOM_CB_ID].pVar)( CBQ_convertToVal__<ArgsT>(argv[--argc])...));
+    #pragma GCC diagnostic pop
 }
 
-template <typename FuncT>
-inline int Queue::Push(FuncT func) noexcept
+template <typename FuncT, typename... ArgsT>
+inline CBQArg_t Queue::CBQ_packCustomCB__(FuncT customCB) noexcept
 {
-    return CBQ_Push(&this->cbq, static_cast<QCallback>( [](int, CBQArg_t* argv) -> int
-               {
-                    return static_cast<int>(reinterpret_cast<int (*)(void)>(argv[0].pVar)());
-               })
-        , 0, CBQ_NO_VPARAMS, 1, CBQ_convertToArg__<void*>(reinterpret_cast<void*>(reinterpret_cast<int (*)(void)>(+func))));
+    CBQArg_t arg;
+    arg.pVar = reinterpret_cast<void*>(reinterpret_cast<int (*)(ArgsT...)>(+customCB));
+    return arg;
 }
 
-inline int Queue::Execute(int* cb_status) noexcept
+template <typename FuncT, typename... ArgsT>
+inline int Queue::Push(FuncT func, ArgsT... arguments) noexcept
 {
-    return CBQ_Exec(&this->cbq, cb_status);
+    return CBQ_Push(&this->cbq, CBQ_invokeCustomCB__<ArgsT...>, 0, CBQ_NO_VPARAMS, sizeof...(arguments) + 1, CBQ_packCustomCB__<FuncT, ArgsT...>(func), CBQ_convertToArg__<ArgsT>(arguments)...);
 }
 
 
@@ -359,72 +357,63 @@ template <typename... Args>
 inline int Queue::SetTimeout(QCallback func, clock_t delay, Args... arguments) noexcept
 {
     CBQArg_t params[] = {CBQ_convertToArg__<Args>(arguments)...};
-    return CBQ_SetTimeout(&this->cbq, delay, 0, &this->cbq, func, sizeof...(arguments), params);
-}
-
-inline int Queue::SetTimeout(QCallback func, clock_t delay) noexcept
-{
-    return CBQ_SetTimeout(&this->cbq, delay, 0, &this->cbq, func, 0,  CBQ_NO_VPARAMS);
+    return CBQ_SetTimeout(&this->cbq, delay, 0, &this->cbq, func, sizeof...(arguments), sizeof...(arguments)? params : CBQ_NO_VPARAMS);
 }
 
 template <typename... Args>
 inline int Queue::SetTimeout(Queue& target, QCallback func, clock_t delay, Args... arguments) noexcept
 {
     CBQArg_t params[] = {CBQ_convertToArg__<Args>(arguments)...};
-    return CBQ_SetTimeout(&this->cbq, delay, 0, &target.cbq, func, sizeof...(arguments), params);
-}
-
-inline int Queue::SetTimeout(Queue& target, QCallback func, clock_t delay) noexcept
-{
-    return CBQ_SetTimeout(&this->cbq, delay, 0, &target.cbq, func, 0,  CBQ_NO_VPARAMS);
+    return CBQ_SetTimeout(&this->cbq, delay, 0, &target.cbq, func, sizeof...(arguments), sizeof...(arguments)? params : CBQ_NO_VPARAMS);
 }
 
 template <typename... Args>
 inline int Queue::SetTimeoutForSec(QCallback func, clock_t delayInSec, Args... arguments) noexcept
 {
     CBQArg_t params[] = {CBQ_convertToArg__<Args>(arguments)...};
-    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &this->cbq, func, sizeof...(arguments), params);
-}
-
-inline int Queue::SetTimeoutForSec(QCallback func, clock_t delayInSec) noexcept
-{
-    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &this->cbq, func, 0, CBQ_NO_VPARAMS);
+    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &this->cbq, func, sizeof...(arguments), sizeof...(arguments)? params : CBQ_NO_VPARAMS);
 }
 
 template <typename... Args>
 inline int Queue::SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec, Args... arguments) noexcept
 {
-    CBQArg_t params[] = {CBQ_convertToArg__<Args>(arguments)...};
-    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &target.cbq, func, sizeof...(arguments), params);
+    CBQArg_t* params = {CBQ_convertToArg__<Args>(arguments)...};
+    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &target.cbq, func, sizeof...(arguments), sizeof...(arguments)? params : CBQ_NO_VPARAMS);
 }
 
-inline int Queue::SetTimeoutForSec(Queue& target, QCallback func, clock_t delayInSec) noexcept
+template <typename FuncT, typename... Args>
+inline int Queue::SetTimeout(FuncT func, clock_t delay, Args... arguments) noexcept
 {
-    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &target.cbq, func, 0,  CBQ_NO_VPARAMS);
+    CBQArg_t params[] = { CBQ_packCustomCB__<FuncT, Args...>(func), CBQ_convertToArg__<Args>(arguments)... };
+    return CBQ_SetTimeout(&this->cbq, delay, 0, &this->cbq, CBQ_invokeCustomCB__<Args...>, sizeof...(arguments) + 1, sizeof...(arguments)? params : CBQ_NO_VPARAMS);
+}
+
+template <typename FuncT, typename... Args>
+inline int Queue::SetTimeout(Queue& target, FuncT func, clock_t delay, Args... arguments) noexcept
+{
+    CBQArg_t params[] = { CBQ_packCustomCB__<FuncT, Args...>(func), CBQ_convertToArg__<Args>(arguments)... };
+    return CBQ_SetTimeout(&this->cbq, delay, 0, &target.cbq, CBQ_invokeCustomCB__<Args...>, sizeof...(arguments) + 1, sizeof...(arguments)? params : CBQ_NO_VPARAMS);
+}
+
+template <typename FuncT, typename... Args>
+inline int Queue::SetTimeoutForSec(FuncT func, clock_t delayInSec, Args... arguments) noexcept
+{
+    CBQArg_t params[] = { CBQ_packCustomCB__<FuncT, Args...>(func), CBQ_convertToArg__<Args>(arguments)...};
+    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &this->cbq, CBQ_invokeCustomCB__<Args...>, sizeof...(arguments) + 1, sizeof...(arguments)? params : CBQ_NO_VPARAMS);
+}
+
+template <typename FuncT, typename... Args>
+inline int Queue::SetTimeoutForSec(Queue& target, FuncT func, clock_t delayInSec, Args... arguments) noexcept
+{
+    CBQArg_t* params = { CBQ_packCustomCB__<FuncT, Args...>(func), CBQ_convertToArg__<Args>(arguments)...};
+    return CBQ_SetTimeout(&this->cbq, delayInSec, 1, &target.cbq, CBQ_invokeCustomCB__<Args...>, sizeof...(arguments) + 1, sizeof...(arguments)? params : CBQ_NO_VPARAMS);
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+inline int Queue::Execute(int* cb_status) noexcept
+{
+    return CBQ_Exec(&this->cbq, cb_status);
+}
 
 inline size_t Queue::Size(void) const noexcept
 {
