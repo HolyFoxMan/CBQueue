@@ -13,7 +13,7 @@ int PrintSum(UNUSED int argc, CBQArg_t* argv)
 int main()
 {
     CBQueue_t queue;
-    CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0); // check hello_world.c for understand
+    CBQ_QueueInit(&queue, CBQ_SI_TINY, CBQ_SM_STATIC, 0, 0); // see hello_world.c to understand
 
     /* Push CB with 3 integers args */
     CBQ_PushStatic(&queue, PrintSum, 3, (CBQArg_t){.iVar = 1}, (CBQArg_t){.iVar = 2}, (CBQArg_t){.iVar = 3});
