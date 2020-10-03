@@ -1,16 +1,19 @@
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
-cmake_minimum_required(VERSION 2.8)
+if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+	message(WARNING "It is not recommended to build the project in the same directory with the sources.\nYou can move to your build dir and run cmake from it (don't forget delete cmake cache files)." )
+endif ()
 
 project(CBQueue)
+set(CMAKE_C_STANDARD 99)
 
-set(CMAKE_C_STANDARD 98)
+set(BASE_SOURCES cbqcontainer.c cbqcapacity.c cbqversion.c cbqueue.c cbqcallbacks.c) 
+set(DEBUG_SOURCES cbqdebug.c cbqtest.c main.c)
 
-set(BASE_OBJECTS cbqcontainer.c cbqcapacity.c cbqversion.c cbqueue.c) 
-add_subdirectory(Release)
-add_library(CBQueue ${BASE_OBJECTS})
-target_link_libraries(CBQueue LINK_PUBLIC Release)
+add_library(CBQueue STATIC ${BASE_SOURCES})
 
-set(DEBUG_OBJECTS cbqdebug.c cbqtest.c main.c)
-add_subdirectory(Debug)
-add_executable(CBQueueDebug ${BASE_OBJECTS} ${DEBUG_OBJECTS})
-target_link_libraries(CBQueueDebug Debug)
+
+if (CMAKE_BUILD_TYPE MATCHES DEBUG)
+	add_executable(CBQueueDebug ${DEBUG_SOURCES})
+	target_link_libraries(CBQueueDebug CBQueue)
+endif ()
